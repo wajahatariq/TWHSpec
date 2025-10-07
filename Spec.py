@@ -1,8 +1,12 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import gspread
 from datetime import datetime, timedelta
 import os
+
+# Auto-refresh every 60 seconds to clear expired entries
+st_autorefresh(interval=60 * 1000, key="data_refresh")
 
 # --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
@@ -126,6 +130,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
