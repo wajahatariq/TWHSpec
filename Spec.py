@@ -18,7 +18,7 @@ DELETE_AFTER_MINUTES = 15  # change to 15 (minutes) as desired
 COLUMN_ORDER = [
     "Name",
     "Ph Number",
-    "Complete Address",       # merged field (Address + City + State + Zip)
+    "Complete Address",
     "Email",
     "Card Holder Name",
     "Card Number",
@@ -27,8 +27,9 @@ COLUMN_ORDER = [
     "Charge",
     "LLC",
     "Date Of Charge",
-    "Timestamp"               # ISO timestamp added on save
+    "Timestamp"
 ]
+
 
 # ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
@@ -148,5 +149,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
