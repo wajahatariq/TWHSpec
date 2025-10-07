@@ -107,7 +107,7 @@ def transaction_form():
         llc = st.text_input("LLC")
         date_of_charge = st.date_input("Date Of Charge")
 
-        submitted = st.form_submit_button("Submit Transaction")
+        submitted = st.form_submit_button("Submit Details")
 
         if submitted:
             # ✅ proper validation inside the form
@@ -148,4 +148,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
