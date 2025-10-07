@@ -13,7 +13,16 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 # --- Connect to Google Sheets ---
 def connect_google_sheet():
-    gc = gspread.service_account(filename="forimage-466607-0d33a2e71146.json")
+    import json
+
+    try:
+        # Try loading credentials from Streamlit Secrets (for deployment)
+        creds = st.secrets["gcp_service_account"]
+        gc = gspread.service_account_from_dict(creds)
+    except Exception:
+        # Fallback to local JSON file (for local testing)
+        gc = gspread.service_account(filename="forimage-466607-0d33a2e71146.json")
+
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
@@ -117,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
