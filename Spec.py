@@ -7,7 +7,7 @@ import os
 # --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15  # Auto delete after 15 mins
+DELETE_AFTER_MINUTES = 1  # Auto delete after 15 mins
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
@@ -126,5 +126,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
