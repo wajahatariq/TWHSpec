@@ -73,18 +73,31 @@ def save_data(form_data):
 
 # ---------------- Clean expired local entries ----------------
 def clean_old_entries():
+    # If file doesn't exist, create empty DataFrame
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame(columns=COLUMN_ORDER)
 
-    df = pd.read_csv(LOCAL_FILE)
-    if "Timestamp" not in df.columns:
-        return df
+    try:
+        df = pd.read_csv(LOCAL_FILE)
+    except Exception:
+        # If CSV is malformed or partially written, recreate it cleanly
+        st.warning("⚠️ Local data file was corrupted and has been reset.")
+        pd.DataFrame(columns=COLUMN_ORDER).to_csv(LOCAL_FILE, index=False)
+        return pd.DataFrame(columns=COLUMN_ORDER)
 
+    # Validate structure
+    if "Timestamp" not in df.columns:
+        df = pd.DataFrame(columns=COLUMN_ORDER)
+
+    # Convert and clean timestamps
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
+
+    # Save cleaned data back
     df.to_csv(LOCAL_FILE, index=False)
     return df
+
 
 # ---------------- UI: transaction form ----------------
 def transaction_form():
@@ -148,5 +161,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
