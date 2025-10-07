@@ -7,15 +7,14 @@ import os
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
-# Auto-refresh every 60 seconds to allow timely cleanup
-st_autorefresh(interval=60 * 1000, key="data_refresh")
+st_autorefresh(interval=60 * 1000, key="data_refresh")  # Auto-refresh every 60 sec
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15  # change to 15 (minutes) as desired
+DELETE_AFTER_MINUTES = 15  # Local records auto-delete after X minutes
 
-# The exact column order we will use for both local CSV and Google Sheet
 COLUMN_ORDER = [
+    "Agent Name",
     "Name",
     "Ph Number",
     "Complete Address",
@@ -27,32 +26,28 @@ COLUMN_ORDER = [
     "Charge",
     "LLC",
     "Date Of Charge",
-    "Timestamp"
+    "Timestamp",
 ]
 
+AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 
 # ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
-    # supports both Streamlit Secrets (deployed) and local JSON (development)
     try:
         creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
     except Exception:
-        # fallback to local file for testing
         gc = gspread.service_account(filename="forimage-466607-0d33a2e71146.json")
     sh = gc.open(GOOGLE_SHEET_NAME)
-    worksheet = sh.sheet1
-    return worksheet
+    return sh.sheet1
 
 # ---------------- Local CSV header helper ----------------
 def ensure_local_header():
     if not os.path.exists(LOCAL_FILE):
-        df = pd.DataFrame(columns=COLUMN_ORDER)
-        df.to_csv(LOCAL_FILE, index=False)
+        pd.DataFrame(columns=COLUMN_ORDER).to_csv(LOCAL_FILE, index=False)
 
 # ---------------- Save a submission ----------------
 def save_data(form_data):
-    # build a row in the exact column order
     now_iso = datetime.now().isoformat()
     row = []
     for col in COLUMN_ORDER:
@@ -61,7 +56,7 @@ def save_data(form_data):
         else:
             row.append(form_data.get(col, ""))
 
-    # 1) Append to Google Sheet
+    # Save to Google Sheet
     try:
         ws = connect_google_sheet()
         ws.append_row(row, value_input_option="USER_ENTERED")
@@ -69,10 +64,11 @@ def save_data(form_data):
     except Exception as e:
         st.error(f"Failed to save to Google Sheet: {e}")
 
-    # 2) Append to local CSV (temporary backup)
+    # Save to local CSV
     ensure_local_header()
-    row_dict = dict(zip(COLUMN_ORDER, row))
-    pd.DataFrame([row_dict]).to_csv(LOCAL_FILE, mode="a", header=False, index=False)
+    pd.DataFrame([dict(zip(COLUMN_ORDER, row))]).to_csv(
+        LOCAL_FILE, mode="a", header=False, index=False
+    )
     st.info("Saved locally (temporary).")
 
 # ---------------- Clean expired local entries ----------------
@@ -93,12 +89,14 @@ def clean_old_entries():
 # ---------------- UI: transaction form ----------------
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared after configured minutes).")
+    st.write(
+        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically)."
+    )
 
     with st.form("transaction_form"):
+        agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
-        # merged address field
         complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
@@ -112,10 +110,12 @@ def transaction_form():
         submitted = st.form_submit_button("Submit Transaction")
 
         if submitted:
-            if not name or not ph_number:
-                st.warning("Please fill in at least Name and Phone Number.")
+            # ✅ proper validation inside the form
+            if not name or not ph_number or agent_name == "Select Agent":
+                st.warning("Please fill in Name, Phone Number, and select an Agent.")
             else:
                 form_data = {
+                    "Agent Name": agent_name,
                     "Name": name,
                     "Ph Number": ph_number,
                     "Complete Address": complete_address,
@@ -127,7 +127,6 @@ def transaction_form():
                     "Charge": charge,
                     "LLC": llc,
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
-                    # "Timestamp" is added automatically in save_data()
                 }
                 save_data(form_data)
 
@@ -149,6 +148,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
