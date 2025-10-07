@@ -11,7 +11,7 @@ st_autorefresh(interval=60 * 1000, key="data_refresh")  # Auto-refresh every 60 
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15  # Local records auto-delete after X minutes
+DELETE_AFTER_MINUTES = 5  # Local records auto-delete after X minutes
 
 COLUMN_ORDER = [
     "Agent Name",
@@ -60,7 +60,7 @@ def save_data(form_data):
     try:
         ws = connect_google_sheet()
         ws.append_row(row, value_input_option="USER_ENTERED")
-        st.success("✅ Saved to Google Sheet.")
+        st.success("Saved to Google Sheet.")
     except Exception as e:
         st.error(f"Failed to save to Google Sheet: {e}")
 
@@ -88,9 +88,9 @@ def clean_old_entries():
 
 # ---------------- UI: transaction form ----------------
 def transaction_form():
-    st.title("Company Transactions Entry")
+    st.title("Client Management System")
     st.write(
-        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically)."
+        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes) ."
     )
 
     with st.form("transaction_form"):
@@ -148,3 +148,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
