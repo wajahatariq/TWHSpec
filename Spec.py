@@ -5,77 +5,100 @@ import gspread
 from datetime import datetime, timedelta
 import os
 
-# Auto-refresh every 60 seconds to clear expired entries
+# ---------------- CONFIG ----------------
+st.set_page_config(page_title="Company Transactions Entry", layout="wide")
+# Auto-refresh every 60 seconds to allow timely cleanup
 st_autorefresh(interval=60 * 1000, key="data_refresh")
 
-# --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 1  # Auto delete after 15 mins
+DELETE_AFTER_MINUTES = 15  # change to 15 (minutes) as desired
 
-st.set_page_config(page_title="Company Transactions Entry", layout="wide")
+# The exact column order we will use for both local CSV and Google Sheet
+COLUMN_ORDER = [
+    "Name",
+    "Ph Number",
+    "Complete Address",       # merged field (Address + City + State + Zip)
+    "Email",
+    "Card Holder Name",
+    "Card Number",
+    "Expiry Date",
+    "CVC",
+    "Charge",
+    "LLC",
+    "Date Of Charge",
+    "Timestamp"               # ISO timestamp added on save
+]
 
-# --- Connect to Google Sheets ---
+# ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
-    import json
-
+    # supports both Streamlit Secrets (deployed) and local JSON (development)
     try:
-        # Try loading credentials from Streamlit Secrets (for deployment)
         creds = st.secrets["gcp_service_account"]
         gc = gspread.service_account_from_dict(creds)
     except Exception:
-        # Fallback to local JSON file (for local testing)
+        # fallback to local file for testing
         gc = gspread.service_account(filename="forimage-466607-0d33a2e71146.json")
-
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save to Google Sheet + Local File ---
+# ---------------- Local CSV header helper ----------------
+def ensure_local_header():
+    if not os.path.exists(LOCAL_FILE):
+        df = pd.DataFrame(columns=COLUMN_ORDER)
+        df.to_csv(LOCAL_FILE, index=False)
+
+# ---------------- Save a submission ----------------
 def save_data(form_data):
-    # Save to Google Sheet
+    # build a row in the exact column order
+    now_iso = datetime.now().isoformat()
+    row = []
+    for col in COLUMN_ORDER:
+        if col == "Timestamp":
+            row.append(now_iso)
+        else:
+            row.append(form_data.get(col, ""))
+
+    # 1) Append to Google Sheet
     try:
         ws = connect_google_sheet()
-        ws.append_row(list(form_data.values()))
-        st.success("Data saved to Google Sheet successfully!")
+        ws.append_row(row, value_input_option="USER_ENTERED")
+        st.success("✅ Saved to Google Sheet.")
     except Exception as e:
         st.error(f"Failed to save to Google Sheet: {e}")
 
-    # Save locally (temporary data)
-    form_data["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    df = pd.DataFrame([form_data])
-    df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
-    st.info("Data also saved locally (temporary view).")
+    # 2) Append to local CSV (temporary backup)
+    ensure_local_header()
+    row_dict = dict(zip(COLUMN_ORDER, row))
+    pd.DataFrame([row_dict]).to_csv(LOCAL_FILE, mode="a", header=False, index=False)
+    st.info("Saved locally (temporary).")
 
-# --- Auto-delete old local entries ---
+# ---------------- Clean expired local entries ----------------
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame()
+        return pd.DataFrame(columns=COLUMN_ORDER)
 
     df = pd.read_csv(LOCAL_FILE)
-    if "timestamp" not in df.columns:
+    if "Timestamp" not in df.columns:
         return df
 
-    now = datetime.now()
-    df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
-    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["timestamp"] > cutoff]  # Keep only recent entries
-
-    df.to_csv(LOCAL_FILE, index=False)  # Overwrite filtered data
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
+    df = df[df["Timestamp"] > cutoff]
+    df.to_csv(LOCAL_FILE, index=False)
     return df
 
-# --- Main Form ---
+# ---------------- UI: transaction form ----------------
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details below. Data will sync with Google Sheet and auto-clear locally after 15 minutes.")
+    st.write("Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared after configured minutes).")
 
     with st.form("transaction_form"):
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
-        address = st.text_input("Address")
-        city = st.text_input("City")
-        state = st.text_input("State")
-        zipcode = st.text_input("Zipcode")
+        # merged address field
+        complete_address = st.text_area("Complete Address (Address, City, State, Zipcode)")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
         card_number = st.text_input("Card Number")
@@ -83,23 +106,18 @@ def transaction_form():
         cvc = st.text_input("CVC")
         charge = st.text_input("Charge")
         llc = st.text_input("LLC")
-        provider = st.text_input("Provider")
-        order_id = st.text_input("Order Id")
         date_of_charge = st.date_input("Date Of Charge")
 
         submitted = st.form_submit_button("Submit Transaction")
 
         if submitted:
             if not name or not ph_number:
-                st.warning("Please fill in at least the Name and Phone Number.")
+                st.warning("Please fill in at least Name and Phone Number.")
             else:
                 form_data = {
                     "Name": name,
                     "Ph Number": ph_number,
-                    "Address": address,
-                    "City": city,
-                    "State": state,
-                    "Zipcode": zipcode,
+                    "Complete Address": complete_address,
                     "Email": email,
                     "Card Holder Name": card_holder,
                     "Card Number": card_number,
@@ -107,30 +125,26 @@ def transaction_form():
                     "CVC": cvc,
                     "Charge": charge,
                     "LLC": llc,
-                    "Provider": provider,
-                    "Order Id": order_id,
-                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
+                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
+                    # "Timestamp" is added automatically in save_data()
                 }
                 save_data(form_data)
 
-# --- Display Local Data ---
+# ---------------- UI: show temporary local data ----------------
 def view_local_data():
-    st.subheader("Temporary Data (Last 15 Minutes)")
+    st.subheader(f"Temporary Data (Last {DELETE_AFTER_MINUTES} minutes)")
     df = clean_old_entries()
     if df.empty:
         st.info("No recent transactions found.")
     else:
         st.dataframe(df)
 
-# --- Main App ---
+# ---------------- Main ----------------
 def main():
+    ensure_local_header()
     transaction_form()
     st.divider()
     view_local_data()
 
 if __name__ == "__main__":
     main()
-
-
-
-
