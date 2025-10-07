@@ -98,7 +98,7 @@ def transaction_form():
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
         # merged address field
-        complete_address = st.text_area("Complete Address (Address, City, State, Zipcode)")
+        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
         card_number = st.text_input("Card Number")
@@ -148,3 +148,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
