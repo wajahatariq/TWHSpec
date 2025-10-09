@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from datetime import datetime, timedelta
 import os
+import time
 
 # --- Google Sheets credentials ---
 creds = st.secrets["gcp_service_account"]
@@ -26,8 +27,6 @@ def connect_google_sheet():
 
 # --- Save new transaction locally ---
 def save_data(form_data):
-    form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    form_data["Status"] = "Pending"
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
     st.info("Transaction saved locally as Pending.")
@@ -36,8 +35,11 @@ def save_data(form_data):
 def push_transaction_to_google_sheet(transaction):
     try:
         ws = connect_google_sheet()
-        ws.append_row(list(transaction.values()))
+        headers = ws.row_values(1)  # Use header row to match order
+        row_values = [transaction.get(col, "") for col in headers]
+        ws.append_row(row_values)
         st.success(f"Transaction for {transaction['Name']} pushed to Google Sheet.")
+        time.sleep(1)  # Give API a moment to commit
     except Exception as e:
         st.error(f"Failed to push transaction to Google Sheet: {e}")
 
@@ -46,11 +48,11 @@ def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
     df = pd.read_csv(LOCAL_FILE)
-    if "Timestamp" not in df.columns:
+    if "TimeStamp" not in df.columns:
         return df
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    df["TimeStamp"] = pd.to_datetime(df["TimeStamp"], errors="coerce")
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]
+    df = df[df["TimeStamp"] > cutoff]
     df.to_csv(LOCAL_FILE, index=False)
     return df
 
@@ -71,7 +73,7 @@ def transaction_form():
         cvc = st.text_input("CVC")
         charge = st.text_input("Charge")
         llc = st.selectbox("LLC", LLC_OPTIONS)
-        date_of_charge = st.date_input("Date Of Charge")
+        date_of_charge = st.date_input("Date of Charge")
 
         submitted = st.form_submit_button("Submit Transaction")
 
@@ -91,7 +93,9 @@ def transaction_form():
                     "CVC": cvc,
                     "Charge": charge,
                     "LLC": llc,
-                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
+                    "Date of Charge": date_of_charge.strftime("%Y-%m-%d"),
+                    "TimeStamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Status": "Pending"
                 }
                 save_data(form_data)
                 st.rerun()
@@ -118,7 +122,7 @@ def status_sidebar():
         st.sidebar.write(f"**Agent:** {txn['Agent Name']}")
         st.sidebar.write(f"**Charge:** {txn['Charge']}")
         st.sidebar.write(f"**Card Number:** {txn['Card Number']}")
-        st.sidebar.write(f"**Date:** {txn['Date Of Charge']}")
+        st.sidebar.write(f"**Date:** {txn['Date of Charge']}")
 
         col1, col2 = st.sidebar.columns(2)
         if col1.button(f"Charged {txn['Card Number']}", key=f"charged_{txn['Card Number']}"):
