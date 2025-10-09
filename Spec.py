@@ -126,7 +126,7 @@ def sidebar_transactions():
                 
 # --- View processed transactions from CSV ---
 def view_local_data():
-st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
+    st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
     
     df = clean_old_entries()  # auto-clean old entries
 
@@ -144,6 +144,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
