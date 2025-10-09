@@ -3,7 +3,6 @@ import pandas as pd
 import gspread
 from datetime import datetime, timedelta
 import os
-import pytz
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
@@ -50,7 +49,7 @@ def ensure_local_header():
 
 # ---------------- Save a submission ----------------
 def save_data(form_data):
-    now_iso = datetime.now(pytz.timezone("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
+    now_iso = datetime.now().isoformat()
     row = []
     for col in COLUMN_ORDER:
         if col == "Timestamp":
@@ -58,6 +57,7 @@ def save_data(form_data):
         else:
             row.append(form_data.get(col, ""))
 
+    # Save to Google Sheet
     try:
         ws = connect_google_sheet()
         ws.append_row(row, value_input_option="USER_ENTERED")
@@ -65,6 +65,7 @@ def save_data(form_data):
     except Exception as e:
         st.error(f"Failed to save to Google Sheet: {e}")
 
+    # Save to local CSV
     ensure_local_header()
     pd.DataFrame([dict(zip(COLUMN_ORDER, row))]).to_csv(
         LOCAL_FILE, mode="a", header=False, index=False
@@ -83,7 +84,7 @@ def clean_old_entries():
         return df
 
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
+    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
 
     df.to_csv(LOCAL_FILE, index=False)
@@ -94,7 +95,7 @@ def clean_old_entries():
 def transaction_form():
     st.title("Client Management System")
     st.write(
-        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes)."
+        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes) ."
     )
 
     with st.form("transaction_form"):
