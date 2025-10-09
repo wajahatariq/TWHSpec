@@ -4,6 +4,8 @@ import gspread
 from datetime import datetime, timedelta
 import os
 
+creds = st.secrets["gcp_service_account"]
+gc = gspread.service_account_from_dict(creds)
 # --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
@@ -113,3 +115,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
