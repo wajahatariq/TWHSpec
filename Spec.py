@@ -25,6 +25,7 @@ COLUMN_ORDER = [
     "Charge",
     "LLC",
     "Date Of Charge",
+    "Status",
     "Timestamp",
 ]
 
@@ -48,12 +49,9 @@ def ensure_local_header():
 # ---------------- Save a submission ----------------
 def save_data(form_data):
     now_iso = datetime.now(pytz.timezone("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
-    row = []
-    for col in COLUMN_ORDER:
-        if col == "Timestamp":
-            row.append(now_iso)
-        else:
-            row.append(form_data.get(col, ""))
+    form_data["Status"] = "Pending"
+
+    row = [form_data.get(col, "") if col != "Timestamp" else now_iso for col in COLUMN_ORDER]
 
     try:
         ws = connect_google_sheet()
@@ -67,6 +65,23 @@ def save_data(form_data):
         LOCAL_FILE, mode="a", header=False, index=False
     )
     st.info("Saved locally (temporary).")
+
+def update_status_in_files(name, ph_number, new_status):
+    df = pd.read_csv(LOCAL_FILE)
+    match = (df["Name"] == name) & (df["Ph Number"] == ph_number)
+    df.loc[match, "Status"] = new_status
+    df.to_csv(LOCAL_FILE, index=False)
+
+    try:
+        ws = connect_google_sheet()
+        records = ws.get_all_records()
+        for i, rec in enumerate(records):
+            if rec["Name"] == name and rec["Ph Number"] == ph_number:
+                ws.update_cell(i + 2, COLUMN_ORDER.index("Status") + 1, new_status)
+                break
+        st.success(f"Status updated to {new_status}")
+    except Exception as e:
+        st.error(f"Failed to update Google Sheet: {e}")
 
 
 # ---------------- Clean expired local entries ----------------
@@ -83,6 +98,28 @@ def clean_old_entries():
     df = df[df["Timestamp"] > cutoff]
     df.to_csv(LOCAL_FILE, index=False)
     return df
+
+
+def update_status_in_files(row_index, new_status):
+    # Update local CSV
+    df = pd.read_csv(LOCAL_FILE)
+    if row_index >= len(df):
+        st.error("Invalid row index.")
+        return
+
+    df.at[row_index, "Status"] = new_status
+    df.to_csv(LOCAL_FILE, index=False)
+
+    # Update Google Sheet
+    try:
+        ws = connect_google_sheet()
+        records = ws.get_all_records()
+        if row_index < len(records):
+            ws.update_cell(row_index + 2, COLUMN_ORDER.index("Status") + 1, new_status)
+        st.success(f"Status updated to {new_status}")
+    except Exception as e:
+        st.error(f"Failed to update Google Sheet: {e}")
+
 
 # ---------------- UI: transaction form ----------------
 def transaction_form():
@@ -130,12 +167,34 @@ def transaction_form():
 
 # ---------------- UI: show temporary local data ----------------
 def view_local_data():
-    st.subheader(f"Temporary Data (Last {DELETE_AFTER_MINUTES} minutes)")
+    st.subheader(f"Recent Entries (Last {DELETE_AFTER_MINUTES} mins)")
     df = clean_old_entries()
+
     if df.empty:
         st.info("No recent transactions found.")
-    else:
-        st.dataframe(df)
+        return
+
+    # Create an editable dataframe view
+    edited_df = st.data_editor(
+        df,
+        column_config={
+            "Status": st.column_config.Column(
+                "Status",
+                help="Mark as Charged or Declined",
+                width="medium"
+            )
+        },
+        disabled=[col for col in df.columns if col != "Status"],
+        hide_index=True,
+        key="editable_table",
+    )
+
+    # Compare before & after edits
+    changed_rows = edited_df.loc[edited_df["Status"] != df["Status"]]
+    if not changed_rows.empty:
+        for _, row in changed_rows.iterrows():
+            update_status_in_files(row["Name"], row["Ph Number"], row["Status"])
+
 
 # ---------------- Main ----------------
 def main():
@@ -146,6 +205,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
