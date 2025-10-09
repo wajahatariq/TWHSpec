@@ -59,7 +59,7 @@ def save_local(form_data):
     df = pd.read_csv(LOCAL_FILE)
     df = pd.concat([df, pd.DataFrame([form_data])], ignore_index=True)
     df.to_csv(LOCAL_FILE, index=False)
-    st.success("✅ Entry saved locally (Pending review).")
+    st.success("✅ Entry saved locally (Pending review). You can add another now.")
 
 
 # ---------------- Push approved/declined record to Google Sheet ----------------
@@ -100,7 +100,7 @@ def clean_old_entries():
 # ---------------- Transaction Form ----------------
 def transaction_form():
     st.title("Client Management System")
-    st.write("Fill the form below. Multiple entries can be saved before approval.")
+    st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -164,25 +164,25 @@ def manage_status(df):
         st.sidebar.info("All entries processed ✅")
         return
 
-    selected_row = st.sidebar.selectbox(
-        "Select entry:",
-        pending_entries.index,
-        format_func=lambda i: f"{pending_entries.loc[i, 'Name']} ({pending_entries.loc[i, 'Ph Number']})"
-    )
+    entry_labels = [f"{row['Name']} ({row['Ph Number']})" for _, row in pending_entries.iterrows()]
+    selected_index = st.sidebar.selectbox("Select entry:", pending_entries.index, format_func=lambda i: entry_labels[pending_entries.index.get_loc(i)])
 
     new_status = st.sidebar.radio("Update status to:", ["Charged", "Declined"], horizontal=True)
 
     if st.sidebar.button("✅ Finalize Entry"):
-        df.at[selected_row, "Status"] = new_status
+        # Update local status
+        df.at[selected_index, "Status"] = new_status
 
-        # Convert to strings for Google Sheet
-        record = df.loc[selected_row].apply(lambda x: str(x) if pd.notnull(x) else "").to_dict()
+        # Prepare for Google upload
+        record = df.loc[selected_index].apply(lambda x: str(x) if pd.notnull(x) else "").to_dict()
 
+        # Push to Google Sheets
         success = push_to_google_sheet(record)
+
         if success:
-            df.to_csv(LOCAL_FILE, index=False)  # keep locally for record
-            st.sidebar.success(f"Status updated to {new_status} and saved to Google Sheet ✅")
-            st.rerun()
+            df.to_csv(LOCAL_FILE, index=False)
+            st.sidebar.success(f"Status updated to '{new_status}' and saved to Google Sheet ✅")
+            st.experimental_rerun()
 
 
 # ---------------- Main ----------------
