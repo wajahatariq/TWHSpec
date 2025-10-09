@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import gspread
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 # --- Google Sheets setup ---
@@ -16,6 +16,23 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 # --- Connect to Google Sheets ---
+DELETE_AFTER_MINUTES = 5
+
+def clean_old_entries():
+    if not os.path.exists(LOCAL_FILE):
+        return pd.DataFrame()
+
+    df = pd.read_csv(LOCAL_FILE)
+    if "Timestamp" not in df.columns:
+        return df
+
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
+    df = df[df["Timestamp"] > cutoff]  # keep only recent entries
+
+    df.to_csv(LOCAL_FILE, index=False)  # overwrite CSV
+    return df
+    
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
@@ -111,11 +128,8 @@ def sidebar_transactions():
 def view_local_data():
     st.subheader("Processed Transactions (Local CSV)")
     
-    if not os.path.exists(LOCAL_FILE):
-        st.info("No transactions saved locally yet.")
-        return
+    df = clean_old_entries()  # auto-clean old entries
 
-    df = pd.read_csv(LOCAL_FILE)
     if df.empty:
         st.info("No transactions saved locally yet.")
     else:
@@ -130,6 +144,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
