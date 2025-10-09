@@ -163,6 +163,7 @@ def transaction_form():
                         setTimeout(()=>toast.remove(), 3000);
                     </script>
                 """, height=0)
+                st.rerun()
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -221,6 +222,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
