@@ -76,9 +76,8 @@ def transaction_form():
 
         submitted = st.form_submit_button("Submit Transaction")
 
-        if submitted:
-            if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
-                st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
+    if any(not v or (isinstance(v, str) and v.startswith("Select")) for v in form_fields.values()):
+        st.warning("Please complete all details in the form."))
             else:
                 form_data = {
                     "Agent Name": agent_name,
@@ -113,6 +112,7 @@ def sidebar_transactions():
         st.sidebar.write(f"**CVV:** {txn['CVC']}")
         st.sidebar.write(f"**Card Holder Name:** {txn['Card Holder Name']}")
         st.sidebar.write(f"**Expiry Date:** {txn['Expiry Date']}")
+        st.sidebar.write(f"**Address:** {txn['Address']}")
         col1, col2 = st.sidebar.columns(2)
         with col1:
             if st.button("Charged", key=f"charged_{idx}"):
@@ -120,12 +120,14 @@ def sidebar_transactions():
                 save_to_google(txn)
                 save_to_csv(txn)
                 st.sidebar.success("Updated as Charged")
+                st.rerun()
         with col2:
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
                 save_to_csv(txn)
                 st.sidebar.success("Updated as Declined")
+                st.rerun()
                 
 # --- View processed transactions from CSV ---
 def view_local_data():
@@ -147,6 +149,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
