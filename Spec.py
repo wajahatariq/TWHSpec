@@ -17,26 +17,37 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
-# --- Google Sheet ---
+# --- Google Sheet connection ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save locally + Google Sheet ---
+# --- Save form data locally + Google Sheet ---
 def save_data(form_data):
-    # Save locally first
+    # Add Timestamp and Status
     form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     form_data["Status"] = "Pending"
+
+    # Save to Google Sheet
+    try:
+        ws = connect_google_sheet()
+        ws.append_row(list(form_data.values()))
+        st.success("Data saved to Google Sheet successfully!")
+    except Exception as e:
+        st.error(f"Failed to save to Google Sheet: {e}")
+
+    # Save locally
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
     st.info("Transaction saved locally as Pending.")
 
-# --- Update status locally + Google Sheet ---
+# --- Update status locally + Google Sheet by Card Number ---
 def update_status(index, new_status):
     if not os.path.exists(LOCAL_FILE):
         return
     df = pd.read_csv(LOCAL_FILE)
+
     if index >= len(df):
         return
 
@@ -44,7 +55,7 @@ def update_status(index, new_status):
     df.at[index, "Status"] = new_status
     df.to_csv(LOCAL_FILE, index=False)
 
-    # Update Google Sheet by Card Number
+    # Update Google Sheet
     try:
         ws = connect_google_sheet()
         all_values = ws.get_all_records()
@@ -56,17 +67,25 @@ def update_status(index, new_status):
     except Exception as e:
         st.error(f"Failed to update Google Sheet: {e}")
 
-
 # --- Clean old entries ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
+
     df = pd.read_csv(LOCAL_FILE)
+
+    # Ensure required columns exist
     if "Timestamp" not in df.columns:
-        return df
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+        df["Timestamp"] = datetime.now()
+    else:
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+
+    if "Status" not in df.columns:
+        df["Status"] = "Pending"
+
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
+
     df.to_csv(LOCAL_FILE, index=False)
     return df
 
@@ -110,19 +129,23 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
                 }
                 save_data(form_data)
-                st.rerun()  # Refresh so sidebar shows new entry
+                st.experimental_rerun()  # Refresh so sidebar shows new entry
 
 # --- Sidebar for Status Approval ---
 def status_sidebar():
     st.sidebar.title("Pending Transactions Approval")
     df = clean_old_entries()
-    pending_df = df[df["Status"] == "Pending"]
 
+    if "Status" not in df.columns or df.empty:
+        st.sidebar.info("No pending transactions.")
+        return
+
+    pending_df = df[df["Status"] == "Pending"]
     if pending_df.empty:
         st.sidebar.info("No pending transactions.")
         return
 
-    # Show the most recent pending transaction
+    # Show latest pending transaction
     latest_index = pending_df.index[-1]
     latest = pending_df.loc[latest_index]
     st.sidebar.write(f"**Name:** {latest['Name']}")
@@ -132,11 +155,11 @@ def status_sidebar():
 
     if st.sidebar.button("Charged"):
         update_status(latest_index, "Charged")
-        st.rerun()
+        st.experimental_rerun()
 
     if st.sidebar.button("Declined"):
         update_status(latest_index, "Declined")
-        st.rerun()
+        st.experimental_rerun()
 
 # --- Display Local Data ---
 def view_local_data():
@@ -156,5 +179,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
