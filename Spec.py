@@ -113,4 +113,45 @@ def transaction_form():
 
 # --- Sidebar for Status Approval ---
 def status_sidebar():
-    st.sidebar.title("Pending Transactions
+    st.sidebar.title("Pending Transactions Approval")
+    df = clean_old_entries()
+    pending_df = df[df["Status"] == "Pending"]
+
+    if pending_df.empty:
+        st.sidebar.info("No pending transactions.")
+        return
+
+    # Show the most recent pending transaction
+    latest_index = pending_df.index[-1]
+    latest = pending_df.loc[latest_index]
+    st.sidebar.write(f"**Name:** {latest['Name']}")
+    st.sidebar.write(f"**Agent:** {latest['Agent Name']}")
+    st.sidebar.write(f"**Charge:** {latest['Charge']}")
+    st.sidebar.write(f"**Date:** {latest['Date Of Charge']}")
+
+    if st.sidebar.button("Charged"):
+        update_status(latest_index, "Charged")
+        st.experimental_rerun()
+
+    if st.sidebar.button("Declined"):
+        update_status(latest_index, "Declined")
+        st.experimental_rerun()
+
+# --- Display Local Data ---
+def view_local_data():
+    st.subheader("Temporary Data (Last 15 Minutes)")
+    df = clean_old_entries()
+    if df.empty:
+        st.info("No recent transactions found.")
+    else:
+        st.dataframe(df)
+
+# --- Main App ---
+def main():
+    transaction_form()
+    status_sidebar()
+    st.divider()
+    view_local_data()
+
+if __name__ == "__main__":
+    main()
