@@ -29,8 +29,9 @@ def save_to_google(form_data):
 
 # --- Save to local CSV ---
 def save_to_csv(form_data):
+    file_exists = os.path.exists(LOCAL_FILE)
     df = pd.DataFrame([form_data])
-    df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
+    df.to_csv(LOCAL_FILE, mode="a", header=not file_exists, index=False)
     st.info(f"{form_data['Name']} saved to local CSV as {form_data['Status']}.")
 
 # --- Initialize session state ---
@@ -88,10 +89,14 @@ def sidebar_transactions():
         st.sidebar.info("No pending transactions.")
         return
 
-    for idx, txn in enumerate(st.session_state.transactions):
-        if txn["Status"] != "Pending":
-            continue  # Already processed
+    # Only show pending transactions
+    pending_txns = [t for t in st.session_state.transactions if t["Status"] == "Pending"]
 
+    if not pending_txns:
+        st.sidebar.info("No pending transactions.")
+        return
+
+    for idx, txn in enumerate(pending_txns):
         st.sidebar.write(f"**Client:** {txn['Name']} | **Charge:** {txn['Charge']}")
         col1, col2 = st.sidebar.columns(2)
         with col1:
