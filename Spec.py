@@ -95,18 +95,20 @@ def sidebar_transactions():
     if not pending_txns:
         st.sidebar.info("No pending transactions.")
         return
-
+    
     for idx, txn in enumerate(pending_txns):
         st.sidebar.write(f"**Client:** {txn['Name']}")
+    
+        # The buttons must be inside the loop
         col1, col2 = st.sidebar.columns(2)
-    with col1:
-        if st.button("Charged", key=f"charged_{idx}"):
-            txn["Status"] = "Charged"
-            st.sidebar.success("Updated as Charged")
-    with col2:
-        if st.button("Declined", key=f"declined_{idx}"):
-            txn["Status"] = "Declined"
-            st.sidebar.success("Updated as Declined")
+        with col1:
+            if st.button("Charged", key=f"charged_{idx}"):
+                txn["Status"] = "Charged"
+                st.sidebar.success("Updated as Charged")
+        with col2:
+            if st.button("Declined", key=f"declined_{idx}"):
+                txn["Status"] = "Declined"
+                st.sidebar.success("Updated as Declined")
 
 # --- View processed transactions from CSV ---
 def view_local_data():
@@ -131,6 +133,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
