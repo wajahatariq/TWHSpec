@@ -1,15 +1,14 @@
 import streamlit as st
 import pandas as pd
 import gspread
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 
 # --- Google Sheets setup ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 GOOGLE_SHEET_NAME = "Company_Transactions"
-LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15  # Auto delete after 15 mins
+LOCAL_FILE = "company_transactions.csv"
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
@@ -22,64 +21,26 @@ def connect_google_sheet():
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save data ---
-def save_data(form_data):
-    # Initially status is Pending
-    form_data["Status"] = "Pending"
-    form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# --- Save to Google Sheet ---
+def save_to_google(form_data):
+    ws = connect_google_sheet()
+    ws.append_row(list(form_data.values()))
+    st.success(f"{form_data['Name']} saved to Google Sheet as {form_data['Status']}.")
 
-    # Save locally
+# --- Save to local CSV ---
+def save_to_csv(form_data):
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
-    st.info("Data saved locally (temporary view).")
+    st.info(f"{form_data['Name']} saved to local CSV as {form_data['Status']}.")
 
-    # Save to Google Sheet
-    try:
-        ws = connect_google_sheet()
-        ws.append_row(list(form_data.values()))
-        st.success("Data saved to Google Sheet successfully!")
-    except Exception as e:
-        st.error(f"Failed to save to Google Sheet: {e}")
-
-# --- Clean old entries ---
-def clean_old_entries():
-    if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame()
-
-    df = pd.read_csv(LOCAL_FILE)
-    if "Timestamp" not in df.columns:
-        return df
-
-    now = datetime.now()
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]
-
-    df.to_csv(LOCAL_FILE, index=False)
-    return df
-
-# --- Update status locally ---
-def update_local_status(client_name, status):
-    df = pd.read_csv(LOCAL_FILE)
-    df.loc[df["Name"] == client_name, "Status"] = status
-    df.to_csv(LOCAL_FILE, index=False)
-
-# --- Update status in Google Sheet ---
-def update_google_status(client_name, status):
-    ws = connect_google_sheet()
-    all_data = ws.get_all_records()
-    
-    for i, row in enumerate(all_data, start=2):  # start=2 because row 1 is header
-        if row["Name"] == client_name:
-            # Assuming Status column is at the end (last column)
-            col_index = len(row)  # Column index in Google Sheet
-            ws.update_cell(i, col_index + 1, status)
-            break
+# --- Initialize session state ---
+if "transactions" not in st.session_state:
+    st.session_state.transactions = []
 
 # --- Transaction form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details below. Data will sync with Google Sheet and auto-clear locally after 15 minutes.")
+    st.write("Enter transaction details. Approve or decline them in the sidebar.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -113,42 +74,41 @@ def transaction_form():
                     "CVC": cvc,
                     "Charge": charge,
                     "LLC": llc,
-                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
+                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
+                    "Status": "Pending",
+                    "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
-                save_data(form_data)
+                st.session_state.transactions.append(form_data)
+                st.success(f"{name} added to sidebar for approval.")
 
-# --- Manage transactions with Charge/Decline ---
-def manage_transactions():
-    st.subheader("Pending Transactions")
-    df = clean_old_entries()
-    if df.empty:
-        st.info("No recent transactions found.")
-        return
-    
-    pending_df = df[df["Status"] == "Pending"]
-    if pending_df.empty:
-        st.info("No pending transactions.")
+# --- Sidebar for approve/decline ---
+def sidebar_transactions():
+    st.sidebar.title("Approve / Decline Transactions")
+    if not st.session_state.transactions:
+        st.sidebar.info("No pending transactions.")
         return
 
-    for idx, row in pending_df.iterrows():
-        st.write(f"**Client:** {row['Name']} | **Charge:** {row['Charge']}")
-        col1, col2 = st.columns(2)
+    for idx, txn in enumerate(st.session_state.transactions):
+        if txn["Status"] != "Pending":
+            continue  # Already processed
+
+        st.sidebar.write(f"**Client:** {txn['Name']} | **Charge:** {txn['Charge']}")
+        col1, col2 = st.sidebar.columns(2)
         with col1:
-            if st.button(f"Charge {row['Name']}", key=f"charge_{idx}"):
-                update_local_status(row["Name"], "Charged")
-                update_google_status(row["Name"], "Charged")
-                st.success(f"{row['Name']} has been Charged.")
+            if st.button(f"Charge {txn['Name']}", key=f"charge_{idx}"):
+                txn["Status"] = "Charged"
+                save_to_google(txn)
+                save_to_csv(txn)
         with col2:
-            if st.button(f"Decline {row['Name']}", key=f"decline_{idx}"):
-                update_local_status(row["Name"], "Declined")
-                update_google_status(row["Name"], "Declined")
-                st.error(f"{row['Name']} has been Declined.")
+            if st.button(f"Decline {txn['Name']}", key=f"decline_{idx}"):
+                txn["Status"] = "Declined"
+                save_to_google(txn)
+                save_to_csv(txn)
 
 # --- Main App ---
 def main():
     transaction_form()
-    st.divider()
-    manage_transactions()
+    sidebar_transactions()
 
 if __name__ == "__main__":
     main()
