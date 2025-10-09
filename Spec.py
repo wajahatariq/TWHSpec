@@ -19,6 +19,13 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
+# --- Standard Column Names ---
+COLUMNS = [
+    "Agent Name", "Name", "Ph Number", "Address", "Email",
+    "Card Holder Name", "Card Number", "Expiry Date", "CVC", "Charge",
+    "LLC", "Date of Charge", "TimeStamp", "Status"
+]
+
 # --- Connect to Google Sheets ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
@@ -35,21 +42,22 @@ def save_data(form_data):
 def push_transaction_to_google_sheet(transaction):
     try:
         ws = connect_google_sheet()
-        headers = ws.row_values(1)  # Use header row to match order
-        row_values = [transaction.get(col, "") for col in headers]
+        row_values = [transaction.get(col, "") for col in COLUMNS]
         ws.append_row(row_values)
         st.success(f"Transaction for {transaction['Name']} pushed to Google Sheet.")
-        time.sleep(1)  # Give API a moment to commit
+        time.sleep(1)  # allow API commit
     except Exception as e:
         st.error(f"Failed to push transaction to Google Sheet: {e}")
 
 # --- Clean old local entries ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame()
+        return pd.DataFrame(columns=COLUMNS)
     df = pd.read_csv(LOCAL_FILE)
-    if "TimeStamp" not in df.columns:
-        return df
+    # Fix any missing columns
+    for col in COLUMNS:
+        if col not in df.columns:
+            df[col] = ""
     df["TimeStamp"] = pd.to_datetime(df["TimeStamp"], errors="coerce")
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["TimeStamp"] > cutoff]
@@ -81,7 +89,8 @@ def transaction_form():
             if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
                 st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
             else:
-                form_data = {
+                form_data = {col: "" for col in COLUMNS}  # initialize with empty strings
+                form_data.update({
                     "Agent Name": agent_name,
                     "Name": name,
                     "Ph Number": ph_number,
@@ -96,7 +105,7 @@ def transaction_form():
                     "Date of Charge": date_of_charge.strftime("%Y-%m-%d"),
                     "TimeStamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Status": "Pending"
-                }
+                })
                 save_data(form_data)
                 st.rerun()
 
