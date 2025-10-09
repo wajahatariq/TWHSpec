@@ -128,7 +128,7 @@ def transaction_form():
                 }
                 save_local(form_data)
                 st.session_state.submitted = True
-                st.experimental_rerun()
+                st.rerun()
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -179,5 +179,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
