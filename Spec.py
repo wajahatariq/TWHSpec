@@ -110,10 +110,26 @@ def sidebar_transactions():
                 save_to_google(txn)
                 save_to_csv(txn)
 
+# --- View processed transactions from CSV ---
+def view_local_data():
+    st.subheader("Processed Transactions (Local CSV)")
+    
+    if not os.path.exists(LOCAL_FILE):
+        st.info("No transactions saved locally yet.")
+        return
+
+    df = pd.read_csv(LOCAL_FILE)
+    if df.empty:
+        st.info("No transactions saved locally yet.")
+    else:
+        st.dataframe(df)
+
 # --- Main App ---
 def main():
     transaction_form()
     sidebar_transactions()
+    st.divider()
+    view_local_data()
 
 if __name__ == "__main__":
     main()
