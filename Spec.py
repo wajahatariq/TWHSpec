@@ -90,19 +90,20 @@ def transaction_form():
     st.title("Client Management System")
     st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
-    with st.form("transaction_form"):
-        agent_name = st.selectbox("Agent Name", AGENTS)
-        name = st.text_input("Name")
-        ph_number = st.text_input("Ph Number")
-        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)")
-        email = st.text_input("Email")
-        card_holder = st.text_input("Card Holder Name")
-        card_number = st.text_input("Card Number")
-        expiry_date = st.text_input("Expiry Date")
-        cvc = st.text_input("CVC")
-        charge = st.text_input("Charge")
-        llc = st.selectbox("LLC", LLC)
-        date_of_charge = st.date_input("Date Of Charge")
+    with st.form("transaction_form", clear_on_submit=True):  # ✅ auto-clear after submission
+        agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
+        name = st.text_input("Name", key="name")
+        ph_number = st.text_input("Ph Number", key="ph_number")
+        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)", key="address")
+        email = st.text_input("Email", key="email")
+        card_holder = st.text_input("Card Holder Name", key="card_holder")
+        card_number = st.text_input("Card Number", key="card_number")
+        expiry_date = st.text_input("Expiry Date", key="expiry")
+        cvc = st.text_input("CVC", key="cvc")
+        charge = st.text_input("Charge", key="charge")
+        llc = st.selectbox("LLC", LLC, key="llc")
+        date_of_charge = st.date_input("Date Of Charge", key="charge_date")
+
         submitted = st.form_submit_button("Submit Details")
 
         if submitted:
