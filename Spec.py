@@ -90,23 +90,25 @@ def transaction_form():
     st.title("Client Management System")
     st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
-    with st.form("transaction_form", clear_on_submit=True):  # ✅ auto-clear after submission
-        agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
-        name = st.text_input("Name", key="name")
-        ph_number = st.text_input("Ph Number", key="ph_number")
-        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)", key="address")
-        email = st.text_input("Email", key="email")
-        card_holder = st.text_input("Card Holder Name", key="card_holder")
-        card_number = st.text_input("Card Number", key="card_number")
-        expiry_date = st.text_input("Expiry Date", key="expiry")
-        cvc = st.text_input("CVC", key="cvc")
-        charge = st.text_input("Charge", key="charge")
-        llc = st.selectbox("LLC", LLC, key="llc")
-        date_of_charge = st.date_input("Date Of Charge", key="charge_date")
+    if "submitted" not in st.session_state:
+        st.session_state.submitted = False
 
+    with st.form("transaction_form"):
+        agent_name = st.selectbox("Agent Name", AGENTS)
+        name = st.text_input("Name")
+        ph_number = st.text_input("Ph Number")
+        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)")
+        email = st.text_input("Email")
+        card_holder = st.text_input("Card Holder Name")
+        card_number = st.text_input("Card Number")
+        expiry_date = st.text_input("Expiry Date")
+        cvc = st.text_input("CVC")
+        charge = st.text_input("Charge")
+        llc = st.selectbox("LLC", LLC)
+        date_of_charge = st.date_input("Date Of Charge")
         submitted = st.form_submit_button("Submit Details")
 
-        if submitted:
+        if submitted and not st.session_state.submitted:
             if not name or not ph_number or agent_name == "Select Agent":
                 st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
             else:
@@ -125,32 +127,9 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                 }
                 save_local(form_data)
+                st.session_state.submitted = True
+                st.experimental_rerun()
 
-                # 🔔 Notification with sound
-                components.html("""
-                    <audio autoplay>
-                        <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
-                    </audio>
-                    <script>
-                        const toast = document.createElement('div');
-                        toast.textContent = '✅ Entry added successfully!';
-                        Object.assign(toast.style, {
-                          position: 'fixed',
-                          bottom: '20px',
-                          right: '20px',
-                          background: '#4BB543',
-                          color: 'white',
-                          padding: '12px 20px',
-                          borderRadius: '8px',
-                          fontFamily: 'sans-serif',
-                          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
-                          zIndex: 9999
-                        });
-                        document.body.appendChild(toast);
-                        setTimeout(()=>toast.remove(), 3000);
-                    </script>
-                """, height=0)
-                st.rerun()
 # ---------------- Display Local Entries ----------------
 def view_local_data():
     st.subheader(f"Local Records (Auto-clears after {DELETE_AFTER_MINUTES} minutes)")
@@ -200,4 +179,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
