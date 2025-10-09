@@ -97,18 +97,20 @@ def sidebar_transactions():
         return
 
     for idx, txn in enumerate(pending_txns):
-        st.sidebar.write(f"**Client:** {txn['Name']} | **Charge:** {txn['Charge']}")
+        st.sidebar.write(f"**Charge:** {txn['Charge']}")
         col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button(f"Charge {txn['Name']}", key=f"charge_{idx}"):
-                txn["Status"] = "Charged"
-                save_to_google(txn)
-                save_to_csv(txn)
-        with col2:
-            if st.button(f"Decline {txn['Name']}", key=f"decline_{idx}"):
-                txn["Status"] = "Declined"
-                save_to_google(txn)
-                save_to_csv(txn)
+    with col1:
+        if st.button("Charged", key=f"charged_{idx}"):
+            txn["Status"] = "Charged"
+            save_to_google(txn)
+            save_to_csv(txn)
+            st.sidebar.success("Updated as Charged")
+    with col2:
+        if st.button("Declined", key=f"declined_{idx}"):
+            txn["Status"] = "Declined"
+            save_to_google(txn)
+            save_to_csv(txn)
+            st.sidebar.success("Updated as Declined")
 
 # --- View processed transactions from CSV ---
 def view_local_data():
@@ -133,3 +135,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
