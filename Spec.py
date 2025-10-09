@@ -102,14 +102,10 @@ def sidebar_transactions():
     with col1:
         if st.button("Charged", key=f"charged_{idx}"):
             txn["Status"] = "Charged"
-            save_to_google(txn)
-            save_to_csv(txn)
             st.sidebar.success("Updated as Charged")
     with col2:
         if st.button("Declined", key=f"declined_{idx}"):
             txn["Status"] = "Declined"
-            save_to_google(txn)
-            save_to_csv(txn)
             st.sidebar.success("Updated as Declined")
 
 # --- View processed transactions from CSV ---
@@ -135,5 +131,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
