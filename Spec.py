@@ -25,12 +25,12 @@ COLUMN_ORDER = [
     "Charge",
     "LLC",
     "Date Of Charge",
-    "Status",
     "Timestamp",
 ]
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
+
 # ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
     try:
@@ -41,17 +41,22 @@ def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     return sh.sheet1
 
+
 # ---------------- Local CSV header helper ----------------
 def ensure_local_header():
     if not os.path.exists(LOCAL_FILE):
         pd.DataFrame(columns=COLUMN_ORDER).to_csv(LOCAL_FILE, index=False)
 
+
 # ---------------- Save a submission ----------------
 def save_data(form_data):
     now_iso = datetime.now(pytz.timezone("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
-    form_data["Status"] = "Pending"
-
-    row = [form_data.get(col, "") if col != "Timestamp" else now_iso for col in COLUMN_ORDER]
+    row = []
+    for col in COLUMN_ORDER:
+        if col == "Timestamp":
+            row.append(now_iso)
+        else:
+            row.append(form_data.get(col, ""))
 
     try:
         ws = connect_google_sheet()
@@ -66,68 +71,30 @@ def save_data(form_data):
     )
     st.info("Saved locally (temporary).")
 
-def update_status_in_files(name, ph_number, new_status):
-    df = pd.read_csv(LOCAL_FILE)
-    match = (df["Name"] == name) & (df["Ph Number"] == ph_number)
-    df.loc[match, "Status"] = new_status
-    df.to_csv(LOCAL_FILE, index=False)
-
-    try:
-        ws = connect_google_sheet()
-        records = ws.get_all_records()
-        for i, rec in enumerate(records):
-            if rec["Name"] == name and rec["Ph Number"] == ph_number:
-                ws.update_cell(i + 2, COLUMN_ORDER.index("Status") + 1, new_status)
-                break
-        st.success(f"Status updated to {new_status}")
-    except Exception as e:
-        st.error(f"Failed to update Google Sheet: {e}")
-
 
 # ---------------- Clean expired local entries ----------------
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame()
+        return pd.DataFrame(columns=COLUMN_ORDER)
 
     df = pd.read_csv(LOCAL_FILE)
-    now = datetime.now(pytz.timezone("Asia/Karachi"))
-    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
 
-    # ✅ Fix: ensure Timestamp is datetime
-    if "Timestamp" in df.columns:
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-        df = df[df["Timestamp"] > cutoff]
+    if "Timestamp" not in df.columns:
+        return df
+
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
+    df = df[df["Timestamp"] > cutoff]
 
     df.to_csv(LOCAL_FILE, index=False)
     return df
-
-
-def update_status_in_files(row_index, new_status):
-    # Update local CSV
-    df = pd.read_csv(LOCAL_FILE)
-    if row_index >= len(df):
-        st.error("Invalid row index.")
-        return
-
-    df.at[row_index, "Status"] = new_status
-    df.to_csv(LOCAL_FILE, index=False)
-
-    # Update Google Sheet
-    try:
-        ws = connect_google_sheet()
-        records = ws.get_all_records()
-        if row_index < len(records):
-            ws.update_cell(row_index + 2, COLUMN_ORDER.index("Status") + 1, new_status)
-        st.success(f"Status updated to {new_status}")
-    except Exception as e:
-        st.error(f"Failed to update Google Sheet: {e}")
 
 
 # ---------------- UI: transaction form ----------------
 def transaction_form():
     st.title("Client Management System")
     st.write(
-        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes) ."
+        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes)."
     )
 
     with st.form("transaction_form"):
@@ -141,7 +108,7 @@ def transaction_form():
         expiry_date = st.text_input("Expiry Date")
         cvc = st.text_input("CVC")
         charge = st.text_input("Charge")
-        llc = st.selectbox("LLC",LLC)
+        llc = st.selectbox("LLC", LLC)
         date_of_charge = st.date_input("Date Of Charge")
 
         submitted = st.form_submit_button("Submit Details")
@@ -167,35 +134,15 @@ def transaction_form():
                 }
                 save_data(form_data)
 
+
 # ---------------- UI: show temporary local data ----------------
 def view_local_data():
-    st.subheader(f"Recent Entries (Last {DELETE_AFTER_MINUTES} mins)")
+    st.subheader(f"Temporary Data (Last {DELETE_AFTER_MINUTES} minutes)")
     df = clean_old_entries()
-
     if df.empty:
         st.info("No recent transactions found.")
-        return
-
-    # Create an editable dataframe view
-    edited_df = st.data_editor(
-        df,
-        column_config={
-            "Status": st.column_config.Column(
-                "Status",
-                help="Mark as Charged or Declined",
-                width="medium"
-            )
-        },
-        disabled=[col for col in df.columns if col != "Status"],
-        hide_index=True,
-        key="editable_table",
-    )
-
-    # Compare before & after edits
-    changed_rows = edited_df.loc[edited_df["Status"] != df["Status"]]
-    if not changed_rows.empty:
-        for _, row in changed_rows.iterrows():
-            update_status_in_files(row["Name"], row["Ph Number"], row["Status"])
+    else:
+        st.dataframe(df)
 
 
 # ---------------- Main ----------------
@@ -205,14 +152,6 @@ def main():
     st.divider()
     view_local_data()
 
+
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
