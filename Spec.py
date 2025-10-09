@@ -18,28 +18,6 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 # --- Connect to Google Sheets ---
 DELETE_AFTER_MINUTES = 5
 
-def save_to_csv(form_data):
-    file_exists = os.path.exists(LOCAL_FILE)
-    df = pd.DataFrame([form_data])
-    
-    # If file doesn't exist, create it
-    if not file_exists:
-        df.to_csv(LOCAL_FILE, index=False)
-    else:
-        df.to_csv(LOCAL_FILE, mode="a", header=False, index=False)
-    
-    st.info(f"Saved to local CSV")
-
-def update_status_in_csv(name, new_status):
-    if not os.path.exists(LOCAL_FILE):
-        return
-    
-    df = pd.read_csv(LOCAL_FILE)
-    # Update the row with matching name and Pending status
-    df.loc[(df["Name"] == name) & (df["Status"] == "Pending"), "Status"] = new_status
-    df.to_csv(LOCAL_FILE, index=False)
-
-
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
@@ -131,21 +109,23 @@ def sidebar_transactions():
         return
 
     for idx, txn in enumerate(pending_txns):
-        st.sidebar.write(f"**Client:** {txn['Name']}")
+        st.sidebar.write(f"**Card Number:** {txn['Card Number']}")
+        st.sidebar.write(f"**CVV:** {txn['CVC']}")
+        st.sidebar.write(f"**Card Holder Name:** {txn['Card Holder Name']}")
+        st.sidebar.write(f"**Expiry Date:** {txn['Expiry Date']}")
         col1, col2 = st.sidebar.columns(2)
         with col1:
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
                 save_to_google(txn)
-                update_status_in_csv(txn["Name"], "Charged")
+                save_to_csv(txn)
                 st.sidebar.success("Updated as Charged")
         with col2:
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
-                update_status_in_csv(txn["Name"], "Declined")
+                save_to_csv(txn)
                 st.sidebar.success("Updated as Declined")
-
                 
 # --- View processed transactions from CSV ---
 def view_local_data():
@@ -167,8 +147,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
 
 
