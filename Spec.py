@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import gspread
 from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 import os
 
 # ---------------- CONFIG ----------------
@@ -138,6 +139,30 @@ def transaction_form():
                 }
                 save_local(form_data)
 
+                # 🔔 Notification with sound
+                components.html("""
+                    <audio autoplay>
+                        <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+                    </audio>
+                    <script>
+                        const toast = document.createElement('div');
+                        toast.textContent = '✅ Entry added successfully!';
+                        Object.assign(toast.style, {
+                          position: 'fixed',
+                          bottom: '20px',
+                          right: '20px',
+                          background: '#4BB543',
+                          color: 'white',
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          fontFamily: 'sans-serif',
+                          boxShadow: '0 0 10px rgba(0,0,0,0.3)',
+                          zIndex: 9999
+                        });
+                        document.body.appendChild(toast);
+                        setTimeout(()=>toast.remove(), 3000);
+                    </script>
+                """, height=0)
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -196,4 +221,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
