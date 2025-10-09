@@ -9,7 +9,7 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 500  # keep longer for now while debugging
+DELETE_AFTER_MINUTES = 5
 
 COLUMN_ORDER = [
     "Agent Name",
@@ -67,14 +67,14 @@ def save_data(form_data):
             ws.insert_row(COLUMN_ORDER, 1)
 
         ws.append_row(row_data, value_input_option="USER_ENTERED")
-        st.success("✅ Saved to Google Sheet.")
+        st.success("Saved to Google Sheet.")
     except Exception as e:
-        st.error(f"❌ Failed to save to Google Sheet: {e}")
+        st.error(f"Failed to save to Google Sheet: {e}")
 
     # Save to local CSV
     ensure_local_header()
     pd.DataFrame([form_data]).to_csv(LOCAL_FILE, mode="a", header=False, index=False)
-    st.info("💾 Saved locally (temporary).")
+    st.info("Saved locally (temporary).")
 
 
 # ---------------- Clean expired local entries ----------------
@@ -119,7 +119,7 @@ def transaction_form():
         submitted = st.form_submit_button("Submit Details")
 
         if submitted:
-            if not name or not ph_number or agent_name == "Select Agent":
+            if not name or not ph_number or agent_name or llc == "Select Agent":
                 st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
             else:
                 form_data = {
@@ -153,7 +153,7 @@ def view_local_data():
 
 # ---------------- Sidebar: Manage Entry Status ----------------
 def manage_status(df):
-    st.sidebar.header("⚙️ Manage Entry Status")
+    st.sidebar.header("Manage Entry Status")
 
     if df.empty:
         st.sidebar.info("No entries to manage yet.")
@@ -206,4 +206,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
