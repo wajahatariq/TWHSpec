@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from datetime import datetime, timedelta
 import os
+import pytz
 
 # ---------------- CONFIG ----------------
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
@@ -46,7 +47,7 @@ def ensure_local_header():
 
 # ---------------- Save a submission ----------------
 def save_data(form_data):
-    now_iso = datetime.now().isoformat()
+    now_iso = datetime.now(pytz.timezone("Asia/Karachi")).strftime("%Y-%m-%d %H:%M:%S")
     row = []
     for col in COLUMN_ORDER:
         if col == "Timestamp":
@@ -54,7 +55,6 @@ def save_data(form_data):
         else:
             row.append(form_data.get(col, ""))
 
-    # Save to Google Sheet
     try:
         ws = connect_google_sheet()
         ws.append_row(row, value_input_option="USER_ENTERED")
@@ -62,12 +62,12 @@ def save_data(form_data):
     except Exception as e:
         st.error(f"Failed to save to Google Sheet: {e}")
 
-    # Save to local CSV
     ensure_local_header()
     pd.DataFrame([dict(zip(COLUMN_ORDER, row))]).to_csv(
         LOCAL_FILE, mode="a", header=False, index=False
     )
     st.info("Saved locally (temporary).")
+
 
 # ---------------- Clean expired local entries ----------------
 def clean_old_entries():
@@ -146,6 +146,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
