@@ -174,7 +174,7 @@ def manage_status(df):
 
         if st.sidebar.button("✅ Finalize Entry"):
             df.at[selected_row, "Status"] = new_status
-            record = df.loc[selected_row].to_dict()
+            record = df.loc[selected_row].apply(lambda x: str(x) if pd.notnull(x) else "").to_dict()
 
             # Push to Google Sheet
             success = push_to_google_sheet(record)
@@ -199,3 +199,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
