@@ -77,7 +77,7 @@ def transaction_form():
         submitted = st.form_submit_button("Submit Transaction")
 
     if any(not v or (isinstance(v, str) and v.startswith("Select")) for v in form_fields.values()):
-        st.warning("Please complete all details in the form."))
+        st.warning("Please complete all details in the form.")
             else:
                 form_data = {
                     "Agent Name": agent_name,
@@ -149,6 +149,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
