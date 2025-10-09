@@ -97,7 +97,7 @@ def sidebar_transactions():
         return
 
     for idx, txn in enumerate(pending_txns):
-        st.sidebar.write(f"**Charge:** {txn['Charge']}")
+        st.sidebar.write(f"**Client:** {txn['Name']}")
         col1, col2 = st.sidebar.columns(2)
     with col1:
         if st.button("Charged", key=f"charged_{idx}"):
@@ -135,4 +135,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
