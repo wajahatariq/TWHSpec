@@ -4,68 +4,81 @@ import gspread
 from datetime import datetime, timedelta
 import os
 
+# --- Config ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
-# --- Configuration ---
+
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15  # Auto delete after 15 mins
+DELETE_AFTER_MINUTES = 15
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
-# --- Connect to Google Sheets ---
+# --- Google Sheet ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save to Google Sheet + Local File ---
+# --- Save locally + Google Sheet ---
 def save_data(form_data):
-    # Save to Google Sheet
-    try:
-        ws = connect_google_sheet()
-        ws.append_row(list(form_data.values()))
-        st.success("Data saved to Google Sheet successfully!")
-    except Exception as e:
-        st.error(f"Failed to save to Google Sheet: {e}")
-
-    # Save locally (temporary data)
+    # Save locally first
     form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     form_data["Status"] = "Pending"
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
-    st.info("Data also saved locally (temporary view).")
+    st.info("Transaction saved locally as Pending.")
 
-# --- Auto-delete old local entries ---
+# --- Update status locally + Google Sheet ---
+def update_status(index, new_status):
+    if not os.path.exists(LOCAL_FILE):
+        return
+    df = pd.read_csv(LOCAL_FILE)
+    if index >= len(df):
+        return
+    df.at[index, "Status"] = new_status
+    df.to_csv(LOCAL_FILE, index=False)
+
+    # Update Google Sheet
+    try:
+        ws = connect_google_sheet()
+        # Find row by timestamp
+        timestamp = df.at[index, "Timestamp"]
+        all_values = ws.get_all_records()
+        for i, row in enumerate(all_values):
+            if row.get("Timestamp") == timestamp:
+                ws.update(f"L{i+2}", new_status)  # Assuming Status is column L
+                break
+        st.success(f"Status updated to {new_status} in Google Sheet.")
+    except Exception as e:
+        st.error(f"Failed to update Google Sheet: {e}")
+
+# --- Clean old entries ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
-
     df = pd.read_csv(LOCAL_FILE)
     if "Timestamp" not in df.columns:
         return df
-
-    now = datetime.now()
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]  # Keep only recent entries
-
-    df.to_csv(LOCAL_FILE, index=False)  # Overwrite filtered data
+    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
+    df = df[df["Timestamp"] > cutoff]
+    df.to_csv(LOCAL_FILE, index=False)
     return df
 
-# --- Main Form ---
+# --- Transaction Form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details below. Data will sync with Google Sheet and auto-clear locally after 15 minutes.")
+    st.write("Enter transaction details below. Transactions wait for status approval.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
-        address = st.text_input("Address")  # Single address field
+        address = st.text_input("Address")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
         card_number = st.text_input("Card Number")
@@ -79,7 +92,7 @@ def transaction_form():
 
         if submitted:
             if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
-                st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
+                st.warning("Please fill required fields and select Agent/LLC.")
             else:
                 form_data = {
                     "Agent Name": agent_name,
@@ -96,23 +109,8 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
                 }
                 save_data(form_data)
+                st.experimental_rerun()  # Refresh so sidebar shows new entry
 
-# --- Display Local Data ---
-def view_local_data():
-    st.subheader("Temporary Data (Last 15 Minutes)")
-    df = clean_old_entries()
-    if df.empty:
-        st.info("No recent transactions found.")
-    else:
-        st.dataframe(df)
-
-# --- Main App ---
-def main():
-    transaction_form()
-    st.divider()
-    view_local_data()
-
-if __name__ == "__main__":
-    main()
-
-
+# --- Sidebar for Status Approval ---
+def status_sidebar():
+    st.sidebar.title("Pending Transactions
