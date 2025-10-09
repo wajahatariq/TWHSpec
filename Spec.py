@@ -129,7 +129,7 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
                 }
                 save_data(form_data)
-                st.experimental_rerun()  # Refresh so sidebar shows new entry
+                st.rerun()  # Refresh so sidebar shows new entry
 
 # --- Sidebar for Status Approval ---
 def status_sidebar():
@@ -155,11 +155,11 @@ def status_sidebar():
 
     if st.sidebar.button("Charged"):
         update_status(latest_index, "Charged")
-        st.experimental_rerun()
+        st.rerun()
 
     if st.sidebar.button("Declined"):
         update_status(latest_index, "Declined")
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Display Local Data ---
 def view_local_data():
@@ -179,3 +179,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
