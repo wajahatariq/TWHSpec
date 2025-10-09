@@ -126,8 +126,8 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                 }
                 save_local(form_data)
-                st.session_state.submitted = False  # reset for next submission
-                st.experimental_rerun()
+                st.session_state.submitted = True  # reset for next submission
+                st.rerun()
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -180,3 +180,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
