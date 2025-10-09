@@ -9,7 +9,7 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 500  # for testing (you can set to 5 later)
+DELETE_AFTER_MINUTES = 500  # for testing, set to 5 in production
 
 COLUMN_ORDER = [
     "Agent Name",
@@ -84,12 +84,11 @@ def clean_old_entries():
     return df
 
 # ---------------- Transaction Form ----------------
-# ---------------- Transaction Form ----------------
 def transaction_form():
     st.title("Client Management System")
     st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
-    with st.form("transaction_form", clear_on_submit=True):  # <--- important
+    with st.form("transaction_form", clear_on_submit=True):
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
@@ -124,13 +123,12 @@ def transaction_form():
                 }
                 save_local(form_data)
                 st.success("✅ Entry saved locally (Pending review). You can add another now.")
-                st.rerun()
-
+                st.experimental_rerun()
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
     st.subheader(f"Local Records (Auto-clears after {DELETE_AFTER_MINUTES} minutes)")
-    df = clean_old_entries()  # always reload from CSV
+    df = clean_old_entries()
     if df.empty:
         st.info("No entries found.")
     else:
@@ -140,11 +138,17 @@ def view_local_data():
 # ---------------- Sidebar: Manage Status ----------------
 def manage_status():
     st.sidebar.header("Manage Pending Entries")
-    df = clean_old_entries()  # always reload latest data
+    
+    # Initialize session state for continuous sidebar interaction
+    if "manage_active" not in st.session_state:
+        st.session_state.manage_active = True
 
-    pending_entries = df[df["Status"] == "Pending"]
+    df = clean_old_entries()
+    pending_entries = df[df["Status"] == "Pending"].reset_index(drop=True)
+
     if pending_entries.empty:
-        st.sidebar.info("No entries to manage yet.")
+        st.sidebar.info("No pending entries to manage.")
+        st.session_state.manage_active = False
         return
 
     entry_labels = [f"{row['Name']} ({row['Ph Number']})" for _, row in pending_entries.iterrows()]
@@ -164,18 +168,15 @@ def manage_status():
         if success:
             df.to_csv(LOCAL_FILE, index=False)
             st.sidebar.success(f"Status updated to '{new_status}' and saved to Google Sheet ✅")
-            st.rerun()  # refresh everything
+            st.experimental_rerun()  # refresh sidebar for next entry
 
 # ---------------- Main ----------------
 def main():
     ensure_local_header()
     transaction_form()
     st.divider()
-    df = view_local_data()
+    view_local_data()
     manage_status()
 
 if __name__ == "__main__":
     main()
-
-
-
