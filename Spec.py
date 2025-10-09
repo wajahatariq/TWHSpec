@@ -87,15 +87,17 @@ def update_status_in_files(name, ph_number, new_status):
 # ---------------- Clean expired local entries ----------------
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame(columns=COLUMN_ORDER)
+        return pd.DataFrame()
 
     df = pd.read_csv(LOCAL_FILE)
-    if "Timestamp" not in df.columns:
-        return df
+    now = datetime.now(pytz.timezone("Asia/Karachi"))
+    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
 
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]
+    # ✅ Fix: ensure Timestamp is datetime
+    if "Timestamp" in df.columns:
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+        df = df[df["Timestamp"] > cutoff]
+
     df.to_csv(LOCAL_FILE, index=False)
     return df
 
@@ -205,6 +207,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
