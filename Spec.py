@@ -39,22 +39,23 @@ def update_status(index, new_status):
     df = pd.read_csv(LOCAL_FILE)
     if index >= len(df):
         return
+
+    card_number = df.at[index, "Card Number"]
     df.at[index, "Status"] = new_status
     df.to_csv(LOCAL_FILE, index=False)
 
-    # Update Google Sheet
+    # Update Google Sheet by Card Number
     try:
         ws = connect_google_sheet()
-        # Find row by timestamp
-        timestamp = df.at[index, "Timestamp"]
         all_values = ws.get_all_records()
         for i, row in enumerate(all_values):
-            if row.get("Timestamp") == timestamp:
-                ws.update(f"L{i+2}", new_status)  # Assuming Status is column L
+            if str(row.get("Card Number")) == str(card_number):
+                ws.update(f"L{i+2}", new_status)  # Column L = Status
+                st.success(f"Status updated to {new_status} in Google Sheet.")
                 break
-        st.success(f"Status updated to {new_status} in Google Sheet.")
     except Exception as e:
         st.error(f"Failed to update Google Sheet: {e}")
+
 
 # --- Clean old entries ---
 def clean_old_entries():
@@ -155,4 +156,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
