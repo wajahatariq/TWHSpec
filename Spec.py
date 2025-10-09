@@ -86,7 +86,7 @@ def clean_old_entries():
 # ---------------- Transaction Form ----------------
 def transaction_form():
     st.title("Client Management System")
-    st.caption("Fill the form below. Multiple entries can be saved before approval.")
+    st.caption("Fill the form below. Multiple entries can be saved as Pending before approval.")
 
     with st.form("transaction_form", clear_on_submit=True):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -122,8 +122,7 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                 }
                 save_local(form_data)
-                st.success("✅ Entry saved locally (Pending review). You can add another now.")
-                st.rerun()
+                st.success("✅ Entry saved locally as Pending. You can manage it in the sidebar now.")
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -179,7 +178,6 @@ def manage_status():
             st.sidebar.success(f"{len(selected_indices)} entries updated to '{new_status}' and pushed to Google Sheet ✅")
             # Reset checkboxes for next iteration
             st.session_state.selected_entries = [False] * num_pending
-            st.rerun()
 
 # ---------------- Main ----------------
 def main():
