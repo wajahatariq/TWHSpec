@@ -32,12 +32,12 @@ def save_data(form_data):
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
     st.info("Transaction saved locally as Pending.")
 
-# --- Push only updated transaction to Google Sheets ---
+# --- Push single transaction to Google Sheets (append only) ---
 def push_transaction_to_google_sheet(transaction):
     try:
         ws = connect_google_sheet()
         ws.append_row(list(transaction.values()))
-        st.success(f"Transaction for {transaction['Name']} updated in Google Sheet.")
+        st.success(f"Transaction for {transaction['Name']} pushed to Google Sheet.")
     except Exception as e:
         st.error(f"Failed to push transaction to Google Sheet: {e}")
 
@@ -95,29 +95,6 @@ def transaction_form():
                 }
                 save_data(form_data)
                 st.rerun()
-def push_transaction_to_google_sheet(transaction):
-    try:
-        ws = connect_google_sheet()
-        all_values = ws.get_all_records()  # List of dicts
-        # Look for the transaction by Card Number (or unique identifier)
-        row_index = None
-        for i, row in enumerate(all_values):
-            if row.get("Card Number") == transaction["Card Number"]:
-                row_index = i + 2  # +2 because sheet header row + 0-index
-                break
-
-        # If found, update that row
-        if row_index:
-            row_data = [transaction.get(col, "") for col in ws.row_values(1)]
-            ws.update(f"A{row_index}:{chr(64 + len(row_data))}{row_index}", [row_data])
-            st.success(f"Transaction {transaction['Name']} updated in Google Sheet.")
-        else:
-            # If not found, append as new
-            ws.append_row(list(transaction.values()))
-            st.success(f"Transaction {transaction['Name']} added to Google Sheet.")
-    except Exception as e:
-        st.error(f"Failed to push transaction to Google Sheet: {e}")
-
 
 # --- Sidebar: Pending Transactions ---
 def status_sidebar():
@@ -174,4 +151,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
