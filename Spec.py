@@ -79,7 +79,7 @@ def clean_old_entries():
         return df
 
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
+    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
     df.to_csv(LOCAL_FILE, index=False)
     return df
@@ -146,6 +146,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
