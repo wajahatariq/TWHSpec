@@ -102,7 +102,7 @@ def transaction_form():
 
 # --- Display Local Data ---
 def view_local_data():
-    st.subheader("🕒 Temporary Data (Last 15 Minutes)")
+    st.subheader("Temporary Data (Last 15 Minutes)")
     df = clean_old_entries()
     if df.empty:
         st.info("No recent transactions found.")
@@ -117,3 +117,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
