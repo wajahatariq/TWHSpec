@@ -152,7 +152,7 @@ def view_local_data():
 
 # ---------------- Sidebar: Manage Status ----------------
 def manage_status(df):
-    st.sidebar.header("⚙️ Manage Pending Entries")
+    st.sidebar.header("Manage Pending Entries")
 
     if df.empty:
         st.sidebar.info("No entries to manage yet.")
@@ -196,3 +196,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
