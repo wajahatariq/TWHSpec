@@ -138,7 +138,13 @@ def view_local_data():
 def manage_status():
     st.sidebar.header("Manage Pending Entries")
 
-    df = clean_old_entries()
+    # Always read fresh CSV immediately after saving
+    if os.path.exists(LOCAL_FILE):
+        df = pd.read_csv(LOCAL_FILE)
+    else:
+        df = pd.DataFrame(columns=COLUMN_ORDER)
+
+    # Only consider Pending entries
     pending_entries = df[df["Status"] == "Pending"].reset_index(drop=True)
     num_pending = len(pending_entries)
 
@@ -179,6 +185,7 @@ def manage_status():
             # Reset checkboxes for next iteration
             st.session_state.selected_entries = [False] * num_pending
 
+
 # ---------------- Main ----------------
 def main():
     ensure_local_header()
@@ -189,3 +196,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
