@@ -76,8 +76,9 @@ def transaction_form():
 
         submitted = st.form_submit_button("Submit Transaction")
 
-    if any(not v or (isinstance(v, str) and v.startswith("Select")) for v in form_fields.values()):
-        st.warning("Please complete all details in the form.")
+        if submitted:
+            if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
+                st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
             else:
                 form_data = {
                     "Agent Name": agent_name,
@@ -128,7 +129,7 @@ def sidebar_transactions():
                 save_to_csv(txn)
                 st.sidebar.success("Updated as Declined")
                 st.rerun()
-                
+
 # --- View processed transactions from CSV ---
 def view_local_data():
     st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
@@ -149,9 +150,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
 
 
 
