@@ -150,7 +150,7 @@ def transaction_form():
                         setTimeout(()=>toast.remove(), 3000);
                     </script>
                 """, height=0)
-
+                st.rerun()
 # ---------------- Display Local Entries ----------------
 def view_local_data():
     st.subheader(f"Local Records (Auto-clears after {DELETE_AFTER_MINUTES} minutes)")
@@ -200,3 +200,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
