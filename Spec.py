@@ -1,30 +1,20 @@
 import streamlit as st
 import pandas as pd
 import gspread
-import os
 from datetime import datetime, timedelta
-import time
+import os
 
-# --- Google Sheets credentials ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
-
 # --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 15
+DELETE_AFTER_MINUTES = 15  # Auto delete after 15 mins
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
-
-# --- Standard Column Names ---
-COLUMNS = [
-    "Agent Name", "Name", "Ph Number", "Address", "Email",
-    "Card Holder Name", "Card Number", "Expiry Date", "CVC", "Charge",
-    "LLC", "Date of Charge", "TimeStamp", "Status"
-]
 
 # --- Connect to Google Sheets ---
 def connect_google_sheet():
@@ -32,48 +22,50 @@ def connect_google_sheet():
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save new transaction locally ---
+# --- Save to Google Sheet + Local File ---
 def save_data(form_data):
-    df = pd.DataFrame([form_data])
-    df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
-    st.info("Transaction saved locally as Pending.")
-
-# --- Push single transaction to Google Sheets (append only) ---
-def push_transaction_to_google_sheet(transaction):
+    # Save to Google Sheet
     try:
         ws = connect_google_sheet()
-        row_values = [transaction.get(col, "") for col in COLUMNS]
-        ws.append_row(row_values)
-        st.success(f"Transaction for {transaction['Name']} pushed to Google Sheet.")
-        time.sleep(1)  # allow API commit
+        ws.append_row(list(form_data.values()))
+        st.success("Data saved to Google Sheet successfully!")
     except Exception as e:
-        st.error(f"Failed to push transaction to Google Sheet: {e}")
+        st.error(f"Failed to save to Google Sheet: {e}")
 
-# --- Clean old local entries ---
+    # Save locally (temporary data)
+    form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    form_data["Status"] = "Pending"
+    df = pd.DataFrame([form_data])
+    df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
+    st.info("Data also saved locally (temporary view).")
+
+# --- Auto-delete old local entries ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
-        return pd.DataFrame(columns=COLUMNS)
+        return pd.DataFrame()
+
     df = pd.read_csv(LOCAL_FILE)
-    # Fix any missing columns
-    for col in COLUMNS:
-        if col not in df.columns:
-            df[col] = ""
-    df["TimeStamp"] = pd.to_datetime(df["TimeStamp"], errors="coerce")
-    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["TimeStamp"] > cutoff]
-    df.to_csv(LOCAL_FILE, index=False)
+    if "Timestamp" not in df.columns:
+        return df
+
+    now = datetime.now()
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+    df = df[df["Timestamp"] > cutoff]  # Keep only recent entries
+
+    df.to_csv(LOCAL_FILE, index=False)  # Overwrite filtered data
     return df
 
-# --- Transaction Form ---
+# --- Main Form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details below. Transactions are saved locally and pending for approval.")
+    st.write("Enter transaction details below. Data will sync with Google Sheet and auto-clear locally after 15 minutes.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Name")
         ph_number = st.text_input("Ph Number")
-        address = st.text_input("Address")
+        address = st.text_input("Address")  # Single address field
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
         card_number = st.text_input("Card Number")
@@ -81,7 +73,7 @@ def transaction_form():
         cvc = st.text_input("CVC")
         charge = st.text_input("Charge")
         llc = st.selectbox("LLC", LLC_OPTIONS)
-        date_of_charge = st.date_input("Date of Charge")
+        date_of_charge = st.date_input("Date Of Charge")
 
         submitted = st.form_submit_button("Submit Transaction")
 
@@ -89,8 +81,7 @@ def transaction_form():
             if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
                 st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
             else:
-                form_data = {col: "" for col in COLUMNS}  # initialize with empty strings
-                form_data.update({
+                form_data = {
                     "Agent Name": agent_name,
                     "Name": name,
                     "Ph Number": ph_number,
@@ -102,49 +93,9 @@ def transaction_form():
                     "CVC": cvc,
                     "Charge": charge,
                     "LLC": llc,
-                    "Date of Charge": date_of_charge.strftime("%Y-%m-%d"),
-                    "TimeStamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "Status": "Pending"
-                })
+                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
+                }
                 save_data(form_data)
-                st.rerun()
-
-# --- Sidebar: Pending Transactions ---
-def status_sidebar():
-    st.sidebar.title("Pending Transactions Approval")
-    df = clean_old_entries()
-    if df.empty or "Status" not in df.columns:
-        st.sidebar.info("No pending transactions.")
-        return
-
-    pending_df = df[df["Status"] == "Pending"]
-    if pending_df.empty:
-        st.sidebar.info("No pending transactions.")
-        return
-
-    st.sidebar.subheader(f"Total Pending: {len(pending_df)}")
-
-    for idx in pending_df.index:
-        txn = pending_df.loc[idx]
-        st.sidebar.markdown("---")
-        st.sidebar.write(f"**Name:** {txn['Name']}")
-        st.sidebar.write(f"**Agent:** {txn['Agent Name']}")
-        st.sidebar.write(f"**Charge:** {txn['Charge']}")
-        st.sidebar.write(f"**Card Number:** {txn['Card Number']}")
-        st.sidebar.write(f"**Date:** {txn['Date of Charge']}")
-
-        col1, col2 = st.sidebar.columns(2)
-        if col1.button(f"Charged {txn['Card Number']}", key=f"charged_{txn['Card Number']}"):
-            df.at[idx, "Status"] = "Charged"
-            df.to_csv(LOCAL_FILE, index=False)
-            push_transaction_to_google_sheet(df.loc[idx].to_dict())
-            st.rerun()
-
-        if col2.button(f"Declined {txn['Card Number']}", key=f"declined_{txn['Card Number']}"):
-            df.at[idx, "Status"] = "Declined"
-            df.to_csv(LOCAL_FILE, index=False)
-            push_transaction_to_google_sheet(df.loc[idx].to_dict())
-            st.rerun()
 
 # --- Display Local Data ---
 def view_local_data():
@@ -158,7 +109,6 @@ def view_local_data():
 # --- Main App ---
 def main():
     transaction_form()
-    status_sidebar()
     st.divider()
     view_local_data()
 
