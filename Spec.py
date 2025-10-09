@@ -29,43 +29,19 @@ def save_data(form_data):
     form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     form_data["Status"] = "Pending"
 
-    # Save to Google Sheet
-    try:
-        ws = connect_google_sheet()
-        ws.append_row(list(form_data.values()))
-        st.success("Data saved to Google Sheet successfully!")
-    except Exception as e:
-        st.error(f"Failed to save to Google Sheet: {e}")
-
     # Save locally
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
     st.info("Transaction saved locally as Pending.")
 
-# --- Update status locally + Google Sheet by Card Number ---
-def update_status(index, new_status):
-    if not os.path.exists(LOCAL_FILE):
-        return
-    df = pd.read_csv(LOCAL_FILE)
-
-    if index >= len(df):
-        return
-
-    card_number = df.at[index, "Card Number"]
-    df.at[index, "Status"] = new_status
-    df.to_csv(LOCAL_FILE, index=False)
-
-    # Update Google Sheet
+# --- Append approved transaction to Google Sheet ---
+def append_to_google_sheet(form_data):
     try:
         ws = connect_google_sheet()
-        all_values = ws.get_all_records()
-        for i, row in enumerate(all_values):
-            if str(row.get("Card Number")) == str(card_number):
-                ws.update(f"L{i+2}", new_status)  # Column L = Status
-                st.success(f"Status updated to {new_status} in Google Sheet.")
-                break
+        ws.append_row(list(form_data.values()))
+        st.success(f"Transaction for {form_data['Name']} inserted into Google Sheet with status {form_data['Status']}")
     except Exception as e:
-        st.error(f"Failed to update Google Sheet: {e}")
+        st.error(f"Failed to insert into Google Sheet: {e}")
 
 # --- Clean old entries ---
 def clean_old_entries():
@@ -129,9 +105,9 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
                 }
                 save_data(form_data)
-                st.rerun()  # Refresh so sidebar shows new entry
+                st.experimental_rerun()
 
-# --- Sidebar for Status Approval ---
+# --- Sidebar for Status Approval (all pending transactions) ---
 def status_sidebar():
     st.sidebar.title("Pending Transactions Approval")
     df = clean_old_entries()
@@ -145,21 +121,30 @@ def status_sidebar():
         st.sidebar.info("No pending transactions.")
         return
 
-    # Show latest pending transaction
-    latest_index = pending_df.index[-1]
-    latest = pending_df.loc[latest_index]
-    st.sidebar.write(f"**Name:** {latest['Name']}")
-    st.sidebar.write(f"**Agent:** {latest['Agent Name']}")
-    st.sidebar.write(f"**Charge:** {latest['Charge']}")
-    st.sidebar.write(f"**Date:** {latest['Date Of Charge']}")
+    st.sidebar.subheader(f"Total Pending: {len(pending_df)}")
+    
+    # Loop over all pending transactions
+    for idx in pending_df.index:
+        txn = pending_df.loc[idx]
+        st.sidebar.markdown("---")
+        st.sidebar.write(f"**Name:** {txn['Name']}")
+        st.sidebar.write(f"**Agent:** {txn['Agent Name']}")
+        st.sidebar.write(f"**Charge:** {txn['Charge']}")
+        st.sidebar.write(f"**Card Number:** {txn['Card Number']}")
+        st.sidebar.write(f"**Date:** {txn['Date Of Charge']}")
 
-    if st.sidebar.button("Charged"):
-        update_status(latest_index, "Charged")
-        st.rerun()
+        col1, col2 = st.sidebar.columns(2)
+        if col1.button(f"Charged {txn['Card Number']}", key=f"charged_{txn['Card Number']}"):
+            df.at[idx, "Status"] = "Charged"
+            df.to_csv(LOCAL_FILE, index=False)
+            append_to_google_sheet(df.loc[idx].to_dict())
+            st.experimental_rerun()
 
-    if st.sidebar.button("Declined"):
-        update_status(latest_index, "Declined")
-        st.rerun()
+        if col2.button(f"Declined {txn['Card Number']}", key=f"declined_{txn['Card Number']}"):
+            df.at[idx, "Status"] = "Declined"
+            df.to_csv(LOCAL_FILE, index=False)
+            append_to_google_sheet(df.loc[idx].to_dict())
+            st.experimental_rerun()
 
 # --- Display Local Data ---
 def view_local_data():
@@ -179,4 +164,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
