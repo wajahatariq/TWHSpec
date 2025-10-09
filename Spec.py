@@ -42,14 +42,14 @@ def connect_google_sheet():
 def save_to_google(form_data):
     ws = connect_google_sheet()
     ws.append_row(list(form_data.values()))
-    st.success(f"{form_data['Name']} saved to Google Sheet as {form_data['Status']}.")
+    st.success(f"Saved to Google Sheet.")
 
 # --- Save to local CSV ---
 def save_to_csv(form_data):
     file_exists = os.path.exists(LOCAL_FILE)
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not file_exists, index=False)
-    st.info(f"{form_data['Name']} saved to local CSV as {form_data['Status']}.")
+    st.info(f"Saved to local CSV")
 
 # --- Initialize session state ---
 if "transactions" not in st.session_state:
@@ -123,10 +123,10 @@ def sidebar_transactions():
                 save_to_google(txn)
                 save_to_csv(txn)
                 st.sidebar.success("Updated as Declined")
-
+                
 # --- View processed transactions from CSV ---
 def view_local_data():
-    st.subheader("Processed Transactions (Local CSV)")
+st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
     
     df = clean_old_entries()  # auto-clean old entries
 
@@ -144,6 +144,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
