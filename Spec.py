@@ -123,7 +123,7 @@ def transaction_form():
                 }
                 save_local(form_data)
                 st.success("✅ Entry saved locally (Pending review). You can add another now.")
-                st.experimental_rerun()
+                st.rerun()
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -168,7 +168,7 @@ def manage_status():
         if success:
             df.to_csv(LOCAL_FILE, index=False)
             st.sidebar.success(f"Status updated to '{new_status}' and saved to Google Sheet ✅")
-            st.experimental_rerun()  # refresh sidebar for next entry
+            st.rerun()  # refresh sidebar for next entry
 
 # ---------------- Main ----------------
 def main():
@@ -180,3 +180,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
