@@ -190,7 +190,7 @@ def manage_status(df):
             except Exception as e:
                 st.sidebar.error(f"Failed to update Google Sheet: {e}")
 
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.sidebar.info("All entries have been processed ✅")
 
@@ -206,3 +206,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
