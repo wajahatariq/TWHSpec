@@ -18,6 +18,28 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 # --- Connect to Google Sheets ---
 DELETE_AFTER_MINUTES = 5
 
+def save_to_csv(form_data):
+    file_exists = os.path.exists(LOCAL_FILE)
+    df = pd.DataFrame([form_data])
+    
+    # If file doesn't exist, create it
+    if not file_exists:
+        df.to_csv(LOCAL_FILE, index=False)
+    else:
+        df.to_csv(LOCAL_FILE, mode="a", header=False, index=False)
+    
+    st.info(f"Saved to local CSV")
+
+def update_status_in_csv(name, new_status):
+    if not os.path.exists(LOCAL_FILE):
+        return
+    
+    df = pd.read_csv(LOCAL_FILE)
+    # Update the row with matching name and Pending status
+    df.loc[(df["Name"] == name) & (df["Status"] == "Pending"), "Status"] = new_status
+    df.to_csv(LOCAL_FILE, index=False)
+
+
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
@@ -115,14 +137,15 @@ def sidebar_transactions():
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
                 save_to_google(txn)
-                save_to_csv(txn)
+                update_status_in_csv(txn["Name"], "Charged")
                 st.sidebar.success("Updated as Charged")
         with col2:
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
-                save_to_csv(txn)
+                update_status_in_csv(txn["Name"], "Declined")
                 st.sidebar.success("Updated as Declined")
+
                 
 # --- View processed transactions from CSV ---
 def view_local_data():
@@ -144,6 +167,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
