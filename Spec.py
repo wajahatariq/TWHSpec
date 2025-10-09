@@ -25,10 +25,12 @@ COLUMN_ORDER = [
     "LLC",
     "Date Of Charge",
     "Timestamp",
+    "Status"
 ]
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
+
 
 # ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
@@ -54,6 +56,8 @@ def save_data(form_data):
     for col in COLUMN_ORDER:
         if col == "Timestamp":
             row.append(now_iso)
+        elif col == "Status":
+            row.append("Pending")
         else:
             row.append(form_data.get(col, ""))
 
@@ -95,7 +99,7 @@ def clean_old_entries():
 def transaction_form():
     st.title("Client Management System")
     st.write(
-        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes) ."
+        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes)."
     )
 
     with st.form("transaction_form"):
@@ -115,7 +119,6 @@ def transaction_form():
         submitted = st.form_submit_button("Submit Details")
 
         if submitted:
-            # ✅ proper validation inside the form
             if not name or not ph_number or agent_name == "Select Agent":
                 st.warning("Please fill in Name, Phone Number, and select an Agent.")
             else:
@@ -144,6 +147,43 @@ def view_local_data():
         st.info("No recent transactions found.")
     else:
         st.dataframe(df)
+    return df
+
+
+# ---------------- Sidebar: Manage Entry Status ----------------
+def manage_status(df):
+    st.sidebar.header("⚙️ Manage Entry Status")
+
+    if "Status" not in df.columns:
+        df["Status"] = "Pending"
+
+    pending_entries = df[df["Status"] == "Pending"]
+
+    if not pending_entries.empty:
+        selected_row = st.sidebar.selectbox(
+            "Select a pending entry:",
+            pending_entries.index,
+            format_func=lambda i: f"{pending_entries.loc[i, 'Name']} ({pending_entries.loc[i, 'Ph Number']})"
+        )
+
+        new_status = st.sidebar.radio("Update status to:", ["Charged", "Declined"], horizontal=True)
+
+        if st.sidebar.button("✅ Update Status"):
+            # Update locally
+            df.at[selected_row, "Status"] = new_status
+            df.to_csv(LOCAL_FILE, index=False)
+
+            # Push update to Google Sheet
+            try:
+                worksheet = connect_google_sheet()
+                worksheet.update_cell(selected_row + 2, df.columns.get_loc("Status") + 1, new_status)
+                st.sidebar.success(f"Status updated to {new_status}")
+            except Exception as e:
+                st.sidebar.error(f"Failed to update Google Sheet: {e}")
+
+            st.experimental_rerun()
+    else:
+        st.sidebar.info("All entries have been processed ✅")
 
 
 # ---------------- Main ----------------
@@ -151,7 +191,8 @@ def main():
     ensure_local_header()
     transaction_form()
     st.divider()
-    view_local_data()
+    df = view_local_data()
+    manage_status(df)
 
 
 if __name__ == "__main__":
