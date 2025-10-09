@@ -28,7 +28,7 @@ COLUMN_ORDER = [
 ]
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
-
+LLC = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 # ---------------- Google Sheets connection ----------------
 def connect_google_sheet():
     try:
@@ -102,7 +102,7 @@ def transaction_form():
         expiry_date = st.text_input("Expiry Date")
         cvc = st.text_input("CVC")
         charge = st.text_input("Charge")
-        llc = st.text_input("LLC")
+        llc = st.selectbox("LLC",LLC)
         date_of_charge = st.date_input("Date Of Charge")
 
         submitted = st.form_submit_button("Submit Details")
@@ -146,6 +146,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
