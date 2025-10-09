@@ -4,10 +4,11 @@ import gspread
 from datetime import datetime, timedelta
 import os
 
-# --- Config ---
+# --- Google Sheets credentials ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 
+# --- Configuration ---
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
 DELETE_AFTER_MINUTES = 15
@@ -17,58 +18,46 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
-# --- Google Sheet connection ---
+# --- Connect to Google Sheets ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save form data locally + Google Sheet ---
+# --- Save new transaction locally ---
 def save_data(form_data):
-    # Add Timestamp and Status
     form_data["Timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     form_data["Status"] = "Pending"
-
-    # Save locally
     df = pd.DataFrame([form_data])
     df.to_csv(LOCAL_FILE, mode="a", header=not os.path.exists(LOCAL_FILE), index=False)
     st.info("Transaction saved locally as Pending.")
 
-# --- Append approved transaction to Google Sheet ---
-def append_to_google_sheet(form_data):
+# --- Push only updated transaction to Google Sheets ---
+def push_transaction_to_google_sheet(transaction):
     try:
         ws = connect_google_sheet()
-        ws.append_row(list(form_data.values()))
-        st.success(f"Transaction for {form_data['Name']} inserted into Google Sheet with status {form_data['Status']}")
+        ws.append_row(list(transaction.values()))
+        st.success(f"Transaction for {transaction['Name']} updated in Google Sheet.")
     except Exception as e:
-        st.error(f"Failed to insert into Google Sheet: {e}")
+        st.error(f"Failed to push transaction to Google Sheet: {e}")
 
-# --- Clean old entries ---
+# --- Clean old local entries ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
-
     df = pd.read_csv(LOCAL_FILE)
-
-    # Ensure required columns exist
     if "Timestamp" not in df.columns:
-        df["Timestamp"] = datetime.now()
-    else:
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-
-    if "Status" not in df.columns:
-        df["Status"] = "Pending"
-
+        return df
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
-
     df.to_csv(LOCAL_FILE, index=False)
     return df
 
 # --- Transaction Form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details below. Transactions wait for status approval.")
+    st.write("Enter transaction details below. Transactions are saved locally and pending for approval.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -88,7 +77,7 @@ def transaction_form():
 
         if submitted:
             if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
-                st.warning("Please fill required fields and select Agent/LLC.")
+                st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
             else:
                 form_data = {
                     "Agent Name": agent_name,
@@ -107,12 +96,11 @@ def transaction_form():
                 save_data(form_data)
                 st.rerun()
 
-# --- Sidebar for Status Approval (all pending transactions) ---
+# --- Sidebar: Pending Transactions ---
 def status_sidebar():
     st.sidebar.title("Pending Transactions Approval")
     df = clean_old_entries()
-
-    if "Status" not in df.columns or df.empty:
+    if df.empty or "Status" not in df.columns:
         st.sidebar.info("No pending transactions.")
         return
 
@@ -122,8 +110,7 @@ def status_sidebar():
         return
 
     st.sidebar.subheader(f"Total Pending: {len(pending_df)}")
-    
-    # Loop over all pending transactions
+
     for idx in pending_df.index:
         txn = pending_df.loc[idx]
         st.sidebar.markdown("---")
@@ -137,13 +124,13 @@ def status_sidebar():
         if col1.button(f"Charged {txn['Card Number']}", key=f"charged_{txn['Card Number']}"):
             df.at[idx, "Status"] = "Charged"
             df.to_csv(LOCAL_FILE, index=False)
-            append_to_google_sheet(df.loc[idx].to_dict())
+            push_transaction_to_google_sheet(df.loc[idx].to_dict())
             st.rerun()
 
         if col2.button(f"Declined {txn['Card Number']}", key=f"declined_{txn['Card Number']}"):
             df.at[idx, "Status"] = "Declined"
             df.to_csv(LOCAL_FILE, index=False)
-            append_to_google_sheet(df.loc[idx].to_dict())
+            push_transaction_to_google_sheet(df.loc[idx].to_dict())
             st.rerun()
 
 # --- Display Local Data ---
@@ -164,4 +151,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
