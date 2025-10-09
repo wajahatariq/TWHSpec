@@ -119,7 +119,7 @@ def transaction_form():
         submitted = st.form_submit_button("Submit Details")
 
         if submitted:
-            if not name or not ph_number or agent_name or llc == "Select Agent":
+            if not name or not ph_number or agent_name == "Select Agent":
                 st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
             else:
                 form_data = {
@@ -206,5 +206,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
