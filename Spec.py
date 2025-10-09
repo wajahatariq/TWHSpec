@@ -105,7 +105,7 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d")
                 }
                 save_data(form_data)
-                st.experimental_rerun()
+                st.rerun()
 
 # --- Sidebar for Status Approval (all pending transactions) ---
 def status_sidebar():
@@ -138,13 +138,13 @@ def status_sidebar():
             df.at[idx, "Status"] = "Charged"
             df.to_csv(LOCAL_FILE, index=False)
             append_to_google_sheet(df.loc[idx].to_dict())
-            st.experimental_rerun()
+            st.rerun()
 
         if col2.button(f"Declined {txn['Card Number']}", key=f"declined_{txn['Card Number']}"):
             df.at[idx, "Status"] = "Declined"
             df.to_csv(LOCAL_FILE, index=False)
             append_to_google_sheet(df.loc[idx].to_dict())
-            st.experimental_rerun()
+            st.rerun()
 
 # --- Display Local Data ---
 def view_local_data():
@@ -164,3 +164,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
