@@ -85,29 +85,26 @@ def transaction_form():
 # --- Sidebar for approve/decline ---
 def sidebar_transactions():
     st.sidebar.title("Approve / Decline Transactions")
-    if not st.session_state.transactions:
-        st.sidebar.info("No pending transactions.")
-        return
-
-    # Only show pending transactions
     pending_txns = [t for t in st.session_state.transactions if t["Status"] == "Pending"]
 
     if not pending_txns:
         st.sidebar.info("No pending transactions.")
         return
-    
+
     for idx, txn in enumerate(pending_txns):
         st.sidebar.write(f"**Client:** {txn['Name']}")
-    
-        # The buttons must be inside the loop
         col1, col2 = st.sidebar.columns(2)
         with col1:
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
+                save_to_google(txn)
+                save_to_csv(txn)
                 st.sidebar.success("Updated as Charged")
         with col2:
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
+                save_to_google(txn)
+                save_to_csv(txn)
                 st.sidebar.success("Updated as Declined")
 
 # --- View processed transactions from CSV ---
@@ -133,6 +130,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
