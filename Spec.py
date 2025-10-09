@@ -155,7 +155,7 @@ def view_local_data():
 
 # ---------------- Sidebar: Manage Status ----------------
 def manage_status(df):
-    st.sidebar.header("⚙️ Manage Pending Entries")
+    st.sidebar.header("Manage Pending Entries")
 
     if df.empty:
         st.sidebar.info("No entries to manage yet.")
@@ -172,7 +172,7 @@ def manage_status(df):
 
         new_status = st.sidebar.radio("Update status to:", ["Charged", "Declined"], horizontal=True)
 
-        if st.sidebar.button("✅ Finalize Entry"):
+        if st.sidebar.button("✅ Update Status"):
             df.at[selected_row, "Status"] = new_status
             record = df.loc[selected_row].apply(lambda x: str(x) if pd.notnull(x) else "").to_dict()
 
@@ -199,4 +199,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
