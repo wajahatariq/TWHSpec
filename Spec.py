@@ -84,37 +84,47 @@ def clean_old_entries():
     return df
 
 # ---------------- Transaction Form ----------------
+# ---------------- Transaction Form ----------------
 def transaction_form():
     st.title("Client Management System")
     st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
     with st.form("transaction_form", clear_on_submit=True):  # <--- important
-    agent_name = st.selectbox("Agent Name", AGENTS)
-    name = st.text_input("Name")
-    ph_number = st.text_input("Ph Number")
-    # ... other inputs ...
-    submitted = st.form_submit_button("Submit Details")
+        agent_name = st.selectbox("Agent Name", AGENTS)
+        name = st.text_input("Name")
+        ph_number = st.text_input("Ph Number")
+        complete_address = st.text_input("Complete Address (Address, City, State, Zipcode)")
+        email = st.text_input("Email")
+        card_holder = st.text_input("Card Holder Name")
+        card_number = st.text_input("Card Number")
+        expiry_date = st.text_input("Expiry Date")
+        cvc = st.text_input("CVC")
+        charge = st.text_input("Charge")
+        llc = st.selectbox("LLC", LLC)
+        date_of_charge = st.date_input("Date Of Charge")
+        submitted = st.form_submit_button("Submit Details")
 
-    if submitted:
-        if not name or not ph_number or agent_name == "Select Agent":
-            st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
-        else:
-            form_data = {
-                "Agent Name": agent_name,
-                "Name": name,
-                "Ph Number": ph_number,
-                "Complete Address": complete_address,
-                "Email": email,
-                "Card Holder Name": card_holder,
-                "Card Number": card_number,
-                "Expiry Date": expiry_date,
-                "CVC": cvc,
-                "Charge": charge,
-                "LLC": llc,
-                "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
-            }
-            save_local(form_data)
-            st.success("✅ Entry saved locally (Pending review). You can add another now.")
+        if submitted:
+            if not name or not ph_number or agent_name == "Select Agent":
+                st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
+            else:
+                form_data = {
+                    "Agent Name": agent_name,
+                    "Name": name,
+                    "Ph Number": ph_number,
+                    "Complete Address": complete_address,
+                    "Email": email,
+                    "Card Holder Name": card_holder,
+                    "Card Number": card_number,
+                    "Expiry Date": expiry_date,
+                    "CVC": cvc,
+                    "Charge": charge,
+                    "LLC": llc,
+                    "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
+                }
+                save_local(form_data)
+                st.success("✅ Entry saved locally (Pending review). You can add another now.")
+
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
@@ -165,4 +175,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
