@@ -9,7 +9,7 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 500  # for testing, set to 5 in production
+DELETE_AFTER_MINUTES = 500  # change to 5 in production
 
 COLUMN_ORDER = [
     "Agent Name",
@@ -135,50 +135,50 @@ def view_local_data():
         st.dataframe(df)
     return df
 
-# ---------------- Sidebar: Manage Status ----------------
+# ---------------- Sidebar: Manage Status with Bulk Update ----------------
 def manage_status():
     st.sidebar.header("Manage Pending Entries")
-    
+
     df = clean_old_entries()
     pending_entries = df[df["Status"] == "Pending"].reset_index(drop=True)
+    num_pending = len(pending_entries)
 
-    if pending_entries.empty:
+    if num_pending == 0:
         st.sidebar.info("No pending entries to manage.")
+        st.session_state.selected_entries = []
         return
 
-    st.sidebar.subheader(f"Pending Entries ({len(pending_entries)})")
+    st.sidebar.subheader(f"Pending Entries ({num_pending})")
 
-    # List all pending entries with checkboxes
-    if "selected_entries" not in st.session_state:
-        st.session_state.selected_entries = [False] * len(pending_entries)
+    # Initialize checkboxes if not in session_state or length changed
+    if ("selected_entries" not in st.session_state) or (len(st.session_state.selected_entries) != num_pending):
+        st.session_state.selected_entries = [False] * num_pending
 
-    selected_entries = []
+    selected_indices = []
     for i, row in pending_entries.iterrows():
         st.session_state.selected_entries[i] = st.sidebar.checkbox(
             f"{row['Name']} ({row['Ph Number']})",
             value=st.session_state.selected_entries[i]
         )
         if st.session_state.selected_entries[i]:
-            selected_entries.append(i)
+            selected_indices.append(i)
 
-    # Select status for bulk update
     new_status = st.sidebar.radio("Update status to:", ["Charged", "Declined"], horizontal=True)
 
     if st.sidebar.button("✅ Finalize Selected Entries"):
-        if not selected_entries:
+        if not selected_indices:
             st.sidebar.warning("⚠️ No entries selected!")
         else:
-            for idx in selected_entries:
+            for idx in selected_indices:
                 original_index = pending_entries.index[idx]
                 df.at[original_index, "Status"] = new_status
                 record = df.loc[original_index].apply(lambda x: str(x) if pd.notnull(x) else "").to_dict()
                 push_to_google_sheet(record)
 
             df.to_csv(LOCAL_FILE, index=False)
-            st.sidebar.success(f"{len(selected_entries)} entries updated to '{new_status}' and pushed to Google Sheet ✅")
-            
+            st.sidebar.success(f"{len(selected_indices)} entries updated to '{new_status}' and pushed to Google Sheet ✅")
             # Reset checkboxes for next iteration
-            st.session_state.selected_entries = [False] * len(pending_entries)
+            st.session_state.selected_entries = [False] * num_pending
             st.rerun()
 
 # ---------------- Main ----------------
@@ -191,5 +191,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
