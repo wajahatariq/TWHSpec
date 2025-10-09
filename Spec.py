@@ -55,7 +55,6 @@ def save_local(form_data):
     df = pd.read_csv(LOCAL_FILE)
     df = pd.concat([df, pd.DataFrame([form_data])], ignore_index=True)
     df.to_csv(LOCAL_FILE, index=False)
-    st.success("✅ Entry saved locally (Pending review). You can add another now.")
 
 # ---------------- Push approved/declined record to Google Sheet ----------------
 def push_to_google_sheet(record):
@@ -89,9 +88,6 @@ def transaction_form():
     st.title("Client Management System")
     st.caption("Fill the form below. Multiple entries can be saved before approval.")
 
-    if "submitted" not in st.session_state:
-        st.session_state.submitted = False
-
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Name")
@@ -107,7 +103,7 @@ def transaction_form():
         date_of_charge = st.date_input("Date Of Charge")
         submitted = st.form_submit_button("Submit Details")
 
-        if submitted and not st.session_state.submitted:
+        if submitted:
             if not name or not ph_number or agent_name == "Select Agent":
                 st.warning("⚠️ Please fill in Name, Phone Number, and select an Agent.")
             else:
@@ -126,13 +122,13 @@ def transaction_form():
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                 }
                 save_local(form_data)
-                st.session_state.submitted = True  # reset for next submission
-                st.rerun()
+                st.success("✅ Entry saved locally (Pending review). You can add another now.")
+                st.rerun()  # refresh everything immediately
 
 # ---------------- Display Local Entries ----------------
 def view_local_data():
     st.subheader(f"Local Records (Auto-clears after {DELETE_AFTER_MINUTES} minutes)")
-    df = clean_old_entries()
+    df = clean_old_entries()  # always reload from CSV
     if df.empty:
         st.info("No entries found.")
     else:
@@ -140,15 +136,13 @@ def view_local_data():
     return df
 
 # ---------------- Sidebar: Manage Status ----------------
-def manage_status(df):
+def manage_status():
     st.sidebar.header("Manage Pending Entries")
-    if df.empty:
-        st.sidebar.info("No entries to manage yet.")
-        return
+    df = clean_old_entries()  # always reload latest data
 
     pending_entries = df[df["Status"] == "Pending"]
     if pending_entries.empty:
-        st.sidebar.info("All entries processed ✅")
+        st.sidebar.info("No entries to manage yet.")
         return
 
     entry_labels = [f"{row['Name']} ({row['Ph Number']})" for _, row in pending_entries.iterrows()]
@@ -168,7 +162,7 @@ def manage_status(df):
         if success:
             df.to_csv(LOCAL_FILE, index=False)
             st.sidebar.success(f"Status updated to '{new_status}' and saved to Google Sheet ✅")
-            st.rerun()
+            st.rerun()  # refresh everything
 
 # ---------------- Main ----------------
 def main():
@@ -176,9 +170,7 @@ def main():
     transaction_form()
     st.divider()
     df = view_local_data()
-    manage_status(df)
+    manage_status()
 
 if __name__ == "__main__":
     main()
-
-
