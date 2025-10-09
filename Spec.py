@@ -9,7 +9,7 @@ st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
 GOOGLE_SHEET_NAME = "Company_Transactions"
 LOCAL_FILE = "user_temp_inventory.csv"
-DELETE_AFTER_MINUTES = 5
+DELETE_AFTER_MINUTES = 25  # Local records auto-delete after X minutes
 
 COLUMN_ORDER = [
     "Agent Name",
@@ -49,35 +49,38 @@ def ensure_local_header():
         pd.DataFrame(columns=COLUMN_ORDER).to_csv(LOCAL_FILE, index=False)
 
 
-# ---------------- Save a submission ----------------
-def save_data(form_data):
+# ---------------- Save submission locally only ----------------
+def save_local(form_data):
     now_iso = datetime.now().isoformat()
     form_data["Timestamp"] = now_iso
     form_data["Status"] = "Pending"
 
-    row_data = [form_data.get(col, "") for col in COLUMN_ORDER]
+    ensure_local_header()
+    df = pd.read_csv(LOCAL_FILE)
+    df = pd.concat([df, pd.DataFrame([form_data])], ignore_index=True)
+    df.to_csv(LOCAL_FILE, index=False)
+    st.success("✅ Saved locally (pending approval).")
 
-    # Save to Google Sheet
+
+# ---------------- Push approved/declined record to Google Sheet ----------------
+def push_to_google_sheet(record):
     try:
         ws = connect_google_sheet()
-
-        # Ensure headers exist
         existing_headers = ws.row_values(1)
+
+        # Add headers if not exist
         if not existing_headers:
             ws.insert_row(COLUMN_ORDER, 1)
 
+        row_data = [record.get(col, "") for col in COLUMN_ORDER]
         ws.append_row(row_data, value_input_option="USER_ENTERED")
-        st.success("Saved to Google Sheet.")
+        return True
     except Exception as e:
-        st.error(f"Failed to save to Google Sheet: {e}")
-
-    # Save to local CSV
-    ensure_local_header()
-    pd.DataFrame([form_data]).to_csv(LOCAL_FILE, mode="a", header=False, index=False)
-    st.info("Saved locally (temporary).")
+        st.sidebar.error(f"❌ Failed to update Google Sheet: {e}")
+        return False
 
 
-# ---------------- Clean expired local entries ----------------
+# ---------------- Clean old local entries ----------------
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame(columns=COLUMN_ORDER)
@@ -95,11 +98,11 @@ def clean_old_entries():
     return df
 
 
-# ---------------- UI: transaction form ----------------
+# ---------------- Transaction Form ----------------
 def transaction_form():
     st.title("Client Management System")
     st.write(
-        "Fill the form. Data is saved to Google Sheet (permanent) and to a temporary local CSV (cleared automatically after 5 minutes)."
+        "Fill the form below. Data will be saved **locally first** and pushed to Google Sheet **after status update**."
     )
 
     with st.form("transaction_form"):
@@ -136,63 +139,53 @@ def transaction_form():
                     "LLC": llc,
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                 }
-                save_data(form_data)
+                save_local(form_data)
 
 
-# ---------------- UI: show temporary local data ----------------
+# ---------------- Display Local Pending Entries ----------------
 def view_local_data():
-    st.subheader(f"Temporary Data (Last {DELETE_AFTER_MINUTES} minutes)")
+    st.subheader(f"Temporary Local Data (Last {DELETE_AFTER_MINUTES} minutes)")
     df = clean_old_entries()
     if df.empty:
-        st.info("No recent transactions found.")
+        st.info("No pending entries found.")
     else:
         st.dataframe(df)
-    st.write(f"Loaded {len(df)} entries from local CSV")  # for debugging
     return df
 
 
-# ---------------- Sidebar: Manage Entry Status ----------------
+# ---------------- Sidebar: Manage Status ----------------
 def manage_status(df):
-    st.sidebar.header("Manage Entry Status")
+    st.sidebar.header("Manage Pending Entries")
 
     if df.empty:
         st.sidebar.info("No entries to manage yet.")
         return
 
-    if "Status" not in df.columns:
-        df["Status"] = "Pending"
-
     pending_entries = df[df["Status"] == "Pending"]
 
     if not pending_entries.empty:
         selected_row = st.sidebar.selectbox(
-            "Select a pending entry:",
+            "Select entry:",
             pending_entries.index,
             format_func=lambda i: f"{pending_entries.loc[i, 'Name']} ({pending_entries.loc[i, 'Ph Number']})"
         )
 
         new_status = st.sidebar.radio("Update status to:", ["Charged", "Declined"], horizontal=True)
 
-        if st.sidebar.button("✅ Update Status"):
-            selected_timestamp = str(df.loc[selected_row, "Timestamp"])
+        if st.sidebar.button("✅ Finalize Entry"):
             df.at[selected_row, "Status"] = new_status
-            df.to_csv(LOCAL_FILE, index=False)
+            record = df.loc[selected_row].to_dict()
 
-            # Update Google Sheet by Timestamp match
-            try:
-                ws = connect_google_sheet()
-                sheet_data = ws.get_all_records()
-                for idx, row in enumerate(sheet_data, start=2):
-                    if str(row.get("Timestamp")) == selected_timestamp:
-                        ws.update_cell(idx, COLUMN_ORDER.index("Status") + 1, new_status)
-                        break
-                st.sidebar.success(f"Status updated to {new_status}")
-            except Exception as e:
-                st.sidebar.error(f"Failed to update Google Sheet: {e}")
-
-            st.rerun()
+            # Push to Google Sheet
+            success = push_to_google_sheet(record)
+            if success:
+                # Remove locally after push
+                df = df.drop(selected_row)
+                df.to_csv(LOCAL_FILE, index=False)
+                st.sidebar.success(f"Status set to {new_status} and saved to Google Sheet ✅")
+                st.rerun()
     else:
-        st.sidebar.info("All entries have been processed ✅")
+        st.sidebar.info("All entries processed ✅")
 
 
 # ---------------- Main ----------------
@@ -206,6 +199,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
