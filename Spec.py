@@ -139,7 +139,7 @@ def transaction_form():
                 }
                 save_local(form_data)
 
-                # 🔔 Notification with sound
+                # 🔔 Notification with sound and visual confirmation
                 components.html("""
                     <audio autoplay>
                         <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
@@ -163,8 +163,6 @@ def transaction_form():
                         setTimeout(()=>toast.remove(), 3000);
                     </script>
                 """, height=0)
-                st.rerun()
-
 # ---------------- Display Local Entries ----------------
 def view_local_data():
     st.subheader(f"Local Records (Auto-clears after {DELETE_AFTER_MINUTES} minutes)")
@@ -222,6 +220,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
