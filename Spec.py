@@ -124,6 +124,7 @@ def transaction_form():
                 }
                 save_local(form_data)
                 st.success("✅ Entry saved locally (Pending review). You can add another now.")
+                st.rerun()
 
 
 # ---------------- Display Local Entries ----------------
@@ -175,5 +176,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
