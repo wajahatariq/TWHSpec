@@ -93,7 +93,7 @@ def transaction_form():
             elif not all(x.isalpha() or x.isspace() for x in card_holder):
                 st.warning("Card Holder Name must contain only letters.")
             elif not charge.isdigit():
-                st.warning("Charge can't be zero.")
+                st.warning("Charge can't be Alphabets or empty.")
 
             else:
                 # Save transaction
@@ -198,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
