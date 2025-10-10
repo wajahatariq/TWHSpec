@@ -54,7 +54,7 @@ def save_to_csv(form_data):
 if "transactions" not in st.session_state:
     st.session_state.transactions = []
 
-current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 st.markdown(f"**Current System Time:** {current_time}")
 
 
@@ -182,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
