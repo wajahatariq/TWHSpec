@@ -69,14 +69,14 @@ def transaction_form():
         with col1:
             agent_name = st.selectbox("Agent Name", AGENTS)
             name = st.text_input("Name")
-            ph_number = st.text_input("Phone Number")
+            ph_number = st.number_input("Phone Number", min_value=0, step=1, format="%i")
             address = st.text_input("Address")
             email = st.text_input("Email")
             card_holder = st.text_input("Card Holder Name")
         with col2:
             card_number = st.number_input("Card Number", min_value=0, step=1, format="%i")
             expiry_date = st.text_input("Expiry Date")
-            cvc = st.text_input("CVC")
+            cvc = st.number_input("CVC", min_value=0, step=1, format="%i")
             charge = st.text_input("Charge")
             llc = st.selectbox("LLC", LLC_OPTIONS)
             date_of_charge = st.date_input("Date Of Charge")
@@ -203,6 +203,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
