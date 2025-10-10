@@ -39,9 +39,9 @@ with tab1:
     else:
         for i, row in pending.iterrows():
             with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
-                st.write(f"**Agent:** {row['Card Holder Name']}")
-                st.write(f"**Email:** {row['Card Number']}")
-                st.write(f"**Phone:** {row['CVC']}")
+                st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
+                st.write(f"**Card Number:** {row['Card Number']}")
+                st.write(f"**CVC:** {row['CVC']}")
                 st.write(f"**Address:** {row['Address']}")
                 col1, col2 = st.columns(2)
                 with col1:
