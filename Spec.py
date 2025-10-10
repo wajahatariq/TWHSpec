@@ -97,7 +97,7 @@ def transaction_form():
                     "LLC": llc,
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                     "Status": "Pending",
-                    "Timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+                    "Timestamp": datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
                 }
                 st.session_state.transactions.append(form_data)
                 st.success(f"{name} added for approval.")
@@ -182,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
