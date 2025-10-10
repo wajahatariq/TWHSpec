@@ -28,11 +28,20 @@ def clean_old_entries():
     df = pd.read_csv(LOCAL_FILE)
     if "Timestamp" not in df.columns:
         return df
+    
+    # Convert to datetime
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = datetime.now(tz) - timedelta(minutes=DELETE_AFTER_MINUTES)
+    
+    # Drop rows where Timestamp could not be converted
+    df = df.dropna(subset=["Timestamp"])
+    
+    # Compare with cutoff
+    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
+    
     df.to_csv(LOCAL_FILE, index=False)
     return df
+
 
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
@@ -203,6 +212,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
