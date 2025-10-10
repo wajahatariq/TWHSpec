@@ -1,5 +1,6 @@
 import streamlit as st
 import gspread
+import pandas as pd
 from datetime import datetime
 import pytz
 
@@ -51,3 +52,22 @@ if submitted:
 
         worksheet.append_row(data)
         st.success(f"✅ Transaction for {name} added successfully!")
+
+        st.experimental_rerun()  # Refresh UI to show new record below
+
+
+# --- LIVE GOOGLE SHEET VIEW ---
+st.divider()
+st.subheader("📋 Live Transaction Data")
+
+try:
+    # Get all data from the sheet
+    data = worksheet.get_all_records()
+
+    if not data:
+        st.info("No data found yet.")
+    else:
+        df = pd.DataFrame(data)
+        st.dataframe(df, use_container_width=True)
+except Exception as e:
+    st.error(f"Error loading data: {e}")
