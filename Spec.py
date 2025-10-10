@@ -96,7 +96,7 @@ def transaction_form():
             # Mandatory check
             if not all([agent_name != "Select Agent", name, ph_number, address, email,
                         card_holder, card_number, expiry_date, cvc, charge, llc != "Select LLC"]):
-                st.warning("Please fill in all fields
+                st.warning("Please fill in all fields")
             else:
                 # Save transaction
                 form_data = {
@@ -200,6 +200,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
