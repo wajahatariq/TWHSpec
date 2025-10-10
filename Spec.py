@@ -18,7 +18,7 @@ AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 # --- FORM ---
-st.title("Agent Transaction Form")
+st.title("Client Management System")
 st.write("Fill out all client details below:")
 
 with st.form("transaction_form"):
@@ -57,6 +57,11 @@ if submitted:
 
 
 # --- LIVE GOOGLE SHEET VIEW ---
+from datetime import datetime, timedelta
+
+DELETE_AFTER_MINUTES = 5
+
+# --- LIVE GOOGLE SHEET VIEW ---
 st.divider()
 st.subheader("Live Updated Data")
 
@@ -68,8 +73,17 @@ try:
         st.info("No data found yet.")
     else:
         df = pd.DataFrame(data)
-        st.dataframe(df, use_container_width=True)
+
+        # ✅ Filter to only show last 5 minutes
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+        now = datetime.now(tz)
+        cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+        df = df[df["Timestamp"] >= cutoff]
+
+        if df.empty:
+            st.info("No recent records (last 5 minutes).")
+        else:
+            st.dataframe(df, use_container_width=True)
+
 except Exception as e:
     st.error(f"Error loading data: {e}")
-
-
