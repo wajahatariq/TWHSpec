@@ -3,17 +3,10 @@ import pandas as pd
 import gspread
 from datetime import datetime, timedelta
 import os
+import pytz
 
-import time
+tz = pytz.timezone("Asia/Karachi")  # Pakistan time
 
-# Live system time display
-time_placeholder = st.empty()  # placeholder for live time
-
-def show_current_time():
-    while True:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        time_placeholder.markdown(f"**Time:** {now}")
-        time.sleep(1)
 
 # --- Google Sheets setup ---
 creds = st.secrets["gcp_service_account"]
@@ -61,7 +54,9 @@ def save_to_csv(form_data):
 if "transactions" not in st.session_state:
     st.session_state.transactions = []
 
-st.markdown(f"**Current System Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+current_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+st.markdown(f"**Current System Time:** {current_time}")
+
 
 # --- Transaction Form ---
 def transaction_form():
@@ -102,7 +97,7 @@ def transaction_form():
                     "LLC": llc,
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                     "Status": "Pending",
-                    "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "Timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
                 }
                 st.session_state.transactions.append(form_data)
                 st.success(f"{name} added for approval.")
@@ -187,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
