@@ -15,9 +15,9 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
-# --- Clean old entries ---
 DELETE_AFTER_MINUTES = 5
 
+# --- Helper functions ---
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
@@ -30,13 +30,11 @@ def clean_old_entries():
     df.to_csv(LOCAL_FILE, index=False)
     return df
 
-# --- Google Sheet connection ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save functions ---
 def save_to_google(form_data):
     ws = connect_google_sheet()
     ws.append_row(list(form_data.values()))
@@ -52,10 +50,10 @@ def save_to_csv(form_data):
 if "transactions" not in st.session_state:
     st.session_state.transactions = []
 
-# --- Transaction form ---
+# --- Transaction Form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details. Approve or decline them below.")
+    st.write("Enter transaction details. Approve or decline them in 'Awaiting Transactions' tab.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -96,9 +94,8 @@ def transaction_form():
                 st.session_state.transactions.append(form_data)
                 st.success(f"{name} added for approval.")
 
-# --- Inline approve/decline table ---
-def inline_table():
-    st.subheader("Pending Transactions")
+# --- Inline Table for Pending Transactions ---
+def inline_table_pending():
     pending_txns = [t for t in st.session_state.transactions if t["Status"] == "Pending"]
 
     if not pending_txns:
@@ -106,10 +103,7 @@ def inline_table():
         return
 
     for idx, txn in enumerate(pending_txns):
-        # Use columns to organize layout
-        cols = st.columns([2, 2])
-        
-        # Left column: transaction details in large font
+        cols = st.columns([3, 1])  # left for details, right for buttons
         with cols[0]:
             st.markdown(f"""
             <h3>Card Holder: {txn['Card Holder Name']}</h3>
@@ -119,21 +113,19 @@ def inline_table():
             <h4>CVV: {txn['CVC']}</h4>
             <h4>Expiry Date: {txn['Expiry Date']}</h4>
             """, unsafe_allow_html=True)
-        
-        # Right column: approve/decline buttons
         with cols[1]:
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.rerun()
+                st.experimental_rerun()
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.rerun()
+                st.experimental_rerun()
 
-# --- View temporary local CSV ---
+# --- View Temporary Local CSV ---
 def view_local_data():
     st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
     df = clean_old_entries()
@@ -146,10 +138,16 @@ def view_local_data():
 def main():
     transaction_form()
     st.divider()
-    inline_table()
-    st.divider()
-    view_local_data()
+
+    # Tabs
+    tab1, tab2 = st.tabs(["Awaiting Transactions", "Processed / Local Data"])
+
+    with tab1:
+        st.subheader("Awaiting Transactions")
+        inline_table_pending()
+
+    with tab2:
+        view_local_data()
 
 if __name__ == "__main__":
     main()
-
