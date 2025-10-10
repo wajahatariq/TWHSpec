@@ -43,6 +43,8 @@ with tab1:
                 st.write(f"**Card Number:** {row['Card Number']}")
                 st.write(f"**CVC:** {row['CVC']}")
                 st.write(f"**Address:** {row['Address']}")
+                st.write(f"**Charge:** {row['Charge']}")
+                
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button(f"Approve", key=f"approve_{i}"):
