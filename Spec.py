@@ -75,10 +75,15 @@ try:
         df = pd.DataFrame(data)
 
         # ✅ Filter to only show last 5 minutes
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-        now = datetime.now(tz)
+        df[timestamp_col] = pd.to_datetime(df[timestamp_col], errors="coerce")
+        
+        # Make both timezone-naive for comparison
+        df[timestamp_col] = df[timestamp_col].dt.tz_localize(None)
+        
+        now = datetime.now(tz).replace(tzinfo=None)
         cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-        df = df[df["Timestamp"] >= cutoff]
+        
+        df = df[df[timestamp_col] >= cutoff]
 
         if df.empty:
             st.info("No recent records (last 5 minutes).")
@@ -87,3 +92,4 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
