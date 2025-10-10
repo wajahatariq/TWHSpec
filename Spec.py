@@ -143,6 +143,7 @@ def inline_table_pending():
             <h4>LLC: {txn['LLC']}</h4>
             <h4>CVV: {txn['CVC']}</h4>
             <h4>Expiry Date: {txn['Expiry Date']}</h4>
+            <h4>Amount of Charge: {txn['Charge']}</h4>
             <h4>Status: <span style="color:{status_color}; font-weight:bold;">{txn['Status']}</span></h4>
             <h4>Submitted At: {txn['Timestamp']}</h4>
             </div>
@@ -194,6 +195,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
