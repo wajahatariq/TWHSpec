@@ -4,6 +4,17 @@ import gspread
 from datetime import datetime, timedelta
 import os
 
+import time
+
+# Live system time display
+time_placeholder = st.empty()  # placeholder for live time
+
+def show_current_time():
+    while True:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        time_placeholder.markdown(f"**Time:** {now}")
+        time.sleep(1)
+
 # --- Google Sheets setup ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
@@ -49,6 +60,8 @@ def save_to_csv(form_data):
 # --- Initialize session state ---
 if "transactions" not in st.session_state:
     st.session_state.transactions = []
+
+st.markdown(f"**Current System Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 # --- Transaction Form ---
 def transaction_form():
@@ -109,7 +122,7 @@ def inline_table_pending():
         elif txn["Status"] == "Declined":
             status_color = "red"
         else:
-            status_color = "black"
+            status_color = "white"
 
         cols = st.columns([3, 1])  # left for details, right for buttons
 
@@ -124,6 +137,7 @@ def inline_table_pending():
             <h4>CVV: {txn['CVC']}</h4>
             <h4>Expiry Date: {txn['Expiry Date']}</h4>
             <h4>Status: <span style="color:{status_color}; font-weight:bold;">{txn['Status']}</span></h4>
+            <h4>Submitted At: {txn['Timestamp']}</h4>
             </div>
             """, unsafe_allow_html=True)
 
@@ -173,6 +187,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
