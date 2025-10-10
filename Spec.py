@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import gspread
 from datetime import datetime, timedelta
+from streamlit_autorefresh import st_autorefresh
 import os
 import pytz
 
@@ -183,6 +184,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
