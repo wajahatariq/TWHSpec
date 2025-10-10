@@ -64,20 +64,26 @@ def transaction_form():
     st.write("Enter Client's details. The submitted clients will be waiting at Awaiting Transactions Tab")
 
     with st.form("transaction_form"):
-        agent_name = st.selectbox("Agent Name", AGENTS)
-        name = st.text_input("Name")
-        ph_number = st.text_input("Ph Number")
-        address = st.text_input("Address")
-        email = st.text_input("Email")
-        card_holder = st.text_input("Card Holder Name")
-        card_number = st.text_input("Card Number")
-        expiry_date = st.text_input("Expiry Date")
-        cvc = st.text_input("CVC")
-        charge = st.text_input("Charge")
-        llc = st.selectbox("LLC", LLC_OPTIONS)
-        date_of_charge = st.date_input("Date Of Charge")
+        col1, col2 = st.columns(2)
         
-        submitted = st.form_submit_button("Submit Transaction")
+        with col1:
+            agent_name = st.selectbox("Agent Name", AGENTS)
+            name = st.text_input("Name")
+            ph_number = st.text_input("Phone Number")
+            address = st.text_input("Address")
+            email = st.text_input("Email")
+            
+        with col2:
+            card_holder = st.text_input("Card Holder Name")
+            card_number = st.text_input("Card Number")
+            expiry_date = st.text_input("Expiry Date")
+            cvc = st.text_input("CVC")
+            charge = st.text_input("Charge")
+            llc = st.selectbox("LLC", LLC_OPTIONS)
+            date_of_charge = st.date_input("Date Of Charge")
+        
+        submitted = st.form_submit_button("Submit")
+
         if submitted:
             # Mandatory check
             if not all([agent_name != "Select Agent", name, ph_number, address, email,
@@ -198,6 +204,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
