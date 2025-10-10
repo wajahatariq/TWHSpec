@@ -96,19 +96,7 @@ def transaction_form():
             # Mandatory check
             if not all([agent_name != "Select Agent", name, ph_number, address, email,
                         card_holder, card_number, expiry_date, cvc, charge, llc != "Select LLC"]):
-                st.warning("Please fill in all fields.")
-            # Validate numbers
-            elif not ph_number.isdigit():
-                st.warning("Phone Number must be numeric.")
-            elif not card_number.isdigit() or len(card_number) not in [13,16,19]:
-                st.warning("Card Number must be numeric and valid length.")
-            elif not cvc.isdigit() or len(cvc) not in [3,4]:
-                st.warning("CVC must be 3 or 4 digits.")
-            elif not all(x.isalpha() or x.isspace() for x in card_holder):
-                st.warning("Card Holder Name must contain only letters.")
-            elif not charge.isdigit():
-                st.warning("Charge can't be Alphabets or empty.")
-
+                st.warning("Please fill in all fields
             else:
                 # Save transaction
                 form_data = {
@@ -212,6 +200,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
