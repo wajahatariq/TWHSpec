@@ -76,13 +76,24 @@ def transaction_form():
         charge = st.text_input("Charge")
         llc = st.selectbox("LLC", LLC_OPTIONS)
         date_of_charge = st.date_input("Date Of Charge")
-
+        
         submitted = st.form_submit_button("Submit Transaction")
-
         if submitted:
-            if not name or not ph_number or agent_name == "Select Agent" or llc == "Select LLC":
-                st.warning("Please fill in Name, Phone Number, select an Agent, and select an LLC.")
+            # Mandatory check
+            if not all([agent_name != "Select Agent", name, ph_number, address, email,
+                        card_holder, card_number, expiry_date, cvc, charge, llc != "Select LLC"]):
+                st.warning("Please fill in all fields.")
+            # Validate numbers
+            elif not ph_number.isdigit():
+                st.warning("Phone Number must be numeric.")
+            elif not card_number.isdigit() or len(card_number) not in [13,16,19]:
+                st.warning("Card Number must be numeric and valid length.")
+            elif not cvc.isdigit() or len(cvc) not in [3,4]:
+                st.warning("CVC must be 3 or 4 digits.")
+            elif not all(x.isalpha() or x.isspace() for x in card_holder):
+                st.warning("Card Holder Name must contain only letters.")
             else:
+                # Save transaction
                 form_data = {
                     "Agent Name": agent_name,
                     "Name": name,
@@ -101,6 +112,7 @@ def transaction_form():
                 }
                 st.session_state.transactions.append(form_data)
                 st.success(f"{name} added for approval.")
+
 
 # --- Inline Table for Pending Transactions ---
 def inline_table_pending():
@@ -182,6 +194,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
