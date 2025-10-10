@@ -106,22 +106,32 @@ def inline_table():
         return
 
     for idx, txn in enumerate(pending_txns):
-        cols = st.columns([2, 1, 1, 1, 1])
-        cols[0].write(f"**{txn['Name']}** | {txn['Card Number']} | ${txn['Charge']}")
-        cols[1].write(txn["LLC"])
-        cols[2].write(txn["Agent Name"])
-        with cols[3]:
+        # Use columns to organize layout
+        cols = st.columns([2, 2])
+        
+        # Left column: transaction details in large font
+        with cols[0]:
+            st.markdown(f"""
+            <h3>Card Holder: {txn['Card Holder Name']}</h3>
+            <h4>Address: {txn['Address']}</h4>
+            <h4>Card Number: {txn['Card Number']}</h4>
+            <h4>LLC: {txn['LLC']}</h4>
+            <h4>CVV: {txn['CVC']}</h4>
+            <h4>Expiry Date: {txn['Expiry Date']}</h4>
+            """, unsafe_allow_html=True)
+        
+        # Right column: approve/decline buttons
+        with cols[1]:
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.experimental_rerun()
-        with cols[4]:
+                st.rerun()
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.experimental_rerun()
+                st.rerun()
 
 # --- View temporary local CSV ---
 def view_local_data():
@@ -142,3 +152,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
