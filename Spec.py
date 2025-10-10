@@ -25,22 +25,26 @@ DELETE_AFTER_MINUTES = 5
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
+    
     df = pd.read_csv(LOCAL_FILE)
     if "Timestamp" not in df.columns:
         return df
-    
-    # Convert to datetime
+
+    # Convert to datetime (naive)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    
+
     # Drop rows where Timestamp could not be converted
     df = df.dropna(subset=["Timestamp"])
-    
-    # Compare with cutoff
-    cutoff = datetime.now(pytz.timezone("Asia/Karachi")) - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]
-    
+
+    # Make Timestamp timezone-aware to match Asia/Karachi
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize(None)  # remove tz if any
+    cutoff = datetime.now(tz).replace(tzinfo=None)  # naive datetime in same tz
+
+    # Filter
+    df = df[df["Timestamp"] > cutoff - timedelta(minutes=DELETE_AFTER_MINUTES)]
     df.to_csv(LOCAL_FILE, index=False)
     return df
+
 
 
 def connect_google_sheet():
@@ -200,6 +204,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
