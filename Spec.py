@@ -61,7 +61,6 @@ from datetime import datetime, timedelta
 
 DELETE_AFTER_MINUTES = 5
 
-# --- LIVE GOOGLE SHEET VIEW ---
 st.divider()
 st.subheader("Live Updated Data")
 
@@ -74,16 +73,17 @@ try:
     else:
         df = pd.DataFrame(data)
 
-        # ✅ Filter to only show last 5 minutes
-        df[timestamp] = pd.to_datetime(df[timestamp], errors="coerce")
-        
-        # Make both timezone-naive for comparison
-        df[timestamp] = df[timestamp].dt.tz_localize(None)
-        
-        now = datetime.now(tz).replace(tzinfo=None)
-        cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-        
-        df = df[df[timestamp] >= cutoff]
+        # ✅ Ensure the column exists
+        if "Timestamp" in df.columns:
+            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+
+            # Make both timezone-naive for comparison
+            df["Timestamp"] = df["Timestamp"].dt.tz_localize(None)
+
+            now = datetime.now(tz).replace(tzinfo=None)
+            cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+
+            df = df[df["Timestamp"] >= cutoff]
 
         if df.empty:
             st.info("No recent records (last 5 minutes).")
@@ -92,6 +92,3 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
-
-
-
