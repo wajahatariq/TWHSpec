@@ -61,7 +61,7 @@ st.markdown(f"**Current System Time:** {current_time}")
 # --- Transaction Form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details. Approve or decline them in 'Awaiting Transactions' tab.")
+    st.write("Enter Client's details. The submitted clients will be waiting at Awaiting Transactions Tab")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -92,7 +92,7 @@ def transaction_form():
                 st.warning("CVC must be 3 or 4 digits.")
             elif not all(x.isalpha() or x.isspace() for x in card_holder):
                 st.warning("Card Holder Name must contain only letters.")
-            elif not charge.isdigit()
+            elif not charge.isdigit():
                 st.warning("Charge can't be zero.")
 
             else:
@@ -198,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
