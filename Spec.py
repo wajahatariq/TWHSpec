@@ -6,6 +6,7 @@ import os
 import pytz
 
 tz = pytz.timezone("Asia/Karachi")  # Pakistan time
+st_autorefresh(interval=1000, key="clock_refresh")
 
 
 # --- Google Sheets setup ---
@@ -182,6 +183,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
