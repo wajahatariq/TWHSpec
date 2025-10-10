@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 
 # --- CONFIG ---
-st.set_page_config(page_title="Agent Transactions", layout="wide")
+st.set_page_config(page_title="Client Management System", layout="wide")
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -43,7 +43,7 @@ with st.form("transaction_form"):
 if submitted:
     if not all([agent_name != "Select Agent", name, phone, address, email,
                 card_holder, card_number, expiry, cvc, charge, llc != "Select LLC"]):
-        st.warning("⚠️ Please fill in all required fields.")
+        st.warning("Please fill in all required fields.")
     else:
         timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
         data = [agent_name, name, phone, address, email, card_holder,
@@ -51,14 +51,14 @@ if submitted:
                 date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp]
 
         worksheet.append_row(data)
-        st.success(f"✅ Transaction for {name} added successfully!")
+        st.success(f"Details for {name} added successfully!")
 
         st.rerun()  # Refresh UI to show new record below
 
 
 # --- LIVE GOOGLE SHEET VIEW ---
 st.divider()
-st.subheader("📋 Live Transaction Data")
+st.subheader("Live Updated Data")
 
 try:
     # Get all data from the sheet
@@ -71,4 +71,5 @@ try:
         st.dataframe(df, use_container_width=True)
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
