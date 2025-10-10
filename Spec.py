@@ -29,7 +29,7 @@ def clean_old_entries():
     if "Timestamp" not in df.columns:
         return df
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-    cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
+    cutoff = datetime.now(tz) - timedelta(minutes=DELETE_AFTER_MINUTES)
     df = df[df["Timestamp"] > cutoff]
     df.to_csv(LOCAL_FILE, index=False)
     return df
@@ -111,7 +111,7 @@ def transaction_form():
                     "LLC": llc,
                     "Date Of Charge": date_of_charge.strftime("%Y-%m-%d"),
                     "Status": "Pending",
-                    "Timestamp": current_time
+                    "Timestamp": datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
                 }
                 st.session_state.transactions.append(form_data)
                 st.success(f"{name} added for approval.")
@@ -198,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
