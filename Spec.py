@@ -72,9 +72,8 @@ def transaction_form():
             ph_number = st.text_input("Phone Number")
             address = st.text_input("Address")
             email = st.text_input("Email")
-            
-        with col2:
             card_holder = st.text_input("Card Holder Name")
+        with col2:
             card_number = st.text_input("Card Number")
             expiry_date = st.text_input("Expiry Date")
             cvc = st.text_input("CVC")
@@ -204,6 +203,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
