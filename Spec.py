@@ -53,7 +53,7 @@ if submitted:
         worksheet.append_row(data)
         st.success(f"✅ Transaction for {name} added successfully!")
 
-        st.experimental_rerun()  # Refresh UI to show new record below
+        st.rerun()  # Refresh UI to show new record below
 
 
 # --- LIVE GOOGLE SHEET VIEW ---
@@ -71,3 +71,4 @@ try:
         st.dataframe(df, use_container_width=True)
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
