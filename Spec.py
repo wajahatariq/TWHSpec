@@ -15,36 +15,33 @@ LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
 st.set_page_config(page_title="Company Transactions Entry", layout="wide")
 
-# --- Connect to Google Sheets ---
+# --- Clean old entries ---
 DELETE_AFTER_MINUTES = 5
 
 def clean_old_entries():
     if not os.path.exists(LOCAL_FILE):
         return pd.DataFrame()
-
     df = pd.read_csv(LOCAL_FILE)
     if "Timestamp" not in df.columns:
         return df
-
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     cutoff = datetime.now() - timedelta(minutes=DELETE_AFTER_MINUTES)
-    df = df[df["Timestamp"] > cutoff]  # keep only recent entries
-
-    df.to_csv(LOCAL_FILE, index=False)  # overwrite CSV
+    df = df[df["Timestamp"] > cutoff]
+    df.to_csv(LOCAL_FILE, index=False)
     return df
-    
+
+# --- Google Sheet connection ---
 def connect_google_sheet():
     sh = gc.open(GOOGLE_SHEET_NAME)
     worksheet = sh.sheet1
     return worksheet
 
-# --- Save to Google Sheet ---
+# --- Save functions ---
 def save_to_google(form_data):
     ws = connect_google_sheet()
     ws.append_row(list(form_data.values()))
     st.success(f"Saved to Google Sheet.")
 
-# --- Save to local CSV ---
 def save_to_csv(form_data):
     file_exists = os.path.exists(LOCAL_FILE)
     df = pd.DataFrame([form_data])
@@ -58,7 +55,7 @@ if "transactions" not in st.session_state:
 # --- Transaction form ---
 def transaction_form():
     st.title("Company Transactions Entry")
-    st.write("Enter transaction details. Approve or decline them in the sidebar.")
+    st.write("Enter transaction details. Approve or decline them below.")
 
     with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
@@ -97,45 +94,39 @@ def transaction_form():
                     "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 st.session_state.transactions.append(form_data)
-                st.success(f"{name} added to sidebar for approval.")
+                st.success(f"{name} added for approval.")
 
-# --- Sidebar for approve/decline ---
-def sidebar_transactions():
-    st.sidebar.title("Approve / Decline Transactions")
+# --- Inline approve/decline table ---
+def inline_table():
+    st.subheader("Pending Transactions")
     pending_txns = [t for t in st.session_state.transactions if t["Status"] == "Pending"]
 
     if not pending_txns:
-        st.sidebar.info("No pending transactions.")
+        st.info("No pending transactions.")
         return
 
     for idx, txn in enumerate(pending_txns):
-        st.sidebar.write(f"**Card Number:** {txn['Card Number']}")
-        st.sidebar.write(f"**CVV:** {txn['CVC']}")
-        st.sidebar.write(f"**Card Holder Name:** {txn['Card Holder Name']}")
-        st.sidebar.write(f"**Expiry Date:** {txn['Expiry Date']}")
-        st.sidebar.write(f"**Address:** {txn['Address']}")
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
+        cols = st.columns([2, 1, 1, 1, 1])
+        cols[0].write(f"**{txn['Name']}** | {txn['Card Number']} | ${txn['Charge']}")
+        cols[1].write(txn["LLC"])
+        cols[2].write(txn["Agent Name"])
+        with cols[3]:
             if st.button("Charged", key=f"charged_{idx}"):
                 txn["Status"] = "Charged"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.sidebar.success("Updated as Charged")
-                st.rerun()
-        with col2:
+                st.experimental_rerun()
+        with cols[4]:
             if st.button("Declined", key=f"declined_{idx}"):
                 txn["Status"] = "Declined"
                 save_to_google(txn)
                 save_to_csv(txn)
-                st.sidebar.success("Updated as Declined")
-                st.rerun()
+                st.experimental_rerun()
 
-# --- View processed transactions from CSV ---
+# --- View temporary local CSV ---
 def view_local_data():
     st.subheader(f"Temporary Data (last {DELETE_AFTER_MINUTES} minutes)")
-    
-    df = clean_old_entries()  # auto-clean old entries
-
+    df = clean_old_entries()
     if df.empty:
         st.info("No transactions saved locally yet.")
     else:
@@ -144,15 +135,10 @@ def view_local_data():
 # --- Main App ---
 def main():
     transaction_form()
-    sidebar_transactions()
+    st.divider()
+    inline_table()
     st.divider()
     view_local_data()
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
