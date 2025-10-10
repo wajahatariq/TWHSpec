@@ -92,6 +92,9 @@ def transaction_form():
                 st.warning("CVC must be 3 or 4 digits.")
             elif not all(x.isalpha() or x.isspace() for x in card_holder):
                 st.warning("Card Holder Name must contain only letters.")
+            elif not charge.isdigit()
+                st.warning("Charge can't be zero.")
+
             else:
                 # Save transaction
                 form_data = {
@@ -195,6 +198,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
