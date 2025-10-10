@@ -46,7 +46,7 @@ with tab1:
                 st.write(f"**Card Number:** {row['Card Number']}")
                 st.write(f"**CVC:** {row['CVC']}")
                 st.write(f"**Expiry:** {row['Expiry Date']}")
-                st.write(f"**Submitted At:** {row['Timestamp']}")
+                st.write(f"**Submitted At:** {row.get('Timestamp', 'N/A')}")
 
                 col1, col2 = st.columns(2)
                 with col1:
