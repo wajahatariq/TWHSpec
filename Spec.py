@@ -96,34 +96,51 @@ def transaction_form():
 
 # --- Inline Table for Pending Transactions ---
 def inline_table_pending():
-    pending_txns = [t for t in st.session_state.transactions if t["Status"] == "Pending"]
+    pending_txns = [t for t in st.session_state.transactions if t["Status"] in ["Pending", "Charged", "Declined"]]
 
     if not pending_txns:
-        st.info("No pending transactions.")
+        st.info("No transactions available.")
         return
 
     for idx, txn in enumerate(pending_txns):
+        # Determine status color
+        if txn["Status"] == "Charged":
+            status_color = "green"
+        elif txn["Status"] == "Declined":
+            status_color = "red"
+        else:
+            status_color = "black"
+
         cols = st.columns([3, 1])  # left for details, right for buttons
+
+        # Left column: transaction details
         with cols[0]:
             st.markdown(f"""
+            <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; border-radius:8px;">
             <h3>Card Holder: {txn['Card Holder Name']}</h3>
             <h4>Address: {txn['Address']}</h4>
             <h4>Card Number: {txn['Card Number']}</h4>
             <h4>LLC: {txn['LLC']}</h4>
             <h4>CVV: {txn['CVC']}</h4>
             <h4>Expiry Date: {txn['Expiry Date']}</h4>
+            <h4>Status: <span style="color:{status_color}; font-weight:bold;">{txn['Status']}</span></h4>
+            </div>
             """, unsafe_allow_html=True)
-        with cols[1]:
-            if st.button("Charged", key=f"charged_{idx}"):
-                txn["Status"] = "Charged"
-                save_to_google(txn)
-                save_to_csv(txn)
-                st.experimental_rerun()
-            if st.button("Declined", key=f"declined_{idx}"):
-                txn["Status"] = "Declined"
-                save_to_google(txn)
-                save_to_csv(txn)
-                st.experimental_rerun()
+
+        # Right column: approve/decline buttons (only if pending)
+        if txn["Status"] == "Pending":
+            with cols[1]:
+                if st.button("Charged", key=f"charged_{idx}"):
+                    txn["Status"] = "Charged"
+                    save_to_google(txn)
+                    save_to_csv(txn)
+                    st.rerun()
+                if st.button("Declined", key=f"declined_{idx}"):
+                    txn["Status"] = "Declined"
+                    save_to_google(txn)
+                    save_to_csv(txn)
+                    st.rerun()
+
 
 # --- View Temporary Local CSV ---
 def view_local_data():
@@ -151,3 +168,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
