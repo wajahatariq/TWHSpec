@@ -38,24 +38,19 @@ with tab1:
         st.info("No pending transactions.")
     else:
         for i, row in pending.iterrows():
-            with st.expander(f"{row['Card Holder Name']} — {row['Charge']} ({row['LLC']})"):
-                st.write(f"**Agent:** {row['Agent Name']}")
-                st.write(f"**Email:** {row['Email']}")
-                st.write(f"**Phone:** {row['Ph Number']}")
+            with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
+                st.write(f"**Agent:** {row['Card Holder Name']}")
+                st.write(f"**Email:** {row['Card Number']}")
+                st.write(f"**Phone:** {row['CVC']}")
                 st.write(f"**Address:** {row['Address']}")
-                st.write(f"**Card Number:** {row['Card Number']}")
-                st.write(f"**CVC:** {row['CVC']}")
-                st.write(f"**Expiry:** {row['Expiry Date']}")
-                st.write(f"**Submitted At:** {row.get('Timestamp', 'N/A')}")
-
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button(f"✅ Approve {i}", key=f"approve_{i}"):
+                    if st.button(f"Approve", key=f"approve_{i}"):
                         worksheet.update_cell(i + 2, df.columns.get_loc("Status") + 1, "Charged")
                         st.success("Approved successfully!")
                         st.rerun()
                 with col2:
-                    if st.button(f"❌ Decline {i}", key=f"decline_{i}"):
+                    if st.button(f"Decline", key=f"decline_{i}"):
                         worksheet.update_cell(i + 2, df.columns.get_loc("Status") + 1, "Declined")
                         st.error("Declined successfully!")
                         st.rerun()
