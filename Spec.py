@@ -134,17 +134,17 @@ def inline_table_pending():
                     txn["Status"] = "Charged"
                     save_to_google(txn)
                     save_to_csv(txn)
-                    st.experimental_rerun()
+                    st.rerun()
                 if st.button("Declined", key=f"declined_{idx}"):
                     txn["Status"] = "Declined"
                     save_to_google(txn)
                     save_to_csv(txn)
-                    st.experimental_rerun()
+                    st.rerun()
 
             # Delete button (removes only from session state)
             if st.button("Delete", key=f"delete_{idx}"):
                 st.session_state.transactions.pop(idx)
-                st.experimental_rerun()
+                st.rerun()
 
 
 # --- View Temporary Local CSV ---
@@ -173,5 +173,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
