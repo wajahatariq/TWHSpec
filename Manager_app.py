@@ -13,7 +13,10 @@ creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
-st.button("🔄 Refresh Now", on_click=st.rerun)
+
+if st.button("Refresh Now"):
+    st.rerun()
+    
 # --- LOAD DATA ---
 def load_data():
     records = worksheet.get_all_records()
