@@ -14,6 +14,9 @@ gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
 
+if st.button("Refresh Now"):
+    st.rerun()
+    
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
@@ -114,3 +117,4 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
