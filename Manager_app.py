@@ -34,6 +34,10 @@ if df.empty:
 DELETE_AFTER_MINUTES = 5
 if "Timestamp" in df.columns:
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+
+    # Make all timestamps timezone-aware (Asia/Karachi)
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize("Asia/Karachi", nonexistent='NaT', ambiguous='NaT', errors='coerce')
+
     now = datetime.now(tz)
     cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
 
@@ -42,7 +46,6 @@ if "Timestamp" in df.columns:
         (df["Status"] == "Pending") |
         ((df["Status"].isin(["Charged", "Declined"])) & (df["Timestamp"] >= cutoff))
     ]
-
 # --- FILTERING ---
 pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
