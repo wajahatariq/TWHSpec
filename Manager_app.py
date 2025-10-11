@@ -31,21 +31,25 @@ if df.empty:
     st.stop()
 
 # --- FILTER OUT OLD PROCESSED (ONLY LOCALLY) ---
+# --- FILTER OUT OLD PROCESSED (ONLY LOCALLY) ---
 DELETE_AFTER_MINUTES = 5
 if "Timestamp" in df.columns:
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
 
-    # Make all timestamps timezone-aware (Asia/Karachi)
-    df["Timestamp"] = df["Timestamp"].dt.tz_localize("Asia/Karachi", nonexistent='NaT', ambiguous='NaT', errors='coerce')
+    # Normalize timezone safely — make all timestamps naive (no tz)
+    df["Timestamp"] = df["Timestamp"].apply(
+        lambda x: x.tz_localize(None) if hasattr(x, "tzinfo") and x.tzinfo else x
+    )
 
-    now = datetime.now(tz)
+    now = datetime.now(tz).replace(tzinfo=None)
     cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
 
-    # Keep all Pending + processed within 5 minutes
+    # Keep Pending + recently processed (last 5 min)
     df = df[
         (df["Status"] == "Pending") |
         ((df["Status"].isin(["Charged", "Declined"])) & (df["Timestamp"] >= cutoff))
     ]
+
 # --- FILTERING ---
 pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
