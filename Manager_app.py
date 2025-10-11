@@ -71,17 +71,23 @@ with tab1:
                 st.write(f"**Address:** {row['Address']}")
                 st.write(f"**Charge:** {row['Charge']}")
 
+                record_id = row["Record_ID"]
+
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button(f"Approve", key=f"approve_{i}"):
-                        worksheet.update_cell(i + 2, df.columns.get_loc("Status") + 1, "Charged")
-                        st.success("Approved successfully!")
-                        st.rerun()
+                    if st.button("Approve", key=f"approve_{i}"):
+                        cell = worksheet.find(record_id)
+                        if cell:
+                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
+                            st.success("Approved successfully!")
+                            st.rerun()
                 with col2:
-                    if st.button(f"Decline", key=f"decline_{i}"):
-                        worksheet.update_cell(i + 2, df.columns.get_loc("Status") + 1, "Declined")
-                        st.error("Declined successfully!")
-                        st.rerun()
+                    if st.button("Decline", key=f"decline_{i}"):
+                        cell = worksheet.find(record_id)
+                        if cell:
+                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
+                            st.error("Declined successfully!")
+                            st.rerun()
 
 # --- PROCESSED TAB ---
 with tab2:
