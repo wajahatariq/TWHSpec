@@ -88,23 +88,17 @@ if submitted:
 
 # --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
-REFRESH_INTERVAL = 5  # seconds
-
 st.divider()
 st.subheader(f"Live Updated Data of last {DELETE_AFTER_MINUTES} minutes")
 
-# This creates a placeholder to update the table without reloading the whole page
-table_placeholder = st.empty()
-last_refresh_time = time.time()
+try:
+    data = worksheet.get_all_records()
 
-def load_and_display_data():
-    try:
-        data = worksheet.get_all_records()
-        if not data:
-            table_placeholder.info("No data found yet.")
-            return
-
+    if not data:
+        st.info("No data found yet.")
+    else:
         df = pd.DataFrame(data)
+
         if "Timestamp" in df.columns:
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
             df["Timestamp"] = df["Timestamp"].dt.tz_localize(None)
@@ -114,18 +108,9 @@ def load_and_display_data():
             df = df[df["Timestamp"] >= cutoff]
 
         if df.empty:
-            table_placeholder.info("No recent records (last 5 minutes).")
+            st.info("No recent records (last 5 minutes).")
         else:
-            table_placeholder.dataframe(df, use_container_width=True)
-    except Exception as e:
-        table_placeholder.error(f"Error loading data: {e}")
+            st.dataframe(df, use_container_width=True)
 
-# First load
-load_and_display_data()
-
-# Continuous auto-refresh (without resetting the form)
-while True:
-    if time.time() - last_refresh_time > REFRESH_INTERVAL:
-        load_and_display_data()
-        last_refresh_time = time.time()
-    time.sleep(REFRESH_INTERVAL)
+except Exception as e:
+    st.error(f"Error loading data: {e}")
