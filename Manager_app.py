@@ -13,7 +13,7 @@ creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
-
+st.button("🔄 Refresh Now", on_click=st.rerun)
 # --- LOAD DATA ---
 def load_data():
     records = worksheet.get_all_records()
@@ -32,7 +32,7 @@ processed = df[df["Status"].isin(["Charged", "Declined"])]
 
 tab1, tab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
 # --- Manual Refresh Button ---
-st.button("🔄 Refresh Now", on_click=st.rerun)
+
 
 with tab1:
     st.subheader("Pending Transactions")
