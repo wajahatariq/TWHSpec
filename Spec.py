@@ -1,7 +1,7 @@
 import streamlit as st
 import gspread
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 # --- CONFIG ---
@@ -27,13 +27,11 @@ with st.form("transaction_form"):
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Client Name")
         phone = st.text_input("Phone Number")
-        if phone and not phone.isdigit():
-            st.warning("Phone number must contain only digits.")
         address = st.text_input("Address")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
     with col2:
-        card_number = cvc = st.number_input("Card Number", step=1)
+        card_number = st.text_input("Card Number")
         expiry = st.text_input("Expiry Date (MM/YY)")
         cvc = st.number_input("CVC", min_value=0, max_value=999, step=1)
         charge = st.text_input("Charge Amount")
@@ -42,32 +40,58 @@ with st.form("transaction_form"):
 
     submitted = st.form_submit_button("Submit")
 
+# --- VALIDATION & SAVE ---
 if submitted:
-    if not all([agent_name != "Select Agent", name, phone, address, email,
-                card_holder, card_number, expiry, cvc, charge, llc != "Select LLC"]):
-        st.warning("Please fill in all required fields.")
-    else:
-        timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
-        data = [agent_name, name, phone, address, email, card_holder,
-                card_number, expiry, cvc, charge, llc,
-                date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp]
+    # --- Mandatory field validation ---
+    missing_fields = []
+    if agent_name == "Select Agent": missing_fields.append("Agent Name")
+    if not name: missing_fields.append("Client Name")
+    if not phone: missing_fields.append("Phone Number")
+    if not address: missing_fields.append("Address")
+    if not email: missing_fields.append("Email")
+    if not card_holder: missing_fields.append("Card Holder Name")
+    if not card_number: missing_fields.append("Card Number")
+    if not expiry: missing_fields.append("Expiry Date")
+    if not charge: missing_fields.append("Charge Amount")
+    if llc == "Select LLC": missing_fields.append("LLC")
 
-        worksheet.append_row(data)
-        st.success(f"Details for {name} added successfully!")
+    if missing_fields:
+        st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
+        st.stop()
 
-        st.rerun()  # Refresh UI to show new record below
+    # --- Numeric validation ---
+    if not phone.isdigit():
+        st.error("Phone number must contain only digits.")
+        st.stop()
+    if not card_number.isdigit():
+        st.error("Card number must contain only digits.")
+        st.stop()
 
+    # --- Optional: numeric validation for charge ---
+    try:
+        float(charge)
+    except ValueError:
+        st.error("Charge amount must be numeric.")
+        st.stop()
+
+    # --- Save to Google Sheet ---
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+    data = [
+        agent_name, name, phone, address, email, card_holder,
+        card_number, expiry, cvc, charge, llc,
+        date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp
+    ]
+
+    worksheet.append_row(data)
+    st.success(f"✅ Details for {name} added successfully!")
+    st.rerun()
 
 # --- LIVE GOOGLE SHEET VIEW ---
-from datetime import datetime, timedelta
-
 DELETE_AFTER_MINUTES = 5
-
 st.divider()
 st.subheader("Live Updated Data")
 
 try:
-    # Get all data from the sheet
     data = worksheet.get_all_records()
 
     if not data:
@@ -75,16 +99,12 @@ try:
     else:
         df = pd.DataFrame(data)
 
-        # ✅ Ensure the column exists
         if "Timestamp" in df.columns:
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-
-            # Make both timezone-naive for comparison
             df["Timestamp"] = df["Timestamp"].dt.tz_localize(None)
 
             now = datetime.now(tz).replace(tzinfo=None)
             cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-
             df = df[df["Timestamp"] >= cutoff]
 
         if df.empty:
@@ -94,5 +114,3 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
-
-
