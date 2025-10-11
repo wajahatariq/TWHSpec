@@ -31,6 +31,8 @@ pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
 
 tab1, tab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
+# --- Manual Refresh Button ---
+st.button("🔄 Refresh Now", on_click=st.rerun)
 
 with tab1:
     st.subheader("Pending Transactions")
