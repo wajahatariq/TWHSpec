@@ -3,7 +3,7 @@ import gspread
 import pandas as pd
 from datetime import datetime, timedelta
 import pytz
-
+import uuid
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 tz = pytz.timezone("Asia/Karachi")
@@ -78,8 +78,10 @@ if submitted:
         st.stop()
 
     # --- Save to Google Sheet ---
+    record_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
     data = [
+        record_id,
         agent_name, name, phone, address, email, card_holder,
         card_number, expiry, cvc, charge, llc,
         date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp
@@ -117,4 +119,5 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
