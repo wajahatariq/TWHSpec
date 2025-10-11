@@ -26,7 +26,7 @@ with st.form("transaction_form"):
     with col1:
         agent_name = st.selectbox("Agent Name", AGENTS)
         name = st.text_input("Client Name")
-        phone = st.text_input("Phone Number")
+        phone = st.number_input("Phone Number")
         address = st.text_input("Address")
         email = st.text_input("Email")
         card_holder = st.text_input("Card Holder Name")
@@ -92,3 +92,4 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
