@@ -62,7 +62,6 @@ if submitted:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
 
-    # --- Numeric validation ---
     if not phone.isdigit():
         st.error("Phone number must contain only digits.")
         st.stop()
@@ -70,15 +69,12 @@ if submitted:
         st.error("Card number must contain only digits.")
         st.stop()
 
-    # --- Optional: numeric validation for charge ---
     try:
         float(charge)
     except ValueError:
         st.error("Charge amount must be numeric.")
         st.stop()
-        
 
-    # --- Save to Google Sheet ---
     record_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
     data = [
@@ -90,8 +86,17 @@ if submitted:
 
     worksheet.append_row(data)
     st.success(f"Details for {name} added successfully!")
-    st.rerun()
 
+    # --- Clear all form fields ---
+    for key in [
+        "agent_name", "name", "phone", "address", "email",
+        "card_holder", "card_number", "expiry", "cvc",
+        "charge", "llc", "date_of_charge"
+    ]:
+        if key in st.session_state:
+            del st.session_state[key]
+
+    st.rerun()
 # --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
 st.divider()
@@ -120,6 +125,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
