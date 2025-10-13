@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 import uuid
+
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 tz = pytz.timezone("Asia/Karachi")
@@ -27,19 +28,19 @@ st.write("Fill out all client details below:")
 with st.form("transaction_form"):
     col1, col2 = st.columns(2)
     with col1:
-        agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
-        name = st.text_input("Client Name", key="name")
-        phone = st.text_input("Phone Number", key="phone")
-        address = st.text_input("Address", key="address")
-        email = st.text_input("Email", key="email")
-        card_holder = st.text_input("Card Holder Name", key="card_holder")
+        agent_name = st.selectbox("Agent Name", AGENTS)
+        name = st.text_input("Client Name")
+        phone = st.text_input("Phone Number")
+        address = st.text_input("Address")
+        email = st.text_input("Email")
+        card_holder = st.text_input("Card Holder Name")
     with col2:
-        card_number = st.text_input("Card Number", key="card_number")
-        expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
-        cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, key="cvc")
-        charge = st.text_input("Charge Amount", key="charge")
-        llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
-        date_of_charge = st.date_input("Date of Charge", key="date_of_charge")
+        card_number = st.text_input("Card Number")
+        expiry = st.text_input("Expiry Date (MM/YY)")
+        cvc = st.number_input("CVC", min_value=0, max_value=999, step=1)
+        charge = st.text_input("Charge Amount")
+        llc = st.selectbox("LLC", LLC_OPTIONS)
+        date_of_charge = st.date_input("Date of Charge")
 
     submitted = st.form_submit_button("Submit")
 
@@ -62,6 +63,7 @@ if submitted:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
 
+    # --- Numeric validation ---
     if not phone.isdigit():
         st.error("Phone number must contain only digits.")
         st.stop()
@@ -69,12 +71,14 @@ if submitted:
         st.error("Card number must contain only digits.")
         st.stop()
 
+    # --- Optional: numeric validation for charge ---
     try:
         float(charge)
     except ValueError:
         st.error("Charge amount must be numeric.")
         st.stop()
 
+    # --- Save to Google Sheet ---
     record_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
     data = [
@@ -86,17 +90,8 @@ if submitted:
 
     worksheet.append_row(data)
     st.success(f"Details for {name} added successfully!")
-
-    # --- Clear all form fields ---
-    for key in [
-        "agent_name", "name", "phone", "address", "email",
-        "card_holder", "card_number", "expiry", "cvc",
-        "charge", "llc", "date_of_charge"
-    ]:
-        if key in st.session_state:
-            del st.session_state[key]
-
     st.rerun()
+
 # --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
 st.divider()
@@ -125,9 +120,3 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
-
-
-
-
-
-
