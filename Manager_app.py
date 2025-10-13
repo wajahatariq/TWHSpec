@@ -68,6 +68,7 @@ with tab1:
                 st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
                 st.write(f"**Card Number:** {row['Card Number']}")
                 st.write(f"**CVC:** {row['CVC']}")
+                st.write(f"**Expiry Date:** {row['Expiry Date']}")
                 st.write(f"**Address:** {row['Address']}")
                 st.write(f"**Charge:** {row['Charge']}")
 
