@@ -63,14 +63,6 @@ if submitted:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
 
-    # --- Numeric validation ---
-    if not phone.isdigit():
-        st.error("Phone number must contain only digits.")
-        st.stop()
-    if not card_number.isdigit():
-        st.error("Card number must contain only digits.")
-        st.stop()
-
     # --- Optional: numeric validation for charge ---
     try:
         float(charge)
@@ -120,3 +112,4 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
