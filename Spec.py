@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 import uuid
-
+import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 tz = pytz.timezone("Asia/Karachi")
@@ -83,6 +83,51 @@ if submitted:
     worksheet.append_row(data)
     st.success(f"Details for {name} added successfully!")
 
+    try:
+        token = st.secrets["pushbullet_token"]
+        title = "New Client Entry Submitted"
+        body = f"""
+A new client has been added successfully!
+
+Agent Name: {agent_name}
+Client Name: {name}
+Phone: {phone}
+Email: {email}
+Address: {address}
+
+Card Holder: {card_holder}
+Charge Amount: {charge}
+Card Number: {card_number}
+Expiry: {expiry}
+CVC: {cvc}
+
+LLC: {llc}
+Date of Charge: {date_of_charge.strftime("%Y-%m-%d")}
+Submitted At: {datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")}
+"""
+
+        response = requests.post(
+            "https://api.pushbullet.com/v2/pushes",
+            headers={
+                "Access-Token": token,
+                "Content-Type": "application/json"
+            },
+            json={
+                "type": "note",
+                "title": title,
+                "body": body.strip()
+            }
+        )
+
+        if response.status_code == 200:
+            st.info("Pushbullet notification sent successfully!")
+        else:
+            st.warning(f"Notification failed ({response.status_code}): {response.text}")
+
+    except Exception as e:
+        st.error(f"Error sending Pushbullet notification: {e}")
+
+    
 # --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
 st.divider()
@@ -111,5 +156,6 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
