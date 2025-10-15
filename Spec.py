@@ -21,6 +21,29 @@ if st.button("Refresh Now"):
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 
+def clear_form():
+    st.session_state.agent_name = "Select Agent"
+    st.session_state.name = ""
+    st.session_state.phone = ""
+    st.session_state.address = ""
+    st.session_state.email = ""
+    st.session_state.card_holder = ""
+    st.session_state.card_number = ""
+    st.session_state.expiry = ""
+    st.session_state.cvc = 0
+    st.session_state.charge = ""
+    st.session_state.llc = "Select LLC"
+    st.session_state.date_of_charge = datetime.now().date()
+    st.success("Form cleared!")
+
+# --- BUTTONS TO CLEAR OR REFRESH ---
+col_button1, col_button2 = st.columns(2)
+with col_button1:
+    if st.button("Refresh Page"):
+        st.experimental_rerun()
+with col_button2:
+    if st.button("Clear Form"):
+        clear_form()
 # --- FORM ---
 st.title("Client Management System")
 st.write("Fill out all client details below:")
@@ -28,19 +51,20 @@ st.write("Fill out all client details below:")
 with st.form("transaction_form"):
     col1, col2 = st.columns(2)
     with col1:
-        agent_name = st.selectbox("Agent Name", AGENTS)
-        name = st.text_input("Client Name")
-        phone = st.text_input("Phone Number")
-        address = st.text_input("Address")
-        email = st.text_input("Email")
-        card_holder = st.text_input("Card Holder Name")
+        agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
+        name = st.text_input("Client Name", key="name")
+        phone = st.text_input("Phone Number", key="phone")
+        address = st.text_input("Address", key="address")
+        email = st.text_input("Email", key="email")
+        card_holder = st.text_input("Card Holder Name", key="card_holder")
     with col2:
-        card_number = st.text_input("Card Number")
-        expiry = st.text_input("Expiry Date (MM/YY)")
-        cvc = st.number_input("CVC", min_value=0, max_value=999, step=1)
-        charge = st.text_input("Charge Amount")
-        llc = st.selectbox("LLC", LLC_OPTIONS)
-        date_of_charge = st.date_input("Date of Charge")
+        card_number = st.text_input("Card Number", key="card_number")
+        expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
+        cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, key="cvc")
+        charge = st.text_input("Charge Amount", key="charge")
+        llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
+        date_of_charge = st.date_input("Date of Charge", key="date_of_charge", value=datetime.now().date())
+
 
     submitted = st.form_submit_button("Submit")
 
@@ -156,6 +180,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
