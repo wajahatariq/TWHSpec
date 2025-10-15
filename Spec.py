@@ -31,6 +31,7 @@ def clear_form():
     st.session_state.charge = ""
     st.session_state.llc = "Select LLC"
     st.session_state.date_of_charge = datetime.now().date()
+    st.rerun()
     st.success("Form cleared!")
 
 # --- BUTTONS TO CLEAR OR REFRESH ---
@@ -177,6 +178,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
