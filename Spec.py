@@ -82,7 +82,6 @@ if submitted:
 
     worksheet.append_row(data)
     st.success(f"Details for {name} added successfully!")
-    st.rerun()
 
 # --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
@@ -112,4 +111,5 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
