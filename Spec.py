@@ -17,7 +17,7 @@ worksheet = gc.open(SHEET_NAME).sheet1
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
-PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "AT&T", "Xfinity"]
+PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum]
 
 def clear_form():
     st.session_state.agent_name = "Select Agent"
@@ -183,6 +183,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
