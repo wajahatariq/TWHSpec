@@ -54,56 +54,46 @@ if "Timestamp" in df.columns:
 pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
 
-# --- MAIN TAB ---
-# --- MAIN TAB ---
-main_tab1, main_tab2 = st.tabs(["Spectrum", "Insurance"])
+# --- TABS ---
+tab1, tab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
 
-# --- FUNCTION TO RENDER SUBTABS (to reuse logic) ---
-def render_transaction_tabs(pending_df, processed_df):
-    subtab1, subtab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
+# --- PENDING TAB ---
+with tab1:
+    st.subheader("Pending Transactions")
+    if pending.empty:
+        st.info("No pending transactions.")
+    else:
+        for i, row in pending.iterrows():
+            with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
+                st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
+                st.write(f"**Card Number:** {row['Card Number']}")
+                st.write(f"**CVC:** {row['CVC']}")
+                st.write(f"**Expiry Date:** {row['Expiry Date']}")
+                st.write(f"**Address:** {row['Address']}")
+                st.write(f"**Charge:** {row['Charge']}")
 
-    # --- PENDING TAB ---
-    with subtab1:
-        st.subheader("Pending Transactions")
-        if pending_df.empty:
-            st.info("No pending transactions.")
-        else:
-            for i, row in pending_df.iterrows():
-                with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
-                    st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
-                    st.write(f"**Card Number:** {row['Card Number']}")
-                    st.write(f"**CVC:** {row['CVC']}")
-                    st.write(f"**Expiry Date:** {row['Expiry Date']}")
-                    st.write(f"**Address:** {row['Address']}")
-                    st.write(f"**Charge:** {row['Charge']}")
+                record_id = row["Record_ID"]
 
-                    row_number = i + 2  # 1 for header, 1 for 1-based index
-                    col_number = df.columns.get_loc("Status") + 1
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("Approve", key=f"approve_{i}_{row['LLC']}"):
-                            worksheet.update_cell(row_number, col_number, "Charged")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Approve", key=f"approve_{i}"):
+                        cell = worksheet.find(record_id)
+                        if cell:
+                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
                             st.success("Approved successfully!")
                             st.rerun()
-                    with col2:
-                        if st.button("Decline", key=f"decline_{i}_{row['LLC']}"):
-                            worksheet.update_cell(row_number, col_number, "Declined")
+                with col2:
+                    if st.button("Decline", key=f"decline_{i}"):
+                        cell = worksheet.find(record_id)
+                        if cell:
+                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
                             st.error("Declined successfully!")
                             st.rerun()
 
-    # --- PROCESSED TAB ---
-    with subtab2:
-        st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
-        if processed_df.empty:
-            st.info("No processed transactions yet.")
-        else:
-            st.dataframe(processed_df)
-
-# --- SPECTRUM TAB CONTENT ---
-with main_tab1:
-    render_transaction_tabs(pending, processed)
-
-# --- INSURANCE TAB CONTENT ---
-with main_tab2:
-    render_transaction_tabs(pending, processed)
+# --- PROCESSED TAB ---
+with tab2:
+    st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
+    if processed.empty:
+        st.info("No processed transactions yet.")
+    else:
+        st.dataframe(processed)
