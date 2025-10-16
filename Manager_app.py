@@ -56,19 +56,19 @@ processed = df[df["Status"].isin(["Charged", "Declined"])]
 
 # --- MAIN TAB ---
 # --- MAIN TAB ---
-main_tab = st.tabs(["Spectrum"])[0]
+main_tab1, main_tab2 = st.tabs(["Spectrum", "Insurance"])
 
-with main_tab:
-    # Create nested tabs inside Spectrum
+# --- FUNCTION TO RENDER SUBTABS (to reuse logic) ---
+def render_transaction_tabs(pending_df, processed_df):
     subtab1, subtab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
 
     # --- PENDING TAB ---
     with subtab1:
         st.subheader("Pending Transactions")
-        if pending.empty:
+        if pending_df.empty:
             st.info("No pending transactions.")
         else:
-            for i, row in pending.iterrows():
+            for i, row in pending_df.iterrows():
                 with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
                     st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
                     st.write(f"**Card Number:** {row['Card Number']}")
@@ -77,18 +77,17 @@ with main_tab:
                     st.write(f"**Address:** {row['Address']}")
                     st.write(f"**Charge:** {row['Charge']}")
 
-                    record_id = row["Record_ID"]
-                    row_number = i + 2  # assuming header is first row
+                    row_number = i + 2  # 1 for header, 1 for 1-based index
                     col_number = df.columns.get_loc("Status") + 1
 
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("Approve", key=f"approve_{i}"):
+                        if st.button("Approve", key=f"approve_{i}_{row['LLC']}"):
                             worksheet.update_cell(row_number, col_number, "Charged")
                             st.success("Approved successfully!")
                             st.rerun()
                     with col2:
-                        if st.button("Decline", key=f"decline_{i}"):
+                        if st.button("Decline", key=f"decline_{i}_{row['LLC']}"):
                             worksheet.update_cell(row_number, col_number, "Declined")
                             st.error("Declined successfully!")
                             st.rerun()
@@ -96,7 +95,15 @@ with main_tab:
     # --- PROCESSED TAB ---
     with subtab2:
         st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
-        if processed.empty:
+        if processed_df.empty:
             st.info("No processed transactions yet.")
         else:
-            st.dataframe(processed)
+            st.dataframe(processed_df)
+
+# --- SPECTRUM TAB CONTENT ---
+with main_tab1:
+    render_transaction_tabs(pending, processed)
+
+# --- INSURANCE TAB CONTENT ---
+with main_tab2:
+    render_transaction_tabs(pending, processed)
