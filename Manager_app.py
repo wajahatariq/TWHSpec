@@ -19,23 +19,10 @@ if st.button("Refresh Now"):
     st.rerun()
 
 # --- LOAD DATA ---
-
 def load_data():
-    # Get Sheet1 and Sheet2
-    sheet1 = workbook.get_worksheet(0)
-    sheet2 = workbook.get_worksheet(1)
+    records = worksheet.get_all_records()
+    return pd.DataFrame(records)
 
-    # Load both sheets
-    df1 = pd.DataFrame(sheet1.get_all_records())
-    df1["__sheet__"] = 0  # mark source sheet
-
-    df2 = pd.DataFrame(sheet2.get_all_records())
-    df2["__sheet__"] = 1  # mark source sheet
-
-    # Combine both (ignore empty ones)
-    df = pd.concat([df1, df2], ignore_index=True)
-    return df
-    
 st.title("Manager Transaction Dashboard")
 
 df = load_data()
@@ -67,46 +54,49 @@ if "Timestamp" in df.columns:
 pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
 
-# --- TABS ---
-tab1, tab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
+# --- MAIN TAB ---
+main_tab = st.tabs(["Spectrum"])[0]
 
-# --- PENDING TAB ---
-with tab1:
-    st.subheader("Pending Transactions")
-    if pending.empty:
-        st.info("No pending transactions.")
-    else:
-        for i, row in pending.iterrows():
-            with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
-                st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
-                st.write(f"**Card Number:** {row['Card Number']}")
-                st.write(f"**CVC:** {row['CVC']}")
-                st.write(f"**Expiry Date:** {row['Expiry Date']}")
-                st.write(f"**Address:** {row['Address']}")
-                st.write(f"**Charge:** {row['Charge']}")
+with main_tab:
+    subtab1, subtab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
 
-                record_id = row["Record_ID"]
+    # --- PENDING TAB ---
+    with subtab1:
+        st.subheader("Pending Transactions")
+        if pending.empty:
+            st.info("No pending transactions.")
+        else:
+            for i, row in pending.iterrows():
+                with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
+                    st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
+                    st.write(f"**Card Number:** {row['Card Number']}")
+                    st.write(f"**CVC:** {row['CVC']}")
+                    st.write(f"**Expiry Date:** {row['Expiry Date']}")
+                    st.write(f"**Address:** {row['Address']}")
+                    st.write(f"**Charge:** {row['Charge']}")
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Approve", key=f"approve_{i}"):
-                        cell = worksheet.find(record_id)
-                        if cell:
-                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
-                            st.success("Approved successfully!")
-                            st.rerun()
-                with col2:
-                    if st.button("Decline", key=f"decline_{i}"):
-                        cell = worksheet.find(record_id)
-                        if cell:
-                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
-                            st.error("Declined successfully!")
-                            st.rerun()
+                    record_id = row["Record_ID"]
 
-# --- PROCESSED TAB ---
-with tab2:
-    st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
-    if processed.empty:
-        st.info("No processed transactions yet.")
-    else:
-        st.dataframe(processed)
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Approve", key=f"approve_{i}"):
+                            cell = worksheet.find(record_id)
+                            if cell:
+                                worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
+                                st.success("Approved successfully!")
+                                st.rerun()
+                    with col2:
+                        if st.button("Decline", key=f"decline_{i}"):
+                            cell = worksheet.find(record_id)
+                            if cell:
+                                worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
+                                st.error("Declined successfully!")
+                                st.rerun()
+
+    # --- PROCESSED TAB ---
+    with subtab2:
+        st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
+        if processed.empty:
+            st.info("No processed transactions yet.")
+        else:
+            st.dataframe(processed)
