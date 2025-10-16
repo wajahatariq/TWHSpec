@@ -12,7 +12,11 @@ tz = pytz.timezone("Asia/Karachi")
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
-worksheet = gc.open(SHEET_NAME).sheet1
+spreadsheet = gc.open(SHEET_NAME)
+
+# ✅ Load both Sheet1 and Sheet2
+worksheet1 = spreadsheet.get_worksheet(0)  # Sheet1
+worksheet2 = spreadsheet.get_worksheet(1)  # Sheet2
 
 # --- REFRESH BUTTON ---
 if st.button("Refresh Now"):
@@ -20,8 +24,29 @@ if st.button("Refresh Now"):
 
 # --- LOAD DATA ---
 def load_data():
-    records = worksheet.get_all_records()
-    return pd.DataFrame(records)
+    data1 = worksheet1.get_all_records()
+    data2 = worksheet2.get_all_records()
+
+    df1 = pd.DataFrame(data1)
+    df2 = pd.DataFrame(data2)
+
+    # ✅ Add sheet name column (optional for tracking)
+    if not df1.empty:
+        df1["Source Sheet"] = "Sheet1"
+    if not df2.empty:
+        df2["Source Sheet"] = "Sheet2"
+
+    # Combine both
+    if not df1.empty and not df2.empty:
+        df = pd.concat([df1, df2], ignore_index=True)
+    elif not df1.empty:
+        df = df1
+    elif not df2.empty:
+        df = df2
+    else:
+        df = pd.DataFrame()
+
+    return df
 
 st.title("Manager Transaction Dashboard")
 
@@ -30,7 +55,6 @@ if df.empty:
     st.info("No transactions available yet.")
     st.stop()
 
-# --- FILTER OUT OLD PROCESSED (ONLY LOCALLY) ---
 # --- FILTER OUT OLD PROCESSED (ONLY LOCALLY) ---
 DELETE_AFTER_MINUTES = 5
 if "Timestamp" in df.columns:
@@ -74,19 +98,23 @@ with tab1:
 
                 record_id = row["Record_ID"]
 
+                # ✅ Decide which sheet to update
+                sheet_source = row.get("Source Sheet", "Sheet1")
+                target_ws = worksheet1 if sheet_source == "Sheet1" else worksheet2
+
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("Approve", key=f"approve_{i}"):
-                        cell = worksheet.find(record_id)
+                        cell = target_ws.find(record_id)
                         if cell:
-                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
+                            target_ws.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
                             st.success("Approved successfully!")
                             st.rerun()
                 with col2:
                     if st.button("Decline", key=f"decline_{i}"):
-                        cell = worksheet.find(record_id)
+                        cell = target_ws.find(record_id)
                         if cell:
-                            worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
+                            target_ws.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
                             st.error("Declined successfully!")
                             st.rerun()
 
@@ -96,4 +124,4 @@ with tab2:
     if processed.empty:
         st.info("No processed transactions yet.")
     else:
-        st.dataframe(processed)
+        st.dataframe(processed, use_container_width=True)
