@@ -184,6 +184,71 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
+# -------------------- STATEFUL CHATBOT --------------------
+import langgraph as lg
+from groq import ChatGroq
+
+st.divider()
+st.subheader("Chat with Transaction Assistant")
+
+# --- Initialize session state for chat history ---
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# --- Load today's data ---
+df_today = pd.DataFrame(worksheet.get_all_records())
+if "Timestamp" in df_today.columns:
+    df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
+    today = datetime.now(tz).date()
+    df_today = df_today[df_today["Timestamp"].dt.date == today]
+
+data_today = df_today.to_dict(orient="records")
+
+# --- Initialize Groq LLM ---
+groq_client = ChatGroq(api_key=st.secrets["GROQ_API_KEY"])
+
+# --- LangGraph workflow ---
+def fetch_data():
+    return data_today
+
+def process_query(query, data):
+    prompt = f"""
+You are an assistant for the following transaction data:
+
+{data}
+
+Answer the user's question based on the above data:
+{query}
+"""
+    response = groq_client.chat(
+        model="mixtral-8x7b-32768",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response["choices"][0]["message"]["content"]
+
+workflow = lg.Workflow(
+    nodes=[
+        lg.Node(name="fetch_data", func=fetch_data),
+        lg.Node(name="process_query", func=process_query, inputs=["fetch_data", "query"])
+    ]
+)
+
+# --- Streamlit chat input ---
+user_query = st.text_input("Ask a question:")
+
+if user_query:
+    result = workflow.run(inputs={"query": user_query})
+    answer = result["process_query"]
+
+    # Add to chat history
+    st.session_state.chat_history.append({"user": user_query, "bot": answer})
+
+# --- Display chat history ---
+for chat in st.session_state.chat_history:
+    st.markdown(f"**You:** {chat['user']}")
+    st.markdown(f"**Bot:** {chat['bot']}")
+    st.markdown("---")
+
 
 
 
