@@ -4,5 +4,5 @@ pandas
 requests
 pytz
 uuid
-langchain
 langgraph
+langchain_google_genai
