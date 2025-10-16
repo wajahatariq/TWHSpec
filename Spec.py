@@ -184,9 +184,11 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
-# -------------------- STATEFUL CHATBOT --------------------
+
+
 import langgraph as lg
-from groq import ChatGroq
+from langchain.chat_models import GroqChat
+import pandas as pd
 
 st.divider()
 st.subheader("Chat with Transaction Assistant")
@@ -199,15 +201,18 @@ if "chat_history" not in st.session_state:
 df_today = pd.DataFrame(worksheet.get_all_records())
 if "Timestamp" in df_today.columns:
     df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
-    today = datetime.now(tz).date()
+    today = pd.Timestamp.now(tz).date()
     df_today = df_today[df_today["Timestamp"].dt.date == today]
 
 data_today = df_today.to_dict(orient="records")
 
-# --- Initialize Groq LLM ---
-groq_client = ChatGroq(api_key=st.secrets["GROQ_API_KEY"])
+# --- Initialize Groq LLM via LangChain ---
+llm = GroqChat(
+    api_key=st.secrets["GROQ_API_KEY"],
+    model_name="mixtral-8x7b-32768"
+)
 
-# --- LangGraph workflow ---
+# --- Define LangGraph workflow ---
 def fetch_data():
     return data_today
 
@@ -220,11 +225,8 @@ You are an assistant for the following transaction data:
 Answer the user's question based on the above data:
 {query}
 """
-    response = groq_client.chat(
-        model="mixtral-8x7b-32768",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response["choices"][0]["message"]["content"]
+    response = llm.predict(prompt)
+    return response
 
 workflow = lg.Workflow(
     nodes=[
@@ -248,14 +250,3 @@ for chat in st.session_state.chat_history:
     st.markdown(f"**You:** {chat['user']}")
     st.markdown(f"**Bot:** {chat['bot']}")
     st.markdown("---")
-
-
-
-
-
-
-
-
-
-
-
