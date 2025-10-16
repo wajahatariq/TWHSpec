@@ -1,11 +1,3 @@
-
-spectrum_ws = gc.open(SHEET_NAME).worksheet("Sheet1")
-insurance_ws = gc.open(SHEET_NAME).worksheet("Insurance")
-
-# --- REFRESH BUTTON ---
-if st.button("Refresh Now"):
-    st.rerun()
-
 # --- LOAD DATA FUNCTION ---
 def load_data(ws):
     records = ws.get_all_records()
