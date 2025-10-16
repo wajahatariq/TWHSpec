@@ -184,69 +184,82 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
-
-
-import langgraph as lg
-from langchain.chat_models import GroqChat
 import pandas as pd
+import langgraph as lg
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_google_genai import ChatGoogleGenerativeAI
+from typing import Annotated
+from typing_extensions import TypedDict
 
 st.divider()
-st.subheader("Chat with Transaction Assistant")
+st.subheader("Transaction Assistant Chatbot (Gemini)")
 
-# --- Initialize session state for chat history ---
+# --- 1. Initialize Gemini LLM ---
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")  # or gemini-1.5
+
+# --- 2. Define State ---
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+graph_builder = StateGraph(State)
+
+# --- 3. Tool Node: Fetch Today's Transactions ---
+def fetch_transactions_tool(state: State):
+    df_today = pd.DataFrame(worksheet.get_all_records())
+    if "Timestamp" in df_today.columns:
+        df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
+        today = pd.Timestamp.now().date()
+        df_today = df_today[df_today["Timestamp"].dt.date == today]
+    transactions = df_today.to_dict(orient="records")
+    
+    state["messages"].append(("system", f"Today's transactions: {transactions}"))
+    return {"messages": state["messages"]}
+
+tool_node = ToolNode(func=fetch_transactions_tool)
+graph_builder.add_node("tools", tool_node)
+
+# --- 4. Chatbot Node ---
+def chatbot_node(state: State):
+    response = llm.invoke(state["messages"])
+    state["messages"].append(("assistant", response))
+    return {"messages": state["messages"]}
+
+graph_builder.add_node("chatbot", chatbot_node)
+
+# --- 5. Conditional routing ---
+graph_builder.add_conditional_edges(
+    "chatbot",
+    tools_condition,
+    {"tools": "tools", "__end__": END}
+)
+
+# --- 6. Loop back after tool use ---
+graph_builder.add_edge("tools", "chatbot")
+graph_builder.add_edge(START, "chatbot")
+
+# --- 7. Compile graph ---
+graph = graph_builder.compile()
+
+# --- 8. Streamlit input ---
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# --- Load today's data ---
-df_today = pd.DataFrame(worksheet.get_all_records())
-if "Timestamp" in df_today.columns:
-    df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
-    today = pd.Timestamp.now(tz).date()
-    df_today = df_today[df_today["Timestamp"].dt.date == today]
-
-data_today = df_today.to_dict(orient="records")
-
-# --- Initialize Groq LLM via LangChain ---
-llm = GroqChat(
-    api_key=st.secrets["GROQ_API_KEY"],
-    model_name="mixtral-8x7b-32768"
-)
-
-# --- Define LangGraph workflow ---
-def fetch_data():
-    return data_today
-
-def process_query(query, data):
-    prompt = f"""
-You are an assistant for the following transaction data:
-
-{data}
-
-Answer the user's question based on the above data:
-{query}
-"""
-    response = llm.predict(prompt)
-    return response
-
-workflow = lg.Workflow(
-    nodes=[
-        lg.Node(name="fetch_data", func=fetch_data),
-        lg.Node(name="process_query", func=process_query, inputs=["fetch_data", "query"])
-    ]
-)
-
-# --- Streamlit chat input ---
-user_query = st.text_input("Ask a question:")
+user_query = st.text_input("Ask your transaction question:")
 
 if user_query:
-    result = workflow.run(inputs={"query": user_query})
-    answer = result["process_query"]
+    result = graph.invoke({"messages": [("user", user_query)]})
+    final_answer = result["messages"][-1][1] if isinstance(result["messages"][-1], tuple) else result["messages"][-1]
+    st.session_state.chat_history.append({"user": user_query, "bot": final_answer})
 
-    # Add to chat history
-    st.session_state.chat_history.append({"user": user_query, "bot": answer})
-
-# --- Display chat history ---
+# --- 9. Display chat history ---
 for chat in st.session_state.chat_history:
     st.markdown(f"**You:** {chat['user']}")
     st.markdown(f"**Bot:** {chat['bot']}")
     st.markdown("---")
+
+# --- Optional: Clear Chat Button ---
+if st.button("Clear Chat"):
+    st.session_state.chat_history = []
+    st.success("Chat cleared!")
