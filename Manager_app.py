@@ -16,7 +16,7 @@ SHEET_NAME = "Company_Transactions"
 
 # Access the two worksheets
 spectrum_ws = gc.open(SHEET_NAME).worksheet("Sheet1")
-insurance_ws = gc.open(SHEET_NAME).worksheet("Sheet2")
+insurance_ws = gc.open(SHEET_NAME).worksheet("Insurance")
 
 # --- REFRESH BUTTON ---
 if st.button("Refresh Now"):
