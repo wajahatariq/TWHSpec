@@ -147,7 +147,7 @@ Submitted At: {datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")}
         )
 
         if response.status_code == 200:
-            st.info("Pushbullet notification sent successfully!")
+            st.info("Notification sent successfully!")
         else:
             st.warning(f"Notification failed ({response.status_code}): {response.text}")
 
@@ -183,6 +183,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
