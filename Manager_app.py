@@ -3,6 +3,19 @@ import gspread
 import pandas as pd
 from datetime import datetime, timedelta
 import pytz
+import requests
+
+def send_pushbullet_notification(title, message):
+    try:
+        access_token = st.secrets["pushbullet"]["access_token"]
+        headers = {"Access-Token": access_token, "Content-Type": "application/json"}
+        data = {"type": "note", "title": title, "body": message}
+        response = requests.post("https://api.pushbullet.com/v2/pushes", json=data, headers=headers)
+        if response.status_code != 200:
+            st.warning("Pushbullet notification failed to send.")
+    except Exception as e:
+        st.error(f"Pushbullet error: {e}")
+
 
 # --- CONFIG ---
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
@@ -82,6 +95,10 @@ def render_transaction_tabs(df, worksheet, label):
                     with col1:
                         if st.button("Approve", key=f"approve_{label}_{i}"):
                             worksheet.update_cell(row_number, col_number, "Charged")
+                            send_pushbullet_notification(
+                                "Transaction Approved ✅",
+                                f"{row['Agent Name']} — {row['Charge']} ({row['LLC']}) has been approved."
+                            )
                             st.success("Approved successfully!")
                             st.rerun()
                     with col2:
