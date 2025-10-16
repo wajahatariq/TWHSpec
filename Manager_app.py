@@ -1,17 +1,4 @@
 
-import pytz
-
-# --- CONFIG ---
-st.set_page_config(page_title="Manager Dashboard", layout="wide")
-tz = pytz.timezone("Asia/Karachi")
-
-# --- GOOGLE SHEET SETUP ---
-creds = st.secrets["gcp_service_account"]
-gc = gspread.service_account_from_dict(creds)
-
-SHEET_NAME = "Company_Transactions"
-
-# Access the two worksheets
 spectrum_ws = gc.open(SHEET_NAME).worksheet("Sheet1")
 insurance_ws = gc.open(SHEET_NAME).worksheet("Insurance")
 
