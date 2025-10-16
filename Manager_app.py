@@ -55,9 +55,11 @@ pending = df[df["Status"] == "Pending"]
 processed = df[df["Status"].isin(["Charged", "Declined"])]
 
 # --- MAIN TAB ---
+# --- MAIN TAB ---
 main_tab = st.tabs(["Spectrum"])[0]
 
 with main_tab:
+    # Create nested tabs inside Spectrum
     subtab1, subtab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
 
     # --- PENDING TAB ---
@@ -76,22 +78,20 @@ with main_tab:
                     st.write(f"**Charge:** {row['Charge']}")
 
                     record_id = row["Record_ID"]
+                    row_number = i + 2  # assuming header is first row
+                    col_number = df.columns.get_loc("Status") + 1
 
                     col1, col2 = st.columns(2)
                     with col1:
                         if st.button("Approve", key=f"approve_{i}"):
-                            cell = worksheet.find(record_id)
-                            if cell:
-                                worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Charged")
-                                st.success("Approved successfully!")
-                                st.rerun()
+                            worksheet.update_cell(row_number, col_number, "Charged")
+                            st.success("Approved successfully!")
+                            st.rerun()
                     with col2:
                         if st.button("Decline", key=f"decline_{i}"):
-                            cell = worksheet.find(record_id)
-                            if cell:
-                                worksheet.update_cell(cell.row, df.columns.get_loc("Status") + 1, "Declined")
-                                st.error("Declined successfully!")
-                                st.rerun()
+                            worksheet.update_cell(row_number, col_number, "Declined")
+                            st.error("Declined successfully!")
+                            st.rerun()
 
     # --- PROCESSED TAB ---
     with subtab2:
