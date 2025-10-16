@@ -7,7 +7,7 @@ import requests
 
 def send_pushbullet_notification(title, message):
     try:
-        access_token = st.secrets["pushbullet"]["access_token"]
+        access_token = st.secrets["pushbullet_token"]
         headers = {"Access-Token": access_token, "Content-Type": "application/json"}
         data = {"type": "note", "title": title, "body": message}
         response = requests.post("https://api.pushbullet.com/v2/pushes", json=data, headers=headers)
