@@ -19,9 +19,21 @@ if st.button("Refresh Now"):
     st.rerun()
 
 # --- LOAD DATA ---
+
 def load_data():
-    records = worksheet.get_all_records()
-    return pd.DataFrame(records)
+    # Get both Sheet1 and Sheet2
+    sheet1 = workbook.get_worksheet(0)  # first sheet
+    sheet2 = workbook.get_worksheet(1)  # second sheet
+
+    # Load records from both sheets
+    df1 = pd.DataFrame(sheet1.get_all_records())
+    df2 = pd.DataFrame(sheet2.get_all_records())
+
+    # Combine both (ignore if one is empty)
+    df = pd.concat([df1, df2], ignore_index=True)
+
+    return df
+
 
 st.title("Manager Transaction Dashboard")
 
