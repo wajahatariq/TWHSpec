@@ -97,7 +97,12 @@ def render_transaction_tabs(df, worksheet, label):
                             worksheet.update_cell(row_number, col_number, "Charged")
                             send_pushbullet_notification(
                                 "Transaction Approved ✅",
-                                f"{row['Agent Name']} — {row['Charge']} ({row['LLC']}) ({row['Provider']}) has been approved."
+                                f"""Charge: {row['Charge']}
+                    Client Name: {row['Name']}
+                    Phone Number: {row['Ph Number']}
+                    Address: {row['Address']}
+                    Email: {row['Email']}
+                    Provider: {row['Provider']}"""
                             )
                             st.success("Approved successfully!")
                             st.rerun()
