@@ -17,6 +17,7 @@ worksheet = gc.open(SHEET_NAME).sheet1
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
+PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "AT&T", "Xfinity"]
 
 def clear_form():
     st.session_state.agent_name = "Select Agent"
@@ -30,6 +31,7 @@ def clear_form():
     st.session_state.cvc = 0
     st.session_state.charge = ""
     st.session_state.llc = "Select LLC"
+    st.session_state.provider = "Select Provider"
     st.session_state.date_of_charge = datetime.now().date()
     st.rerun()
     st.success("Form cleared!")
@@ -61,6 +63,7 @@ with st.form("transaction_form"):
         cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, key="cvc")
         charge = st.text_input("Charge Amount", key="charge")
         llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
+        provider = st.selectbox("Provider", PROVIDERS, key="provider")
         date_of_charge = st.date_input("Date of Charge", key="date_of_charge", value=datetime.now().date())
 
 
@@ -80,7 +83,8 @@ if submitted:
     if not expiry: missing_fields.append("Expiry Date")
     if not charge: missing_fields.append("Charge Amount")
     if llc == "Select LLC": missing_fields.append("LLC")
-
+    if provider == "Select Provider": missing_fields.append("Provider")
+        
     if missing_fields:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
@@ -124,6 +128,7 @@ Expiry: {expiry}
 CVC: {cvc}
 
 LLC: {llc}
+Provider: {provider}
 Date of Charge: {date_of_charge.strftime("%Y-%m-%d")}
 Submitted At: {datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")}
 """
@@ -178,6 +183,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
 
 
 
