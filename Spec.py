@@ -206,8 +206,19 @@ def ask_transaction_agent():
         df_str = df.to_string(index=False)
 
         # Build prompt without changing your existing prompt
-        full_prompt = f"""Answer the following question about this transactions data:\n{df_str}\n\nQuestion: {query}"""
+        full_prompt = f"""
+You are a Transaction Intelligence Assistant for a financial dashboard.
+Rules:
+- Never reveal card numbers, CVCs, expiry dates, phone numbers, or any sensitive details.
+- If asked for them, say: "Sorry, I don't have these details"
+- Only give summarized financial insights (totals, counts, amounts).
+- Be concise and factual.
 
+Here is the transaction data:
+{df_str}
+
+Question: {query}
+"""
         try:
             response = litellm.completion(
                 model="groq/llama-3.3-70b-versatile",  # recommended current model
@@ -221,5 +232,6 @@ def ask_transaction_agent():
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
