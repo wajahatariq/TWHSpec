@@ -188,6 +188,7 @@ except Exception as e:
 # --- Ask Transaction Agent ---
 def ask_transaction_agent():
     import litellm
+    import json
 
     st.subheader("Ask Your Analysis Agent")
     query = st.text_input("Ask a question about your performance")
@@ -213,7 +214,7 @@ def ask_transaction_agent():
             # --- Parse Timestamp ---
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce").dt.tz_localize(None)
 
-            # --- Successful transactions only ---
+            # --- Only successful transactions ---
             success_status = r"\b(charged|completed|done|success|paid)\b"
             charged_df = df[df["Status"].str.lower().str.contains(success_status, regex=True, na=False)]
 
@@ -221,132 +222,67 @@ def ask_transaction_agent():
                 st.warning("No successful transactions found.")
                 return
 
-            # --- Time definitions ---
-            now = datetime.now(tz).replace(tzinfo=None)
-            today_start = datetime(now.year, now.month, now.day)
+            # --- Time calculations ---
+            tz_now = datetime.now(tz).replace(tzinfo=None)
+            today_start = datetime(tz_now.year, tz_now.month, tz_now.day)
             today_end = today_start + timedelta(days=1)
             yesterday_start = today_start - timedelta(days=1)
             yesterday_end = today_start
-            week_start = now - timedelta(days=7)
+            week_start = tz_now - timedelta(days=7)
 
-            # --- Today / Yesterday / Weekly ---
-            today_revenue = charged_df[
-                (charged_df["Timestamp"] >= today_start) & (charged_df["Timestamp"] < today_end)
-            ]["Charge"].sum()
-
-            yesterday_revenue = charged_df[
-                (charged_df["Timestamp"] >= yesterday_start) & (charged_df["Timestamp"] < yesterday_end)
-            ]["Charge"].sum()
-
+            today_revenue = charged_df[(charged_df["Timestamp"] >= today_start) & (charged_df["Timestamp"] < today_end)]["Charge"].sum()
+            yesterday_revenue = charged_df[(charged_df["Timestamp"] >= yesterday_start) & (charged_df["Timestamp"] < yesterday_end)]["Charge"].sum()
             weekly_revenue = charged_df[charged_df["Timestamp"] >= week_start]["Charge"].sum()
 
-            # --- Custom month (15th → 15th) ---
-            if now.day >= 15:
-                custom_month_start = datetime(now.year, now.month, 15)
-                custom_month_end = datetime(now.year, now.month + 1 if now.month < 12 else 1, 14)
-                if now.month == 12:
-                    custom_month_end = datetime(now.year + 1, 1, 14)
+            # --- Custom month 15th → 14th ---
+            if tz_now.day >= 15:
+                custom_start = datetime(tz_now.year, tz_now.month, 15)
+                custom_end_month = tz_now.month + 1 if tz_now.month < 12 else 1
+                custom_end_year = tz_now.year if tz_now.month < 12 else tz_now.year + 1
+                custom_end = datetime(custom_end_year, custom_end_month, 14)
             else:
-                # before 15th, month is 15th previous month → 14th current
-                prev_month = now.month - 1 if now.month > 1 else 12
-                prev_year = now.year if now.month > 1 else now.year - 1
-                custom_month_start = datetime(prev_year, prev_month, 15)
-                custom_month_end = datetime(now.year, now.month, 14)
+                prev_month = tz_now.month - 1 if tz_now.month > 1 else 12
+                prev_year = tz_now.year if tz_now.month > 1 else tz_now.year - 1
+                custom_start = datetime(prev_year, prev_month, 15)
+                custom_end = datetime(tz_now.year, tz_now.month, 14)
 
-            monthly_df = charged_df[
-                (charged_df["Timestamp"].dt.date >= custom_month_start.date()) &
-                (charged_df["Timestamp"].dt.date <= custom_month_end.date())
-            ]
+            monthly_df = charged_df[(charged_df["Timestamp"].dt.date >= custom_start.date()) &
+                                    (charged_df["Timestamp"].dt.date <= custom_end.date())]
             custom_month_revenue = monthly_df["Charge"].sum()
             custom_month_transactions = len(monthly_df)
             custom_month_average = monthly_df["Charge"].mean() if not monthly_df.empty else 0
 
-            # --- Daily revenue summary ---
-            daily_revenue = charged_df.groupby(charged_df["Timestamp"].dt.date)["Charge"].sum().to_dict()
+            # --- Agent-wise summary with numeric values ---
+            agents_df = charged_df.groupby("Agent Name")["Charge"].agg(["count", "sum"])
+            agents_summary = agents_df.apply(lambda row: {"count": int(row["count"]), "sum": float(row["sum"])}, axis=1).to_dict()
 
-            # --- Agents summary ---
-            agents_summary = (
-                charged_df.groupby("Agent Name")["Charge"]
-                .agg(["count", "sum"])
-                .sort_values("sum", ascending=False)
-                .to_dict("index")
-            )
+            # --- Build JSON for LLM ---
+            compact_data = charged_df[["Record_ID","Agent Name","Name","Charge","LLC","Provider","Status","Timestamp"]].to_dict(orient="records")
+            compact_json = json.dumps(compact_data, default=str)
 
-            # --- Compact context for AI ---
-            compact_data = charged_df[
-                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Timestamp"]
-            ].to_dict(orient="records")
-
-            current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
-
-            # --- Build prompt ---
             prompt = f"""
-You are an Ask Transaction Agent. You are given a dataset of transactions in JSON format. Each transaction contains the following fields:
+You are an Ask Transaction Agent. You are given a dataset of transactions in JSON format:
 
-- Record_ID
-- Agent Name
-- Name
-- Ph Number
-- Address
-- Email
-- Card Holder Name
-- Card Number
-- Expiry Date
-- CVC
-- Charge
-- LLC
-- Provider
-- Date of Charge (YYYY-MM-DD)
-- Status (Charged / Declined)
-- Timestamp (ISO 8601)
+{compact_json}
 
-The rules for your analysis are:
-
+Rules:
 1. Only consider transactions where Status = "Charged" unless explicitly asked otherwise.
-2. The custom month runs from the 15th of the month to the 14th of the next month.
-3. You must be able to compute:
-   - Revenue for today
-   - Revenue for yesterday
-   - Weekly revenue
-   - Custom month revenue
-   - Total transactions for any period
-   - Average charge per transaction
-   - Agent-wise total charges and counts
-4. You must parse and filter timestamps correctly for daily, weekly, or custom month calculations.
-5. All outputs should be in JSON format for structured use, e.g.:
+2. Custom month runs 15th → 14th.
+3. Compute today, yesterday, weekly, and custom month revenue, total transactions, average charge, agent-wise totals.
+4. Respond strictly in JSON format:
 
 {
-  "today_revenue": 0,
-  "yesterday_revenue": 340,
-  "weekly_revenue": 1850,
-  "custom_month_start": "2025-10-15",
-  "custom_month_end": "2025-11-14",
-  "custom_month_revenue": 1487,
-  "custom_month_transactions": 18,
-  "custom_month_average": 82.61,
-  "agents": {
-    "Arham Ali": {"count": 7, "sum": 810},
-    "Haziq": {"count": 10, "sum": 785},
-    "Arham Kaleem": {"count": 4, "sum": 255}
-  }
+  "today_revenue": {today_revenue},
+  "yesterday_revenue": {yesterday_revenue},
+  "weekly_revenue": {weekly_revenue},
+  "custom_month_start": "{custom_start.date()}",
+  "custom_month_end": "{custom_end.date()}",
+  "custom_month_revenue": {custom_month_revenue},
+  "custom_month_transactions": {custom_month_transactions},
+  "custom_month_average": {custom_month_average},
+  "agents": {json.dumps(agents_summary)}
 }
-
-6. Your responses must be accurate based on the JSON data provided.
-7. You can handle queries like:
-   - "How much did we score today?"
-   - "Show agent-wise totals for this month."
-   - "List all transactions after 15th that were charged."
-
-Now, here is the JSON dataset to analyze:
-
-[PASTE YOUR JSON DATA HERE]
-
-Answer all questions strictly based on this JSON dataset.
-Output all results in JSON format as shown above.
 """
-            json_data = df[["Record_ID","Agent Name","Name","Charge","LLC","Provider","Status","Timestamp"]].to_dict(orient="records")
-            json_str = json.dumps(json_data)  # this produces valid JSON
-            prompt = prompt.replace("[PASTE YOUR JSON DATA HERE]", json_str)
 
             with st.spinner("Analyzing your performance..."):
                 response = litellm.completion(
@@ -364,8 +300,3 @@ Output all results in JSON format as shown above.
             st.error(f"Error while analyzing data: {e}")
 
 ask_transaction_agent()
-
-
-
-
-
