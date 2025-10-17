@@ -184,88 +184,47 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
-import pandas as pd
-import langgraph as lg
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.tools.base import BaseTool
-from typing import Annotated
-from typing_extensions import TypedDict
+# --- Ask Transaction Agent ---
+import litellm
 
 st.divider()
-st.subheader("Transaction Assistant Chatbot (Gemini)")
+st.subheader("Ask Transaction Agent")
 
-# --- 1. Initialize Gemini LLM ---
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")  # or gemini-1.5
+user_query = st.text_input("Ask a question about transactions:")
 
-# --- 2. Define State ---
-class State(TypedDict):
-    messages: Annotated[list, add_messages]
+if st.button("Get Answer"):
+    try:
+        # Load all data
+        df = pd.DataFrame(worksheet.get_all_records())
 
-graph_builder = StateGraph(State)
+        # Optional: limit to last X rows or recent timestamps
+        if "Timestamp" in df.columns:
+            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+            recent_cutoff = datetime.now(tz) - timedelta(days=7)  # last 7 days
+            df = df[df["Timestamp"] >= recent_cutoff]
 
-# --- 3. Custom Tool to fetch today's transactions ---
-class FetchTodayTransactionsTool(BaseTool):
-    name = "fetch_today_transactions"
-    description = "Fetches today's Google Sheet transactions."
+        # Prepare the prompt
+        full_prompt = f"""You are a financial transactions assistant. 
+        Use the following transaction data to answer the user's question.
+        Data: {df.to_string(index=False)}
+        
+        Question: {user_query}
+        """
 
-    def _run(self, query: str):
-        df_today = pd.DataFrame(worksheet.get_all_records())
-        if "Timestamp" in df_today.columns:
-            df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
-            today = pd.Timestamp.now().date()
-            df_today = df_today[df_today["Timestamp"].dt.date == today]
-        transactions = df_today.to_dict(orient="records")
-        return f"Today's transactions: {transactions}"
+        # Call Groq via litellm
+        response = litellm.completion(
+            model="groq/llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "You are an expert transaction assistant."},
+                {"role": "user", "content": full_prompt}
+            ],
+            api_key=st.secrets["GROQ"]["GROQ_API_KEY"]
+        )
 
-# --- 4. Tool Node ---
-fetch_tool = FetchTodayTransactionsTool()
-tool_node = ToolNode(tools=[fetch_tool])
-graph_builder.add_node("tools", tool_node)
+        # Display answer
+        answer = response['choices'][0]['message']['content']
+        st.success(answer)
 
-# --- 5. Chatbot Node ---
-def chatbot_node(state: State):
-    response = llm.invoke(state["messages"])
-    state["messages"].append(("assistant", response))
-    return {"messages": state["messages"]}
-
-graph_builder.add_node("chatbot", chatbot_node)
-
-# --- 6. Conditional routing ---
-graph_builder.add_conditional_edges(
-    "chatbot",
-    tools_condition,
-    {"tools": "tools", "__end__": END}
-)
-
-# --- 7. Loop back after tool use ---
-graph_builder.add_edge("tools", "chatbot")
-graph_builder.add_edge(START, "chatbot")
-
-# --- 8. Compile graph ---
-graph = graph_builder.compile()
-
-# --- 9. Streamlit input ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
-user_query = st.text_input("Ask your transaction question:")
-
-if user_query:
-    result = graph.invoke({"messages": [("user", user_query)]})
-    final_answer = result["messages"][-1][1] if isinstance(result["messages"][-1], tuple) else result["messages"][-1]
-    st.session_state.chat_history.append({"user": user_query, "bot": final_answer})
-
-# --- 10. Display chat history ---
-for chat in st.session_state.chat_history:
-    st.markdown(f"**You:** {chat['user']}")
-    st.markdown(f"**Bot:** {chat['bot']}")
-    st.markdown("---")
-
-# --- Optional: Clear Chat Button ---
-if st.button("Clear Chat"):
-    st.session_state.chat_history = []
-    st.success("Chat cleared!")
+    except Exception as e:
+        st.error(f"Error: {e}")
 
