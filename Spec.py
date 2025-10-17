@@ -233,9 +233,18 @@ Current system time: {current_time}
    - Count of charged vs declined
    - Average charge per successful transaction
    - Highest-performing agent or provider
-7. Never fabricate or assume data that isn't present in the dataset.
-8. Always show the **final summarized result only or steps** — no explanation of how you got it.
-9. If the question cannot be answered from the provided dataset, politely state that.
+6. When the user asks about totals, revenue, or agent performance:
+   - Along with the total, include a clear breakdown (list) of each client and their corresponding charge amount that contributed to the total.
+   - Example:  
+     Total revenue for Arham Ali: $540  
+     Clients included:  
+       - Mary Nunez — $60  
+       - James Cones — $60  
+       - Garry Givens — $160  
+       - David Stewart — $95  
+6. Never fabricate or assume data that isn't present in the dataset.
+7. Always show the **final summarized result only or steps** — no explanation of how you got it.
+8. If the question cannot be answered from the provided dataset, politely state that.
 
 -----------------------------
 ### OUR DATA:
@@ -246,7 +255,8 @@ Current system time: {current_time}
 {query}
 
 -----------------------------
-Now, based on the data and the above rules, provide a precise, final analytical answer.
+Now, based on the data, the current system time ({current_time}), and the above rules,
+provide a precise, final analytical answer.
 """
 
         try:
@@ -262,6 +272,7 @@ Now, based on the data and the above rules, provide a precise, final analytical 
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
 
