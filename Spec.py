@@ -201,26 +201,25 @@ def ask_transaction_agent():
 
             df = pd.DataFrame(records)
 
-            required_cols = {"Timestamp", "Charge", "Status", "Agent Name"}
+            required_cols = {"Date of Charge", "Charge", "Status", "Agent Name"}
             if not required_cols.issubset(df.columns):
                 st.error(f"Missing required columns: {required_cols - set(df.columns)}")
                 return
 
-            # --- Clean timestamps ---
-            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-            df = df.dropna(subset=["Timestamp"])
+            # --- Parse Date of Charge ---
+            df["Date of Charge"] = pd.to_datetime(df["Date of Charge"], errors="coerce").dt.date
+            df = df.dropna(subset=["Date of Charge"])
 
-            # --- Filter last 7 days for recency ---
-            now = pd.Timestamp.now(tz)
-            week_ago = now - pd.Timedelta(days=7)
-            df = df[(df["Timestamp"] >= week_ago) & (df["Timestamp"] <= now)]
+            # --- Filter last 7 days only ---
+            now = datetime.now(tz).date()
+            week_ago = now - timedelta(days=7)
+            df = df[(df["Date of Charge"] >= week_ago) & (df["Date of Charge"] <= now)]
 
             if df.empty:
                 st.info("No transactions found in the last 7 days.")
                 return
 
-            # --- Clean charge column ---
-            # Remove dollar signs and commas before converting
+            # --- Clean charge values ---
             df["Charge"] = (
                 df["Charge"]
                 .astype(str)
@@ -239,8 +238,7 @@ def ask_transaction_agent():
                 return
 
             # --- Summaries ---
-            charged_df["Date"] = charged_df["Timestamp"].dt.date
-            daily_revenue = charged_df.groupby("Date")["Charge"].sum().to_dict()
+            daily_revenue = charged_df.groupby("Date of Charge")["Charge"].sum().to_dict()
 
             summary = {
                 "total_revenue": round(float(charged_df["Charge"].sum()), 2),
@@ -256,7 +254,7 @@ def ask_transaction_agent():
             }
 
             compact_data = charged_df[
-                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Date"]
+                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Date of Charge"]
             ].to_dict(orient="records")
 
             current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
@@ -277,7 +275,7 @@ Current system time: {current_time}
 
 Instructions:
 - Use only the above summary for numeric answers.
-- For date-specific queries (like "yesterday"), use the current time.
+- For date-specific queries (like "yesterday"), use the 'Date of Charge' values.
 - For agent performance (e.g., Haziq), use 'agents' and 'daily_revenue'.
 - Be concise, numeric, and accurate.
 """
@@ -296,5 +294,5 @@ Instructions:
 
         except Exception as e:
             st.error(f"Error while analyzing data: {e}")
-
 ask_transaction_agent()
+
