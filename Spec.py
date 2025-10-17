@@ -280,36 +280,68 @@ def ask_transaction_agent():
 
             # --- Build prompt ---
             prompt = f"""
-You are a financial analytics assistant.
+You are an Ask Transaction Agent. You are given a dataset of transactions in JSON format. Each transaction contains the following fields:
 
-Current system time: {current_time}
+- Record_ID
+- Agent Name
+- Name
+- Ph Number
+- Address
+- Email
+- Card Holder Name
+- Card Number
+- Expiry Date
+- CVC
+- Charge
+- LLC
+- Provider
+- Date of Charge (YYYY-MM-DD)
+- Status (Charged / Declined)
+- Timestamp (ISO 8601)
 
-### Transaction Summary (accurately pre-calculated)
-total_revenue: {charged_df['Charge'].sum()}
-total_transactions: {len(charged_df)}
-average_charge: {round(charged_df['Charge'].mean(), 2)}
-today_revenue: {today_revenue}
-yesterday_revenue: {yesterday_revenue}
-weekly_revenue: {weekly_revenue}
-custom_month_start: {custom_month_start.strftime("%Y-%m-%d")}
-custom_month_end: {custom_month_end.strftime("%Y-%m-%d")}
-custom_month_revenue: {custom_month_revenue}
-custom_month_transactions: {custom_month_transactions}
-custom_month_average: {round(custom_month_average, 2)}
-daily_revenue: {daily_revenue}
-agents: {agents_summary}
+The rules for your analysis are:
 
-### Raw Context (for reference)
-{compact_data}
+1. Only consider transactions where Status = "Charged" unless explicitly asked otherwise.
+2. The custom month runs from the 15th of the month to the 14th of the next month.
+3. You must be able to compute:
+   - Revenue for today
+   - Revenue for yesterday
+   - Weekly revenue
+   - Custom month revenue
+   - Total transactions for any period
+   - Average charge per transaction
+   - Agent-wise total charges and counts
+4. You must parse and filter timestamps correctly for daily, weekly, or custom month calculations.
+5. All outputs should be in JSON format for structured use, e.g.:
 
-### User Question
-{query}
+{
+  "today_revenue": 0,
+  "yesterday_revenue": 340,
+  "weekly_revenue": 1850,
+  "custom_month_start": "2025-10-15",
+  "custom_month_end": "2025-11-14",
+  "custom_month_revenue": 1487,
+  "custom_month_transactions": 18,
+  "custom_month_average": 82.61,
+  "agents": {
+    "Arham Ali": {"count": 7, "sum": 810},
+    "Haziq": {"count": 10, "sum": 785},
+    "Arham Kaleem": {"count": 4, "sum": 255}
+  }
+}
 
-Instructions:
-- Use only the above summary for numeric answers.
-- For date-specific queries (like "today" or "yesterday"), use 'Timestamp'.
-- For agent performance, use 'agents' and 'daily_revenue'.
-- Be concise, numeric, and accurate.
+6. Your responses must be accurate based on the JSON data provided.
+7. You can handle queries like:
+   - "How much did we score today?"
+   - "Show agent-wise totals for this month."
+   - "List all transactions after 15th that were charged."
+
+Now, here is the JSON dataset to analyze:
+
+[PASTE YOUR JSON DATA HERE]
+
+Answer all questions strictly based on this JSON dataset.
+Output all results in JSON format as shown above.
 """
 
             with st.spinner("Analyzing your performance..."):
@@ -328,4 +360,5 @@ Instructions:
             st.error(f"Error while analyzing data: {e}")
 
 ask_transaction_agent()
+
 
