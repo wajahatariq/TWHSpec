@@ -219,3 +219,4 @@ def ask_transaction_agent():
             st.success(response['choices'][0]['message']['content'])
         except Exception as e:
             st.error(f"Error: {e}")
+ask_transaction_agent()
