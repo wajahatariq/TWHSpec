@@ -214,11 +214,12 @@ def ask_transaction_agent():
                 messages=[
                     {"role": "system", "content": "You are a transaction expert."},
                     {"role": "user", "content": full_prompt}
-                ]
+                ],
                 api_key=st.secrets["GROQ_API_KEY"]
             )
             st.success(response['choices'][0]['message']['content'])
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
