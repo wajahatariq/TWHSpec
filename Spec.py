@@ -203,6 +203,9 @@ def ask_transaction_agent():
 
         # Convert filtered df to string for LLM
         df_str = df.to_string(index=False)
+        # Current localized timestamp (Asia/Karachi)
+        current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+
 
         # Build prompt without changing your existing prompt
         full_prompt = f"""
@@ -211,6 +214,7 @@ from a client management system. The dataset represents transactions recorded by
 and includes key fields like Agent Name, Charge Amount, Status (Charged, Declined, Pending), LLC, 
 Provider, and Timestamp.
 
+Current system time: {current_time}
 -----------------------------
 ### RULES & GUIDELINES
 1. Always base your analysis purely on the data provided below in 'Our data:'.
@@ -258,5 +262,6 @@ Now, based on the data and the above rules, provide a precise, final analytical 
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
