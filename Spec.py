@@ -202,13 +202,13 @@ def ask_transaction_agent():
         # Ensure Charge is numeric
         df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
         df = df[df["Status"].str.lower() == "charged"]  # only successful transactions
-
-        # Prepare simple stats first
+        
         summary = {}
         if not df.empty:
             summary["total_revenue"] = df["Charge"].sum()
             summary["total_transactions"] = len(df)
-            summary["average_charge"] = df["Charge"].mean().round(2)
+            mean_charge = df["Charge"].mean()
+            summary["average_charge"] = round(mean_charge, 2) if pd.notnull(mean_charge) else 0
             summary["agents"] = (
                 df.groupby("Agent Name")["Charge"]
                 .agg(["count", "sum"])
@@ -258,6 +258,7 @@ Now, based on the summary and data:
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
 
