@@ -185,10 +185,11 @@ except Exception as e:
     st.error(f"Error loading data: {e}")
 
 # --- Ask Transaction Agent ---
+# --- Ask Transaction Agent ---
 import litellm
 
 st.divider()
-st.subheader("Ask Transaction Agent")
+st.subheader("Ask Transaction Agent (Groq)")
 
 user_query = st.text_input("Ask a question about transactions:")
 
@@ -197,11 +198,14 @@ if st.button("Get Answer"):
         # Load all data
         df = pd.DataFrame(worksheet.get_all_records())
 
-        # Optional: limit to last X rows or recent timestamps
         if "Timestamp" in df.columns:
-            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-            recent_cutoff = datetime.now(tz) - timedelta(days=7)  # last 7 days
-            df = df[df["Timestamp"] >= recent_cutoff]
+            # Convert to datetime, remove tzinfo
+            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce").dt.tz_localize(None)
+
+            # Filter last 1 day
+            now_naive = datetime.now(tz).replace(tzinfo=None)
+            yesterday = now_naive - timedelta(days=1)
+            df = df[df["Timestamp"] >= yesterday]
 
         # Prepare the prompt
         full_prompt = f"""You are a financial transactions assistant. 
@@ -227,4 +231,3 @@ if st.button("Get Answer"):
 
     except Exception as e:
         st.error(f"Error: {e}")
-
