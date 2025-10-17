@@ -186,50 +186,36 @@ except Exception as e:
 
 # --- Ask Transaction Agent ---
 # --- Ask Transaction Agent ---
-import litellm
+def ask_transaction_agent():
+    import litellm
+    st.subheader("Ask Transaction Agent (Groq)")
 
-st.divider()
-st.subheader("Ask Transaction Agent (Groq)")
+    query = st.text_input("Ask a question about transactions:")
 
-user_query = st.text_input("Ask a question about transactions:")
-
-if st.button("Get Answer"):
-    try:
-        # Load all data
+    if st.button("Get Answer"):
+        # Load full data
         df = pd.DataFrame(worksheet.get_all_records())
 
+        # Filter only this month's data
         if "Timestamp" in df.columns:
-            # Convert to datetime, remove tzinfo
-            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce").dt.tz_localize(None)
+            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+            now = pd.Timestamp.now()
+            df = df[(df["Timestamp"].dt.year == now.year) & (df["Timestamp"].dt.month == now.month)]
 
-            # Filter last 1 day
-            now_naive = datetime.now(tz).replace(tzinfo=None)
-            yesterday = now_naive - timedelta(days=1)
-            df = df[df["Timestamp"] >= yesterday]
+        # Convert filtered df to string for LLM
+        df_str = df.to_string(index=False)
 
-        # Prepare the prompt
-        full_prompt = f"""You are a financial transactions assistant. 
-        Use the following transaction data to answer the user's question.
-        Data: {df.to_string(index=False)}
-        
-        Question: {user_query}
-        """
+        # Build prompt without changing your existing prompt
+        full_prompt = f"""Answer the following question about this transactions data:\n{df_str}\n\nQuestion: {query}"""
 
-        # Call Groq via litellm
-        response = litellm.completion(
-            model="groq/llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "You are an expert transaction assistant."},
-                {"role": "user", "content": full_prompt}
-            ],
-            api_key=st.secrets["GROQ"]["GROQ_API_KEY"]
-        )
-
-        # Display answer
-        answer = response['choices'][0]['message']['content']
-        st.success(answer)
-
-    except Exception as e:
-        st.error(f"Error: {e}")
-
-
+        try:
+            response = litellm.completion(
+                model="groq/llama-3.3-70b-versatile",  # recommended current model
+                messages=[
+                    {"role": "system", "content": "You are a transaction expert."},
+                    {"role": "user", "content": full_prompt}
+                ]
+            )
+            st.success(response['choices'][0]['message']['content'])
+        except Exception as e:
+            st.error(f"Error: {e}")
