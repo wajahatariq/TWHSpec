@@ -184,3 +184,88 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
+import pandas as pd
+import langgraph as lg
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.tools.base import BaseTool
+from typing import Annotated
+from typing_extensions import TypedDict
+
+st.divider()
+st.subheader("Transaction Assistant Chatbot (Gemini)")
+
+# --- 1. Initialize Gemini LLM ---
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")  # or gemini-1.5
+
+# --- 2. Define State ---
+class State(TypedDict):
+    messages: Annotated[list, add_messages]
+
+graph_builder = StateGraph(State)
+
+# --- 3. Custom Tool to fetch today's transactions ---
+class FetchTodayTransactionsTool(BaseTool):
+    name = "fetch_today_transactions"
+    description = "Fetches today's Google Sheet transactions."
+
+    def _run(self, query: str):
+        df_today = pd.DataFrame(worksheet.get_all_records())
+        if "Timestamp" in df_today.columns:
+            df_today["Timestamp"] = pd.to_datetime(df_today["Timestamp"])
+            today = pd.Timestamp.now().date()
+            df_today = df_today[df_today["Timestamp"].dt.date == today]
+        transactions = df_today.to_dict(orient="records")
+        return f"Today's transactions: {transactions}"
+
+# --- 4. Tool Node ---
+fetch_tool = FetchTodayTransactionsTool()
+tool_node = ToolNode(tools=[fetch_tool])
+graph_builder.add_node("tools", tool_node)
+
+# --- 5. Chatbot Node ---
+def chatbot_node(state: State):
+    response = llm.invoke(state["messages"])
+    state["messages"].append(("assistant", response))
+    return {"messages": state["messages"]}
+
+graph_builder.add_node("chatbot", chatbot_node)
+
+# --- 6. Conditional routing ---
+graph_builder.add_conditional_edges(
+    "chatbot",
+    tools_condition,
+    {"tools": "tools", "__end__": END}
+)
+
+# --- 7. Loop back after tool use ---
+graph_builder.add_edge("tools", "chatbot")
+graph_builder.add_edge(START, "chatbot")
+
+# --- 8. Compile graph ---
+graph = graph_builder.compile()
+
+# --- 9. Streamlit input ---
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+user_query = st.text_input("Ask your transaction question:")
+
+if user_query:
+    result = graph.invoke({"messages": [("user", user_query)]})
+    final_answer = result["messages"][-1][1] if isinstance(result["messages"][-1], tuple) else result["messages"][-1]
+    st.session_state.chat_history.append({"user": user_query, "bot": final_answer})
+
+# --- 10. Display chat history ---
+for chat in st.session_state.chat_history:
+    st.markdown(f"**You:** {chat['user']}")
+    st.markdown(f"**Bot:** {chat['bot']}")
+    st.markdown("---")
+
+# --- Optional: Clear Chat Button ---
+if st.button("Clear Chat"):
+    st.session_state.chat_history = []
+    st.success("Chat cleared!")
+
