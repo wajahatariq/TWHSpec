@@ -185,28 +185,42 @@ except Exception as e:
     st.error(f"Error loading data: {e}")
 
 # --- Ask Transaction Agent ---
-# --- Ask Transaction Agent ---
 def ask_transaction_agent():
     import litellm
     st.subheader("Ask your Analysis Agent")
 
     query = st.text_input("Ask a question about your performance")
+
     if st.button("Get Answer"):
         df = pd.DataFrame(worksheet.get_all_records())
 
+        # Ensure Timestamp exists and convert it
         if "Timestamp" in df.columns:
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-            now = pd.Timestamp.now()
+            now = pd.Timestamp.now(tz)
             df = df[(df["Timestamp"].dt.year == now.year) & (df["Timestamp"].dt.month == now.month)]
+        else:
+            st.warning("No 'Timestamp' column found in sheet.")
+            return
 
         # Ensure Charge is numeric
         df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
-        df = df[df["Status"].str.lower() == "charged"]  # only successful transactions
-        
+
+        # Only include successful transactions
+        df = df[df["Status"].str.lower() == "charged"]
+
+        # --- DAILY BREAKDOWN ---
+        if not df.empty:
+            df["Date"] = df["Timestamp"].dt.date
+            daily_summary = df.groupby("Date")["Charge"].sum().to_dict()
+        else:
+            daily_summary = {}
+
+        # --- AGGREGATE SUMMARY ---
         summary = {}
         if not df.empty:
-            summary["total_revenue"] = df["Charge"].sum()
-            summary["total_transactions"] = len(df)
+            summary["total_revenue"] = float(df["Charge"].sum())
+            summary["total_transactions"] = int(len(df))
             mean_charge = df["Charge"].mean()
             summary["average_charge"] = round(mean_charge, 2) if pd.notnull(mean_charge) else 0
             summary["agents"] = (
@@ -215,37 +229,41 @@ def ask_transaction_agent():
                 .sort_values("sum", ascending=False)
                 .to_dict("index")
             )
+            summary["daily_revenue"] = daily_summary
         else:
             summary["note"] = "No charged transactions found this month."
 
         # Compact dataset for LLM
         compact_data = df[["Agent Name", "Name", "Charge", "LLC", "Provider", "Status"]].to_dict(orient="records")
 
-
+        # --- Current Time ---
         current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 
+        # --- LLM Prompt ---
         prompt = f"""
-You are a Data Analytics Assistant.
-Below is the summary of company transactions that Python has already calculated accurately.
+You are a Data Analytics Assistant helping analyze company transaction performance.
 
-Current time: {current_time}
+Current system time: {current_time}
 
-### Dataset Summary:
+### Dataset Summary (already calculated accurately by Python):
 {summary}
 
-### Raw Records (for context, not calculation):
+### Raw Records (for context only, not for recalculation):
 {compact_data}
 
 ### User Question:
 {query}
 
-Now, based on the summary and data:
-- Provide a clear, numeric answer to the user's question.
-- Do **not** recompute totals yourself; use the summary as ground truth.
-- If the question involves trends, comparisons, or rankings, refer to the summary data.
-- Be concise and precise.
+Now, based on the summary above:
+- Use **summary['daily_revenue']** to answer daily or date-specific questions.
+- Use **summary['agents']** to answer per-agent performance questions.
+- Use **summary['total_revenue']**, **summary['average_charge']**, and **summary['total_transactions']** for overall stats.
+- Do **not** recompute totals yourself.
+- If the question asks for "yesterday" or "today", use the current system date ({current_time}) to determine that.
+- Provide a clear, numeric, and concise answer.
 """
 
+        # --- Send to Groq ---
         try:
             response = litellm.completion(
                 model="groq/llama-3.3-70b-versatile",
@@ -255,15 +273,11 @@ Now, based on the summary and data:
                 ],
                 api_key=st.secrets["GROQ_API_KEY"]
             )
+
+            # Display cleanly
             st.success(response['choices'][0]['message']['content'])
+
         except Exception as e:
             st.error(f"Error: {e}")
+
 ask_transaction_agent()
-
-
-
-
-
-
-
-
