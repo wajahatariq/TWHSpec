@@ -219,7 +219,8 @@ def ask_transaction_agent():
             summary["note"] = "No charged transactions found this month."
 
         # Compact dataset for LLM
-        compact_data = df[["Agent Name", "Client Name", "Charge", "LLC", "Provider", "Status"]].to_dict(orient="records")
+        compact_data = df[["Agent Name", "Name", "Charge", "LLC", "Provider", "Status"]].to_dict(orient="records")
+
 
         current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 
@@ -258,6 +259,7 @@ Now, based on the summary and data:
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
 
