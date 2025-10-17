@@ -219,7 +219,7 @@ Current system time: {current_time}
 ### RULES & GUIDELINES
 1. Always base your analysis purely on the data provided below in 'Our data:'.
 2. Do **not** reveal or reference any sensitive financial information such as:
-   - Card numbers, expiry dates, or CVC codes.
+   - Card numbers, expiry dates, or CVC codes or RecordID
 3. Treat "Declined" or "Pending" transactions as **not successfully charged**.
    - Only rows with Status = "Charged" should count toward total sales, revenue, or agent performance.
    - Declined or Pending charges should be excluded from revenue totals and averages.
@@ -234,7 +234,7 @@ Current system time: {current_time}
    - Average charge per successful transaction
    - Highest-performing agent or provider
 7. Never fabricate or assume data that isn't present in the dataset.
-8. Always show the **final summarized result only** — no reasoning steps or explanation of how you got it.
+8. Always show the **final summarized result only or steps** — no explanation of how you got it.
 9. If the question cannot be answered from the provided dataset, politely state that.
 
 -----------------------------
@@ -262,6 +262,7 @@ Now, based on the data and the above rules, provide a precise, final analytical 
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
 
