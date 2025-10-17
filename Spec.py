@@ -217,7 +217,7 @@ if st.button("Get Answer"):
 
         # Call Groq via litellm
         response = litellm.completion(
-            model="groq/llama3-8b-8192",
+            model=""groq/llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are an expert transaction assistant."},
                 {"role": "user", "content": full_prompt}
@@ -231,3 +231,4 @@ if st.button("Get Answer"):
 
     except Exception as e:
         st.error(f"Error: {e}")
+
