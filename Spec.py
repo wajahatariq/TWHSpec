@@ -194,7 +194,6 @@ def ask_transaction_agent():
 
     if st.button("Get Answer"):
         try:
-            # --- Load all data ---
             records = worksheet.get_all_records()
             if not records:
                 st.warning("No transaction data found in sheet.")
@@ -202,32 +201,41 @@ def ask_transaction_agent():
 
             df = pd.DataFrame(records)
 
-            # --- Check necessary columns ---
             required_cols = {"Timestamp", "Charge", "Status", "Agent Name"}
             if not required_cols.issubset(df.columns):
-                st.error(f"Missing required columns in sheet: {required_cols - set(df.columns)}")
+                st.error(f"Missing required columns: {required_cols - set(df.columns)}")
                 return
 
-            # --- Timestamp cleanup ---
+            # --- Clean timestamps ---
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
             df = df.dropna(subset=["Timestamp"])
 
+            # --- Filter last 7 days for recency ---
             now = pd.Timestamp.now(tz)
-            df = df[(df["Timestamp"].dt.year == now.year) & (df["Timestamp"].dt.month == now.month)]
+            week_ago = now - pd.Timedelta(days=7)
+            df = df[(df["Timestamp"] >= week_ago) & (df["Timestamp"] <= now)]
 
             if df.empty:
-                st.info("No transactions found for the current month.")
+                st.info("No transactions found in the last 7 days.")
                 return
 
-            # --- Data cleanup ---
+            # --- Clean charge column ---
+            # Remove dollar signs and commas before converting
+            df["Charge"] = (
+                df["Charge"]
+                .astype(str)
+                .str.replace(r"[\$,]", "", regex=True)
+                .str.strip()
+            )
             df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
             df = df.dropna(subset=["Charge"])
-            df["Status"] = df["Status"].astype(str).str.lower()
 
-            # --- Keep only charged transactions ---
-            charged_df = df[df["Status"].str.contains("charged|completed", case=False, na=False)]
+            # --- Normalize status ---
+            df["Status"] = df["Status"].astype(str).str.lower()
+            charged_df = df[df["Status"].str.contains("charged|completed|done|success", na=False)]
+
             if charged_df.empty:
-                st.warning("No charged transactions found for this month.")
+                st.warning("No successful transactions found recently.")
                 return
 
             # --- Summaries ---
@@ -247,52 +255,46 @@ def ask_transaction_agent():
                 ),
             }
 
-            # --- Compact dataset for context ---
             compact_data = charged_df[
-                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status"]
+                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Date"]
             ].to_dict(orient="records")
 
             current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 
-            # --- Prompt for LLM ---
             prompt = f"""
-You are a professional financial data analysis assistant.
+You are a financial analytics assistant.
 
 Current system time: {current_time}
 
-### Transaction Summary (calculated accurately by Python)
+### Transaction Summary (accurately pre-calculated)
 {summary}
 
-### Raw Context Data
+### Raw Context (for reference)
 {compact_data}
 
 ### User Question
 {query}
 
 Instructions:
-- Use the provided summary for all numeric answers.
-- Use 'daily_revenue' for day-based questions.
-- Use 'agents' for per-agent performance.
-- Use 'total_revenue', 'average_charge', and 'total_transactions' for overall performance.
-- If asked about "today" or "yesterday", infer using current system time.
-- Be concise, accurate, and data-driven in your response.
+- Use only the above summary for numeric answers.
+- For date-specific queries (like "yesterday"), use the current time.
+- For agent performance (e.g., Haziq), use 'agents' and 'daily_revenue'.
+- Be concise, numeric, and accurate.
 """
 
-            # --- Query Groq LLM ---
-            with st.spinner("Analyzing your data..."):
+            with st.spinner("Analyzing your performance..."):
                 response = litellm.completion(
                     model="groq/llama-3.3-70b-versatile",
                     messages=[
                         {"role": "system", "content": "You are a precise and professional financial data analyst."},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                     api_key=st.secrets["GROQ_API_KEY"],
                 )
 
-            answer = response["choices"][0]["message"]["content"].strip()
-            st.success(answer)
+            st.success(response["choices"][0]["message"]["content"].strip())
 
         except Exception as e:
             st.error(f"Error while analyzing data: {e}")
-ask_transaction_agent()
 
+ask_transaction_agent()
