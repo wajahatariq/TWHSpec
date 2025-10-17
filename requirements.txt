@@ -3,7 +3,3 @@ gspread
 pandas
 requests
 pytz
-uuid
-litellm
-json
-
