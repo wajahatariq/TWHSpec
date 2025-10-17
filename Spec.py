@@ -193,7 +193,7 @@ def ask_transaction_agent():
 
     if st.button("Get Answer"):
         try:
-            # --- Load sheet data ---
+            # --- Load Data ---
             records = worksheet.get_all_records()
             if not records:
                 st.warning("No transaction data found in sheet.")
@@ -201,175 +201,131 @@ def ask_transaction_agent():
 
             df = pd.DataFrame(records)
 
-            # --- Column validation ---
-            required_cols = {"Date of Charge", "Charge", "Status", "Agent Name"}
-            if not required_cols.issubset(df.columns):
-                st.error(f"Missing required columns: {required_cols - set(df.columns)}")
-                return
-
-            # --- Clean dates ---
-            df["Date of Charge"] = (
-                pd.to_datetime(df["Date of Charge"], errors="coerce")
-                .dt.tz_localize(None)
-                .dt.date
-            )
-            df = df.dropna(subset=["Date of Charge"])
-
-            # --- Clean numeric charges ---
+            # --- Ensure numeric Charge ---
             df["Charge"] = (
-                df["Charge"]
-                .astype(str)
-                .str.replace(r"[^\d\.\-]+", "", regex=True)
+                df["Charge"].astype(str)
+                .str.replace(r"[\$,]", "", regex=True)
                 .str.strip()
             )
-            df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
-            df = df.dropna(subset=["Charge"])
+            df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce").fillna(0)
 
-            # --- Normalize status and agent ---
-            df["Status"] = df["Status"].astype(str).str.lower().str.strip()
-            df["Agent Name"] = df["Agent Name"].astype(str).str.strip()
+            # --- Parse Timestamp ---
+            df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce").dt.tz_localize(None)
 
-            # --- Successful transactions ---
-            charged_df = df[
-                df["Status"].str.contains(
-                    r"\b(charged|completed|done|success|paid)\b", regex=True, na=False
-                )
-            ].copy()
+            # --- Successful transactions only ---
+            success_status = r"\b(charged|completed|done|success|paid)\b"
+            charged_df = df[df["Status"].str.lower().str.contains(success_status, regex=True, na=False)]
 
             if charged_df.empty:
                 st.warning("No successful transactions found.")
                 return
 
-            # --- Add string date for grouping ---
-            charged_df["Date_str"] = charged_df["Date of Charge"].apply(
-                lambda d: d.strftime("%Y-%m-%d")
-            )
+            # --- Time definitions ---
+            now = datetime.now(tz).replace(tzinfo=None)
+            today_start = datetime(now.year, now.month, now.day)
+            today_end = today_start + timedelta(days=1)
+            yesterday_start = today_start - timedelta(days=1)
+            yesterday_end = today_start
+            week_start = now - timedelta(days=7)
 
-            # --- Compute standard time frames ---
-            now = datetime.now(tz)
-            today = now.date()
-            yesterday = today - timedelta(days=1)
-            week_ago = today - timedelta(days=7)
+            # --- Today / Yesterday / Weekly ---
+            today_revenue = charged_df[
+                (charged_df["Timestamp"] >= today_start) & (charged_df["Timestamp"] < today_end)
+            ]["Charge"].sum()
 
-            # --- Daily revenue ---
-            daily_revenue = charged_df.groupby("Date_str")["Charge"].sum().to_dict()
-            today_revenue = float(daily_revenue.get(today.strftime("%Y-%m-%d"), 0))
-            yesterday_revenue = float(daily_revenue.get(yesterday.strftime("%Y-%m-%d"), 0))
+            yesterday_revenue = charged_df[
+                (charged_df["Timestamp"] >= yesterday_start) & (charged_df["Timestamp"] < yesterday_end)
+            ]["Charge"].sum()
 
-            # --- Last 7 days ---
-            last_7_days_df = charged_df[
-                (charged_df["Date of Charge"] >= week_ago)
-                & (charged_df["Date of Charge"] <= today)
-            ]
-            weekly_revenue = round(float(last_7_days_df["Charge"].sum()), 2)
+            weekly_revenue = charged_df[charged_df["Timestamp"] >= week_start]["Charge"].sum()
 
-            # --- Custom monthly period 15th-to-14th ---
-            if today.day >= 15:
-                custom_month_start = today.replace(day=15)
-                # compute 14th of next month
-                next_month = today.replace(day=28) + timedelta(days=4)
-                custom_month_end = next_month.replace(day=14)
+            # --- Custom month (15th → 15th) ---
+            if now.day >= 15:
+                custom_month_start = datetime(now.year, now.month, 15)
+                custom_month_end = datetime(now.year, now.month + 1 if now.month < 12 else 1, 14)
+                if now.month == 12:
+                    custom_month_end = datetime(now.year + 1, 1, 14)
             else:
-                last_month = today.replace(day=1) - timedelta(days=1)
-                custom_month_start = last_month.replace(day=15)
-                custom_month_end = today.replace(day=14)
+                # before 15th, month is 15th previous month → 14th current
+                prev_month = now.month - 1 if now.month > 1 else 12
+                prev_year = now.year if now.month > 1 else now.year - 1
+                custom_month_start = datetime(prev_year, prev_month, 15)
+                custom_month_end = datetime(now.year, now.month, 14)
 
-            custom_month_df = charged_df[
-                (charged_df["Date of Charge"] >= custom_month_start)
-                & (charged_df["Date of Charge"] <= custom_month_end)
+            monthly_df = charged_df[
+                (charged_df["Timestamp"].dt.date >= custom_month_start.date()) &
+                (charged_df["Timestamp"].dt.date <= custom_month_end.date())
             ]
-            custom_month_revenue = round(float(custom_month_df["Charge"].sum()), 2)
-            custom_month_transactions = int(len(custom_month_df))
-            custom_month_average = (
-                round(float(custom_month_df["Charge"].mean()), 2)
-                if not custom_month_df.empty
-                else 0
-            )
+            custom_month_revenue = monthly_df["Charge"].sum()
+            custom_month_transactions = len(monthly_df)
+            custom_month_average = monthly_df["Charge"].mean() if not monthly_df.empty else 0
 
-            # --- Total / overall stats ---
-            total_revenue = round(float(charged_df["Charge"].sum()), 2)
-            total_transactions = int(len(charged_df))
-            average_charge = round(float(charged_df["Charge"].mean()), 2)
+            # --- Daily revenue summary ---
+            daily_revenue = charged_df.groupby(charged_df["Timestamp"].dt.date)["Charge"].sum().to_dict()
 
-            # --- Agent-level stats ---
-            agent_summary = (
+            # --- Agents summary ---
+            agents_summary = (
                 charged_df.groupby("Agent Name")["Charge"]
                 .agg(["count", "sum"])
                 .sort_values("sum", ascending=False)
-                .reset_index()
+                .to_dict("index")
             )
-            agent_summary_dict = agent_summary.set_index("Agent Name").to_dict("index")
 
-            # --- Build summary dict ---
-            summary = {
-                "total_revenue": total_revenue,
-                "total_transactions": total_transactions,
-                "average_charge": average_charge,
-                "today_date": today.strftime("%Y-%m-%d"),
-                "today_revenue": today_revenue,
-                "yesterday_revenue": yesterday_revenue,
-                "weekly_revenue": weekly_revenue,
-                "daily_revenue": daily_revenue,
-                "custom_month_start": custom_month_start.strftime("%Y-%m-%d"),
-                "custom_month_end": custom_month_end.strftime("%Y-%m-%d"),
-                "custom_month_revenue": custom_month_revenue,
-                "custom_month_transactions": custom_month_transactions,
-                "custom_month_average": custom_month_average,
-                "agents": agent_summary_dict,
-            }
-
-            # --- Compact context for LLM ---
+            # --- Compact context for AI ---
             compact_data = charged_df[
-                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Date_str"]
-            ].rename(columns={"Date_str": "Date of Charge"}).to_dict(orient="records")
+                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status", "Timestamp"]
+            ].to_dict(orient="records")
 
-            # --- Prompt ---
-            current_time = now.strftime("%Y-%m-%d %I:%M:%S %p")
+            current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+
+            # --- Build prompt ---
             prompt = f"""
 You are a financial analytics assistant.
+
 Current system time: {current_time}
 
-### Summary Data (pre-calculated)
-{summary}
+### Transaction Summary (accurately pre-calculated)
+total_revenue: {charged_df['Charge'].sum()}
+total_transactions: {len(charged_df)}
+average_charge: {round(charged_df['Charge'].mean(), 2)}
+today_revenue: {today_revenue}
+yesterday_revenue: {yesterday_revenue}
+weekly_revenue: {weekly_revenue}
+custom_month_start: {custom_month_start.strftime("%Y-%m-%d")}
+custom_month_end: {custom_month_end.strftime("%Y-%m-%d")}
+custom_month_revenue: {custom_month_revenue}
+custom_month_transactions: {custom_month_transactions}
+custom_month_average: {round(custom_month_average, 2)}
+daily_revenue: {daily_revenue}
+agents: {agents_summary}
 
-### Context (sample transactions)
-{compact_data[:20]}
+### Raw Context (for reference)
+{compact_data}
 
 ### User Question
 {query}
 
 Instructions:
-- Always use precomputed summary numbers for answers.
-- For "today", use summary["today_revenue"].
-- For "yesterday", use summary["yesterday_revenue"].
-- For "this week" or "last 7 days", use summary["weekly_revenue"].
-- For "this month" or "custom month", use summary["custom_month_revenue"]; month runs 15th–14th.
-- For agent-specific queries, use summary["agents"].
-- For totals or overall, use summary["total_revenue"] and summary["total_transactions"].
-- Never invent or recalculate numeric values yourself.
-- Keep answers concise, factual, and accurate.
+- Use only the above summary for numeric answers.
+- For date-specific queries (like "today" or "yesterday"), use 'Timestamp'.
+- For agent performance, use 'agents' and 'daily_revenue'.
+- Be concise, numeric, and accurate.
 """
 
             with st.spinner("Analyzing your performance..."):
                 response = litellm.completion(
                     model="groq/llama-3.3-70b-versatile",
                     messages=[
-                        {
-                            "role": "system",
-                            "content": "You are a precise and professional financial data analyst who only uses the numeric data provided.",
-                        },
+                        {"role": "system", "content": "You are a precise and professional financial data analyst."},
                         {"role": "user", "content": prompt},
                     ],
                     api_key=st.secrets["GROQ_API_KEY"],
                 )
 
-            answer = response["choices"][0]["message"]["content"].strip()
-            st.success(answer)
-
-            # --- Optional: Debug summary ---
-            with st.expander("View Computed Summary (for verification)"):
-                st.json(summary)
+            st.success(response["choices"][0]["message"]["content"].strip())
 
         except Exception as e:
             st.error(f"Error while analyzing data: {e}")
+
 ask_transaction_agent()
+
