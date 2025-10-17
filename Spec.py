@@ -187,97 +187,112 @@ except Exception as e:
 # --- Ask Transaction Agent ---
 def ask_transaction_agent():
     import litellm
-    st.subheader("Ask your Analysis Agent")
+
+    st.subheader("Ask Your Analysis Agent")
 
     query = st.text_input("Ask a question about your performance")
 
     if st.button("Get Answer"):
-        df = pd.DataFrame(worksheet.get_all_records())
+        try:
+            # --- Load all data ---
+            records = worksheet.get_all_records()
+            if not records:
+                st.warning("No transaction data found in sheet.")
+                return
 
-        # Ensure Timestamp exists and convert it
-        if "Timestamp" in df.columns:
+            df = pd.DataFrame(records)
+
+            # --- Check necessary columns ---
+            required_cols = {"Timestamp", "Charge", "Status", "Agent Name"}
+            if not required_cols.issubset(df.columns):
+                st.error(f"Missing required columns in sheet: {required_cols - set(df.columns)}")
+                return
+
+            # --- Timestamp cleanup ---
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+            df = df.dropna(subset=["Timestamp"])
+
             now = pd.Timestamp.now(tz)
             df = df[(df["Timestamp"].dt.year == now.year) & (df["Timestamp"].dt.month == now.month)]
-        else:
-            st.warning("No 'Timestamp' column found in sheet.")
-            return
 
-        # Ensure Charge is numeric
-        df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
+            if df.empty:
+                st.info("No transactions found for the current month.")
+                return
 
-        # Only include successful transactions
-        df = df[df["Status"].str.lower() == "charged"]
+            # --- Data cleanup ---
+            df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
+            df = df.dropna(subset=["Charge"])
+            df["Status"] = df["Status"].astype(str).str.lower()
 
-        # --- DAILY BREAKDOWN ---
-        if not df.empty:
-            df["Date"] = df["Timestamp"].dt.date
-            daily_summary = df.groupby("Date")["Charge"].sum().to_dict()
-        else:
-            daily_summary = {}
+            # --- Keep only charged transactions ---
+            charged_df = df[df["Status"].str.contains("charged|completed", case=False, na=False)]
+            if charged_df.empty:
+                st.warning("No charged transactions found for this month.")
+                return
 
-        # --- AGGREGATE SUMMARY ---
-        summary = {}
-        if not df.empty:
-            summary["total_revenue"] = float(df["Charge"].sum())
-            summary["total_transactions"] = int(len(df))
-            mean_charge = df["Charge"].mean()
-            summary["average_charge"] = round(mean_charge, 2) if pd.notnull(mean_charge) else 0
-            summary["agents"] = (
-                df.groupby("Agent Name")["Charge"]
-                .agg(["count", "sum"])
-                .sort_values("sum", ascending=False)
-                .to_dict("index")
-            )
-            summary["daily_revenue"] = daily_summary
-        else:
-            summary["note"] = "No charged transactions found this month."
+            # --- Summaries ---
+            charged_df["Date"] = charged_df["Timestamp"].dt.date
+            daily_revenue = charged_df.groupby("Date")["Charge"].sum().to_dict()
 
-        # Compact dataset for LLM
-        compact_data = df[["Agent Name", "Name", "Charge", "LLC", "Provider", "Status"]].to_dict(orient="records")
+            summary = {
+                "total_revenue": round(float(charged_df["Charge"].sum()), 2),
+                "total_transactions": int(len(charged_df)),
+                "average_charge": round(charged_df["Charge"].mean(), 2),
+                "daily_revenue": daily_revenue,
+                "agents": (
+                    charged_df.groupby("Agent Name")["Charge"]
+                    .agg(["count", "sum"])
+                    .sort_values("sum", ascending=False)
+                    .to_dict("index")
+                ),
+            }
 
-        # --- Current Time ---
-        current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+            # --- Compact dataset for context ---
+            compact_data = charged_df[
+                ["Agent Name", "Name", "Charge", "LLC", "Provider", "Status"]
+            ].to_dict(orient="records")
 
-        # --- LLM Prompt ---
-        prompt = f"""
-You are a Data Analytics Assistant helping analyze company transaction performance.
+            current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+
+            # --- Prompt for LLM ---
+            prompt = f"""
+You are a professional financial data analysis assistant.
 
 Current system time: {current_time}
 
-### Dataset Summary (already calculated accurately by Python):
+### Transaction Summary (calculated accurately by Python)
 {summary}
 
-### Raw Records (for context only, not for recalculation):
+### Raw Context Data
 {compact_data}
 
-### User Question:
+### User Question
 {query}
 
-Now, based on the summary above:
-- Use **summary['daily_revenue']** to answer daily or date-specific questions.
-- Use **summary['agents']** to answer per-agent performance questions.
-- Use **summary['total_revenue']**, **summary['average_charge']**, and **summary['total_transactions']** for overall stats.
-- Do **not** recompute totals yourself.
-- If the question asks for "yesterday" or "today", use the current system date ({current_time}) to determine that.
-- Provide a clear, numeric, and concise answer.
+Instructions:
+- Use the provided summary for all numeric answers.
+- Use 'daily_revenue' for day-based questions.
+- Use 'agents' for per-agent performance.
+- Use 'total_revenue', 'average_charge', and 'total_transactions' for overall performance.
+- If asked about "today" or "yesterday", infer using current system time.
+- Be concise, accurate, and data-driven in your response.
 """
 
-        # --- Send to Groq ---
-        try:
-            response = litellm.completion(
-                model="groq/llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": "You are a precise financial data analyst."},
-                    {"role": "user", "content": prompt}
-                ],
-                api_key=st.secrets["GROQ_API_KEY"]
-            )
+            # --- Query Groq LLM ---
+            with st.spinner("Analyzing your data..."):
+                response = litellm.completion(
+                    model="groq/llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "system", "content": "You are a precise and professional financial data analyst."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    api_key=st.secrets["GROQ_API_KEY"],
+                )
 
-            # Display cleanly
-            st.success(response['choices'][0]['message']['content'])
+            answer = response["choices"][0]["message"]["content"].strip()
+            st.success(answer)
 
         except Exception as e:
-            st.error(f"Error: {e}")
-
+            st.error(f"Error while analyzing data: {e}")
 ask_transaction_agent()
+
