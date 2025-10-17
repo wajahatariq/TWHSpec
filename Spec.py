@@ -61,7 +61,11 @@ with st.form("transaction_form"):
         card_number = st.text_input("Card Number", key="card_number")
         expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
         cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, key="cvc")
-        charge = st.text_input("Charge Amount", key="charge")
+        charge = st.text_input("Charge Amount ($)", key="charge")
+
+        # Automatically ensure it always starts with a $
+        if charge and not charge.startswith("$"):
+            charge = f"${charge}"
         llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
         provider = st.selectbox("Provider", PROVIDERS, key="provider")
         date_of_charge = st.date_input("Date of Charge", key="date_of_charge", value=datetime.now().date())
@@ -295,4 +299,5 @@ Instructions:
         except Exception as e:
             st.error(f"Error while analyzing data: {e}")
 ask_transaction_agent()
+
 
