@@ -343,6 +343,11 @@ Now, here is the JSON dataset to analyze:
 Answer all questions strictly based on this JSON dataset.
 Output all results in JSON format as shown above.
 """
+import json
+
+json_data = df[["Record_ID","Agent Name","Name","Charge","LLC","Provider","Status","Timestamp"]].to_dict(orient="records")
+json_str = json.dumps(json_data)  # this produces valid JSON
+prompt = prompt.replace("[PASTE YOUR JSON DATA HERE]", json_str)
 
             with st.spinner("Analyzing your performance..."):
                 response = litellm.completion(
@@ -360,5 +365,6 @@ Output all results in JSON format as shown above.
             st.error(f"Error while analyzing data: {e}")
 
 ask_transaction_agent()
+
 
 
