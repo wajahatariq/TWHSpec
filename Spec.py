@@ -209,8 +209,8 @@ def ask_transaction_agent():
 You are a Data analysis Intelligence Assistant. 
 Answer with only the final result — no reasoning or steps.
 Never show or mention sensitive data (card number, CVC, expiry) or any card details.
-
-Transaction data:
+You can show the amount of charge, client details or agent details 
+Our data:
 {df_str}
 
 Question: {query}
@@ -228,3 +228,4 @@ Question: {query}
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
