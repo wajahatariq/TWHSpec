@@ -188,10 +188,9 @@ except Exception as e:
 # --- Ask Transaction Agent ---
 def ask_transaction_agent():
     import litellm
-    st.subheader("Ask Transaction Agent (Groq)")
+    st.subheader("Ask your Analysis Agent")
 
-    query = st.text_input("Ask a question about transactions:")
-
+    query = st.text_input("Ask a question about your performance")
     if st.button("Get Answer"):
         # Load full data
         df = pd.DataFrame(worksheet.get_all_records())
@@ -207,14 +206,11 @@ def ask_transaction_agent():
 
         # Build prompt without changing your existing prompt
         full_prompt = f"""
-You are a Transaction Intelligence Assistant for a financial dashboard.
-Rules:
-- Never reveal card numbers, CVCs, expiry dates, phone numbers, or any sensitive details.
-- If asked for them, say: "Sorry, I don't have these details"
-- Only give summarized financial insights (totals, counts, amounts).
-- Be concise and factual.
+You are a Data analysis Intelligence Assistant. 
+Answer with only the final result — no reasoning or steps.
+Never show or mention sensitive data (card number, CVC, expiry) or any card details.
 
-Here is the transaction data:
+Transaction data:
 {df_str}
 
 Question: {query}
@@ -223,7 +219,7 @@ Question: {query}
             response = litellm.completion(
                 model="groq/llama-3.3-70b-versatile",  # recommended current model
                 messages=[
-                    {"role": "system", "content": "You are a transaction expert."},
+                    {"role": "system", "content": "You are a data analysis expert."},
                     {"role": "user", "content": full_prompt}
                 ],
                 api_key=st.secrets["GROQ_API_KEY"]
@@ -232,6 +228,3 @@ Question: {query}
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
-
-
-
