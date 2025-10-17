@@ -192,79 +192,65 @@ def ask_transaction_agent():
 
     query = st.text_input("Ask a question about your performance")
     if st.button("Get Answer"):
-        # Load full data
         df = pd.DataFrame(worksheet.get_all_records())
 
-        # Filter only this month's data
         if "Timestamp" in df.columns:
             df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
             now = pd.Timestamp.now()
             df = df[(df["Timestamp"].dt.year == now.year) & (df["Timestamp"].dt.month == now.month)]
 
-        # Convert filtered df to string for LLM
-        df_str = df.to_string(index=False)
-        # Current localized timestamp (Asia/Karachi)
+        # Ensure Charge is numeric
+        df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce")
+        df = df[df["Status"].str.lower() == "charged"]  # only successful transactions
+
+        # Prepare simple stats first
+        summary = {}
+        if not df.empty:
+            summary["total_revenue"] = df["Charge"].sum()
+            summary["total_transactions"] = len(df)
+            summary["average_charge"] = df["Charge"].mean().round(2)
+            summary["agents"] = (
+                df.groupby("Agent Name")["Charge"]
+                .agg(["count", "sum"])
+                .sort_values("sum", ascending=False)
+                .to_dict("index")
+            )
+        else:
+            summary["note"] = "No charged transactions found this month."
+
+        # Compact dataset for LLM
+        compact_data = df[["Agent Name", "Client Name", "Charge", "LLC", "Provider", "Status"]].to_dict(orient="records")
+
         current_time = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 
+        prompt = f"""
+You are a Data Analytics Assistant.
+Below is the summary of company transactions that Python has already calculated accurately.
 
-        # Build prompt without changing your existing prompt
-        full_prompt = f"""
-You are a Data Analytics Intelligence Assistant designed to analyze company transaction data 
-from a client management system. The dataset represents transactions recorded by multiple agents 
-and includes key fields like Agent Name, Charge Amount, Status (Charged, Declined, Pending), LLC, 
-Provider, and Timestamp.
+Current time: {current_time}
 
-Current system time: {current_time}
------------------------------
-### RULES & GUIDELINES
-1. Always base your analysis purely on the data provided below in 'Our data:'.
-2. Do **not** reveal or reference any sensitive financial information such as:
-   - Card numbers, expiry dates, or CVC codes or RecordID
-3. Treat "Declined" or "Pending" transactions as **not successfully charged**.
-   - Only rows with Status = "Charged" should count toward total sales, revenue, or agent performance.
-   - Declined or Pending charges should be excluded from revenue totals and averages.
-4. When asked to calculate amounts, commissions, totals, or rankings:
-   - Use only the numeric value of the 'Charge' column for transactions where Status = "Charged".
-   - Summarize per agent, per LLC, per provider, or by date — depending on the user’s question.
-5. Provide insights in **concise, human-readable** form, but **show numeric results clearly**.
-   - Example: “Arham Ali made 6 successful charges this week totaling $540, while 2 transactions were declined.”
-6. If the question requests comparisons, trends, or performance summaries, perform logical aggregation:
-   - Total revenue by agent or LLC
-   - Count of charged vs declined
-   - Average charge per successful transaction
-   - Highest-performing agent or provider
-6. When the user asks about totals, revenue, or agent performance:
-   - Along with the total, include a clear breakdown (list) of each client and their corresponding charge amount that contributed to the total.
-   - Example:  
-     Total revenue for Arham Ali: $540  
-     Clients included:  
-       - Mary Nunez — $60  
-       - James Cones — $60  
-       - Garry Givens — $160  
-       - David Stewart — $95  
-6. Never fabricate or assume data that isn't present in the dataset.
-7. Always show the **final summarized result only or steps** — no explanation of how you got it.
-8. If the question cannot be answered from the provided dataset, politely state that.
+### Dataset Summary:
+{summary}
 
------------------------------
-### OUR DATA:
-{df_str}
+### Raw Records (for context, not calculation):
+{compact_data}
 
------------------------------
-### USER QUESTION:
+### User Question:
 {query}
 
------------------------------
-Now, based on the data, the current system time ({current_time}), and the above rules,
-provide a precise, final analytical answer.
+Now, based on the summary and data:
+- Provide a clear, numeric answer to the user's question.
+- Do **not** recompute totals yourself; use the summary as ground truth.
+- If the question involves trends, comparisons, or rankings, refer to the summary data.
+- Be concise and precise.
 """
 
         try:
             response = litellm.completion(
-                model="groq/llama-3.3-70b-versatile",  # recommended current model
+                model="groq/llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "You are a data analysis expert."},
-                    {"role": "user", "content": full_prompt}
+                    {"role": "system", "content": "You are a precise financial data analyst."},
+                    {"role": "user", "content": prompt}
                 ],
                 api_key=st.secrets["GROQ_API_KEY"]
             )
@@ -272,6 +258,7 @@ provide a precise, final analytical answer.
         except Exception as e:
             st.error(f"Error: {e}")
 ask_transaction_agent()
+
 
 
 
