@@ -193,3 +193,32 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
+st.divider()
+st.subheader("Chat with Manager")
+
+chat_ws = gc.open(SHEET_NAME).worksheet("Chat_System")
+
+sender_name = st.session_state.get("agent_name", "Unknown Agent")
+message = st.text_input("Type your message to Manager:")
+
+if st.button("Send Message"):
+    if sender_name == "Select Agent" or sender_name == "Unknown Agent":
+        st.warning("Please select your agent name above first.")
+    elif message.strip() == "":
+        st.warning("Message cannot be empty.")
+    else:
+        send_message(chat_ws, sender_name, "Manager", message.strip())
+        st.success("Message sent!")
+        st.rerun()
+
+# --- Display chat history ---
+chat_df = load_chat(chat_ws)
+if not chat_df.empty:
+    recent_chat = chat_df[
+        (chat_df["Sender"] == sender_name) | (chat_df["Receiver"] == sender_name)
+    ].tail(20)
+    for _, row in recent_chat.iterrows():
+        role = "You" if row["Sender"] == sender_name else f"Manager {row['Sender']}"
+        st.write(f"**{role}** ({row['Timestamp']}): {row['Message']}")
+else:
+    st.info("No messages yet.")
