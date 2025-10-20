@@ -127,7 +127,7 @@ df_spectrum = load_data(spectrum_ws)
 df_insurance = load_data(insurance_ws)
 
 
-main_tab1, main_tab2, chat_tab = st.tabs(["Spectrum", "Insurance"])
+main_tab1, main_tab2 = st.tabs(["Spectrum", "Insurance"])
 
 # --- SPECTRUM TAB ---
 with main_tab1:
