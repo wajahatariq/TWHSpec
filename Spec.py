@@ -196,33 +196,68 @@ pusher_server = pusher.Pusher(
     ssl=True
 )
 
-# --- Create a separate tab for chat ---
+# --- CREATE A SEPARATE TAB FOR CHAT ---
 st.divider()
-st.subheader("💬 Chat with Manager")
+st.subheader("💬 Live Chat Between Agent & Manager")
 
+import pusher
+from datetime import datetime
+
+# --- Initialize Pusher client ---
+pusher_client = pusher.Pusher(
+    app_id=st.secrets["pusher"]["app_id"],
+    key=st.secrets["pusher"]["key"],
+    secret=st.secrets["pusher"]["secret"],
+    cluster=st.secrets["pusher"]["cluster"],
+    ssl=True
+)
+
+# --- Initialize Safe Session State ---
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
+if "chat_last_refresh" not in st.session_state:
+    st.session_state.chat_last_refresh = datetime.now()
 
-# Chat display container
-chat_container = st.container()
+# --- Auto Refresh (every 5 seconds) ---
+refresh_interval = 5
+if (datetime.now() - st.session_state.chat_last_refresh).seconds >= refresh_interval:
+    st.session_state.chat_last_refresh = datetime.now()
+    st.rerun()
 
-for msg in st.session_state.chat_messages:
-    user = msg.get("user", "Unknown")
-    text = msg.get("message", "")
-    chat_container.markdown(f"**{user}:** {text}")
+# --- Load previous messages (if any) ---
+chat_box = st.container()
+
+if not st.session_state.chat_messages:
+    chat_box.info("No messages yet. Start the conversation below!")
+else:
+    for msg in st.session_state.chat_messages:
+        chat_box.markdown(f"**{msg['user']}**: {msg['message']}")
 
 st.divider()
+
+# --- Message Input ---
 col1, col2 = st.columns([4, 1])
 
 with col1:
-    message = st.text_input("Type your message...", key="agent_message")
+    chat_input = st.text_input("Type a message...", key="chat_input", placeholder="Write your message here...")
 
 with col2:
-    if st.button("Send"):
-        if message.strip():
-            data = {"user": st.session_state.agent_name, "message": message}
-            pusher_server.trigger("agent-manager-chat", "new-message", data)
-            st.session_state.chat_messages.append(data)
-            st.session_state.agent_message = ""
-            st.rerun()
+    send = st.button("Send")
 
+if send and chat_input.strip():
+    message_data = {
+        "user": st.session_state.agent_name if st.session_state.agent_name != "Select Agent" else "Manager",
+        "message": chat_input.strip(),
+    }
+
+    # Send message via Pusher (real-time broadcast)
+    try:
+        pusher_client.trigger("agent-manager-chat", "new-message", message_data)
+    except Exception as e:
+        st.warning(f"Pusher error: {e}")
+
+    st.session_state.chat_messages.append(message_data)
+    st.session_state.chat_input = ""
+    st.rerun()
+
+st.caption("🔁 Chat refreshes every few seconds for new messages.")
