@@ -49,6 +49,14 @@ with col_button2:
 st.title("Client Management System")
 st.write("Fill out all client details below:")
 
+def load_chat(ws):
+    data = ws.get_all_records()
+    return pd.DataFrame(data)
+
+def send_message(ws, sender, receiver, message):
+    timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+    ws.append_row([timestamp, sender, receiver, message, "Unread"])
+    
 with st.form("transaction_form"):
     col1, col2 = st.columns(2)
     with col1:
@@ -184,3 +192,4 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
