@@ -184,3 +184,45 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
+import pusher
+
+# --- Initialize Pusher ---
+pusher_server = pusher.Pusher(
+    app_id=st.secrets["pusher"]["app_id"],
+    key=st.secrets["pusher"]["key"],
+    secret=st.secrets["pusher"]["secret"],
+    cluster=st.secrets["pusher"]["cluster"],
+    ssl=True
+)
+
+# --- Create a separate tab for chat ---
+st.divider()
+st.subheader("💬 Chat with Manager")
+
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = []
+
+# Chat display container
+chat_container = st.container()
+
+for msg in st.session_state.chat_messages:
+    user = msg.get("user", "Unknown")
+    text = msg.get("message", "")
+    chat_container.markdown(f"**{user}:** {text}")
+
+st.divider()
+col1, col2 = st.columns([4, 1])
+
+with col1:
+    message = st.text_input("Type your message...", key="agent_message")
+
+with col2:
+    if st.button("Send"):
+        if message.strip():
+            data = {"user": st.session_state.agent_name, "message": message}
+            pusher_server.trigger("agent-manager-chat", "new-message", data)
+            st.session_state.chat_messages.append(data)
+            st.session_state.agent_message = ""
+            st.rerun()
+
