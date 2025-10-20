@@ -126,9 +126,8 @@ st.title("Manager Transaction Dashboard")
 df_spectrum = load_data(spectrum_ws)
 df_insurance = load_data(insurance_ws)
 
-# --- MAIN TABS ---
-import pusher
-main_tab1, main_tab2, chat_tab = st.tabs(["Spectrum", "Insurance", "💬 Team Chat"])
+
+main_tab1, main_tab2, chat_tab = st.tabs(["Spectrum", "Insurance"])
 
 # --- SPECTRUM TAB ---
 with main_tab1:
@@ -137,40 +136,3 @@ with main_tab1:
 # --- INSURANCE TAB ---
 with main_tab2:
     render_transaction_tabs(df_insurance, insurance_ws, "insurance")
-
-# --- CHAT TAB ---
-with chat_tab:
-    st.subheader("Manager & Agents Chat (Live)")
-
-    # Setup Pusher
-    pusher_client = pusher.Pusher(
-        app_id=st.secrets["pusher"]["app_id"],
-        key=st.secrets["pusher"]["key"],
-        secret=st.secrets["pusher"]["secret"],
-        cluster=st.secrets["pusher"]["cluster"],
-        ssl=True
-    )
-
-    # Initialize messages
-    if "chat_messages" not in st.session_state:
-        st.session_state.chat_messages = []
-
-    # Show messages
-    for msg in st.session_state.chat_messages:
-        st.markdown(f"**{msg['user']}**: {msg['text']}")
-
-    # Input form
-    with st.form("chat_form", clear_on_submit=True):
-        user = st.text_input("Your Name", key="chat_user")
-        message = st.text_area("Type a message...")
-        send = st.form_submit_button("Send")
-
-    # Send logic
-    if send and user and message:
-        msg_data = {"user": user, "text": message}
-        st.session_state.chat_messages.append(msg_data)
-        pusher_client.trigger("chat-channel", "new-message", msg_data)
-        st.rerun()
-
-    st.markdown("---")
-    st.caption("Messages update live across all users.")
