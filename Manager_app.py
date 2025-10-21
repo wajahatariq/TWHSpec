@@ -199,3 +199,45 @@ with main_tab1:
 # --- INSURANCE TAB ---
 with main_tab2:
     render_transaction_tabs(df_insurance, insurance_ws, "insurance")
+
+
+import streamlit as st
+from chat_utils import send_message, load_messages, mark_as_read
+
+init_firebase()
+
+st.divider()
+st.subheader("Manager Chat Console")
+
+# Send broadcast
+broadcast_msg = st.text_input("Broadcast to all agents:", key="broadcast")
+if st.button("Broadcast"):
+    if broadcast_msg.strip():
+        send_message(sender="Manager", receiver="All", body=broadcast_msg.strip())
+        st.success("Broadcasted.")
+        st.rerun()
+
+# Load (cached)
+@st.cache_data(ttl=3)
+def cached_load_mgr():
+    return load_messages(500)
+
+msgs = cached_load_mgr()
+
+if not msgs:
+    st.info("No messages yet.")
+else:
+    for m in msgs:
+        sender = "Manager" if m["sender"] == "Manager" else m["sender"]
+        receiver = m.get("receiver","")
+        st.markdown(f"**{sender}** → *{receiver}* — {m.get('timestamp','')}")
+        st.write(m.get("body"))
+        # Quick reply UI per message
+        reply = st.text_input(f"Reply to {m['sender']}", key=f"reply_{m['id']}")
+        if st.button("Send Reply", key=f"sendrep_{m['id']}"):
+            if reply.strip():
+                send_message(sender="Manager", receiver=m["sender"], body=reply.strip(), txn_id=m.get("txn_id"))
+                mark_as_read(m["id"], "Manager")
+                st.success("Replied.")
+                st.rerun()
+
