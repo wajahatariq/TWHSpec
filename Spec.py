@@ -10,12 +10,16 @@ import requests
 import firebase_admin
 from firebase_admin import credentials, db
 
-def init_firebase():
-    if "firebase_app" in st.session_state:
-        return st.session_state["firebase_app"]
+import firebase_admin
+from firebase_admin import credentials, db
+import streamlit as st
 
-    fb = st.secrets["firebase"]  # structure we populated in secrets.toml or Streamlit Cloud
-    # If your secrets are nested, adjust accordingly.
+def init_firebase():
+    # ✅ Check if already initialized
+    if firebase_admin._apps:
+        return firebase_admin.get_app()
+
+    fb = st.secrets["firebase"]
     cred_dict = {
         "type": fb["type"],
         "project_id": fb["project_id"],
@@ -33,9 +37,8 @@ def init_firebase():
     app = firebase_admin.initialize_app(cred, {
         "databaseURL": fb["databaseURL"]
     })
-    st.session_state["firebase_app"] = app
-    return app
 
+    return app
 # call it once
 init_firebase()
 
@@ -292,6 +295,7 @@ else:
             # optionally mark read for manager messages
             if m["sender"] == "Manager" and not m.get("read_by", {}).get(agent_name):
                 mark_as_read(m["id"], agent_name)
+
 
 
 
