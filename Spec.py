@@ -250,7 +250,7 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
-from chat_utils import send_message, load_messages, mark_as_read
+# from chat_utils import send_message, load_messages, mark_as_read
 from firebase_admin import db
 
 # ensure firebase initialized already
@@ -292,5 +292,6 @@ else:
             # optionally mark read for manager messages
             if m["sender"] == "Manager" and not m.get("read_by", {}).get(agent_name):
                 mark_as_read(m["id"], agent_name)
+
 
 
