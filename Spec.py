@@ -250,5 +250,47 @@ try:
 
 except Exception as e:
     st.error(f"Error loading data: {e}")
+from chat_utils import send_message, load_messages, mark_as_read
+from firebase_admin import db
+
+# ensure firebase initialized already
+init_firebase()
+
+agent_name = st.session_state.get("agent_name", "Unknown Agent")
+
+st.divider()
+st.subheader("Chat with Manager")
+
+msg_col1, msg_col2 = st.columns([4,1])
+with msg_col1:
+    new_msg = st.text_input("Message to Manager:", key="chat_input")
+with msg_col2:
+    if st.button("Send", key="send_chat"):
+        if agent_name in ("Select Agent", "", "Unknown Agent"):
+            st.warning("Select your agent name first.")
+        elif new_msg.strip() == "":
+            st.warning("Cannot send empty message.")
+        else:
+            send_message(sender=agent_name, receiver="Manager", body=new_msg.strip())
+            st.success("Message sent.")
+            st.experimental_rerun()
+
+# cached loader - TTL short (e.g., 3 or 5 sec)
+@st.cache_data(ttl=5)
+def cached_load():
+    return load_messages(200)
+
+msgs = cached_load()
+if not msgs:
+    st.info("No messages yet.")
+else:
+    for m in msgs:
+        # show only messages involving this agent or sent to All
+        if m["receiver"] in (agent_name, "All", "Manager") or m["sender"] == agent_name:
+            sender = "You" if m["sender"] == agent_name else m["sender"]
+            st.markdown(f"**{sender}** — {m.get('timestamp','')}  \n{m.get('body')}")
+            # optionally mark read for manager messages
+            if m["sender"] == "Manager" and not m.get("read_by", {}).get(agent_name):
+                mark_as_read(m["id"], agent_name)
 
 
