@@ -3,4 +3,5 @@ gspread
 pandas
 requests
 pytz
-pusher
+firebase-admin
+
