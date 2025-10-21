@@ -202,7 +202,7 @@ with main_tab2:
 
 
 import streamlit as st
-from chat_utils import send_message, load_messages, mark_as_read
+# from chat_utils import send_message, load_messages, mark_as_read
 
 init_firebase()
 
