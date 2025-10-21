@@ -5,6 +5,35 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 
+import firebase_admin
+from firebase_admin import credentials, db
+
+def init_firebase():
+    if "firebase_app" in st.session_state:
+        return st.session_state["firebase_app"]
+
+    fb = st.secrets["firebase"]  # structure we populated in secrets.toml or Streamlit Cloud
+    # If your secrets are nested, adjust accordingly.
+    cred_dict = {
+        "type": fb["type"],
+        "project_id": fb["project_id"],
+        "private_key_id": fb["private_key_id"],
+        "private_key": fb["private_key"],
+        "client_email": fb["client_email"],
+        "client_id": fb["client_id"],
+        "auth_uri": fb.get("auth_uri", "https://accounts.google.com/o/oauth2/auth"),
+        "token_uri": fb.get("token_uri", "https://oauth2.googleapis.com/token"),
+        "auth_provider_x509_cert_url": fb.get("auth_provider_x509_cert_url"),
+        "client_x509_cert_url": fb.get("client_x509_cert_url"),
+    }
+
+    cred = credentials.Certificate(cred_dict)
+    app = firebase_admin.initialize_app(cred, {
+        "databaseURL": fb["databaseURL"]
+    })
+    st.session_state["firebase_app"] = app
+    return app
+
 def send_pushbullet_notification(title, message):
     try:
         access_token = st.secrets["pushbullet_token"]
