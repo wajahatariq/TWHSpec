@@ -33,6 +33,40 @@ def init_firebase():
     })
     st.session_state["firebase_app"] = app
     return app
+from firebase_admin import db
+
+def send_message(sender, receiver, body, txn_id=None):
+    ref = db.reference("chat")
+    item = {
+        "timestamp": datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S"),
+        "sender": sender,
+        "receiver": receiver,
+        "body": body,
+        "read_by": { sender: True },  # sender already "read" it
+    }
+    if txn_id:
+        item["txn_id"] = txn_id
+    ref.push(item)
+
+def load_messages(limit=200):
+    ref = db.reference("chat")
+    data = ref.order_by_key().limit_to_last(limit).get()  # returns dict of messages
+    # convert dict->list sorted by timestamp (if no timestamps guarantee use keys order)
+    messages = []
+    if data:
+        for k, v in data.items():
+            v["id"] = k
+            messages.append(v)
+        # sort by timestamp if present
+        messages.sort(key=lambda x: x.get("timestamp", ""))
+    return messages
+
+def mark_as_read(msg_id, user):
+    msg_ref = db.reference(f"chat/{msg_id}/read_by")
+    current = msg_ref.get() or {}
+    current[user] = True
+    msg_ref.set(current)
+
 
 def send_pushbullet_notification(title, message):
     try:
