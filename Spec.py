@@ -159,3 +159,65 @@ try:
             st.dataframe(df, use_container_width=True)
 except Exception as e:
     st.error(f"Error loading data: {e}")
+
+# --- EDIT LEAD SECTION ---
+st.divider()
+st.subheader("Edit Lead (From Last 5 Minutes)")
+
+if 'df' in locals() and not df.empty:
+    client_names = df["Name"].unique().tolist()
+    selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
+
+    if selected_client != "Select Client":
+        record = df[df["Name"] == selected_client].iloc[0]
+        record_id = record["Record_ID"]
+
+        st.info(f"Editing Record ID: {record_id}")
+
+        with st.form("edit_lead_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                new_agent_name = st.selectbox("Agent Name", AGENTS, index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0)
+                new_name = st.text_input("Client Name", value=record["Name"])
+                new_phone = st.text_input("Phone Number", value=record["Ph Number"])
+                new_address = st.text_input("Address", value=record["Address"])
+                new_email = st.text_input("Email", value=record["Email"])
+                new_card_holder = st.text_input("Card Holder Name", value=record["Card Holder Name"])
+            with col2:
+                new_card_number = st.text_input("Card Number", value=record["Card Number"])
+                new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
+                new_cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0)
+                new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
+                new_llc = st.selectbox("LLC", LLC_OPTIONS, index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0)
+                new_provider = st.selectbox("Provider", PROVIDERS, index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0)
+                new_date_of_charge = st.date_input("Date of Charge", value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date())
+
+            updated = st.form_submit_button("Update Lead")
+
+        if updated:
+            try:
+                all_records = worksheet.get_all_records()
+                df_all = pd.DataFrame(all_records)
+                if "Record_ID" in df_all.columns:
+                    row_index = df_all.index[df_all["Record_ID"] == record_id].tolist()
+                    if row_index:
+                        row_num = row_index[0] + 2  # +2 because sheet rows start at 1 and header row is row 1
+                        updated_data = [
+                            record_id, new_agent_name, new_name, new_phone, new_address, new_email,
+                            new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
+                            new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
+                            record["Status"], record["Timestamp"]
+                        ]
+                        worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                        st.success(f"Lead for {new_name} updated successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Record not found in sheet. Try refreshing the page.")
+                else:
+                    st.error("No 'Record_ID' column found in sheet.")
+            except Exception as e:
+                st.error(f"Error updating lead: {e}")
+else:
+    st.info("No recent data to edit (last 5 minutes).")
+
+
