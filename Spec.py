@@ -87,6 +87,9 @@ if submitted:
     if missing_fields:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
+    # --- Clean up formatting ---
+    card_number = card_number.replace(" ", "").replace("-", "")
+    expiry = expiry.replace("/", "").replace("-", "").replace(" ", "")
 
     try:
         float(charge)
@@ -219,6 +222,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
