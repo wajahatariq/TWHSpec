@@ -206,7 +206,7 @@ if 'df' in locals() and not df.empty:
                             record_id, new_agent_name, new_name, new_phone, new_address, new_email,
                             new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
                             new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                            record["Status"], record["Timestamp"]
+                            record["Status"], str(record["Timestamp"])
                         ]
                         worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                         st.success(f"Lead for {new_name} updated successfully!")
@@ -219,5 +219,6 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
