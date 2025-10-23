@@ -225,3 +225,80 @@ if 'df' in locals() and not df.empty:
 else:
     st.info("No recent data to edit (last 5 minutes).")
 
+st.divider()
+st.subheader("AI Assistant — Records From 15th of Last Month Onward")
+
+try:
+    # Fetch all records from the Google Sheet
+    all_data = worksheet.get_all_records()
+    if not all_data:
+        st.info("No data found yet.")
+    else:
+        df_all = pd.DataFrame(all_data)
+
+        # Parse timestamps and filter from 15th of the current month onward
+        if "Timestamp" in df_all.columns:
+            df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
+            df_all = df_all.dropna(subset=["Timestamp"])
+
+            now = datetime.now(tz)
+            start_date = datetime(now.year, now.month, 15, tzinfo=tz)
+            df_filtered = df_all[df_all["Timestamp"] >= start_date]
+
+            if df_filtered.empty:
+                st.warning("No records found from the 15th of this month onward.")
+            else:
+                st.dataframe(df_filtered, use_container_width=True)
+
+                st.markdown("### Ask a Question About This Data")
+                user_query = st.text_area("Type your question (e.g., 'Which agent made the most sales?')")
+
+                if st.button("Ask AI"):
+                    with st.spinner("Analyzing with Groq..."):
+                        # Convert the filtered dataframe to readable text
+                        df_text = df_filtered.to_string(index=False)
+
+                        # Build the AI prompt
+                        prompt = f"""
+                        You are a helpful data analysis assistant for a Client Management System.
+                        The following is data from the 15th of this month onward.
+
+                        DATA:
+                        {df_text}
+
+                        USER QUESTION:
+                        {user_query}
+
+                        Please answer accurately and concisely, summarizing key points from the data.
+                        """
+
+                        import requests
+
+                        headers = {
+                            "Authorization": f"Bearer {st.secrets['GROQ_API_KEY']}",
+                            "Content-Type": "application/json"
+                        }
+
+                        payload = {
+                            "model": "llama3-70b-8192",  # You can change to "mixtral-8x7b" if you prefer
+                            "messages": [
+                                {"role": "system", "content": "You are an expert data analyst."},
+                                {"role": "user", "content": prompt}
+                            ]
+                        }
+
+                        response = requests.post(
+                            "https://api.groq.com/openai/v1/chat/completions",
+                            headers=headers,
+                            json=payload
+                        )
+
+                        if response.status_code == 200:
+                            result = response.json()
+                            st.markdown("### AI Response")
+                            st.write(result["choices"][0]["message"]["content"])
+                        else:
+                            st.error(f"Groq API Error: {response.text}")
+
+except Exception as e:
+    st.error(f"Error in AI Assistant section: {e}")
