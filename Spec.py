@@ -91,10 +91,12 @@ if submitted:
     card_number = card_number.replace(" ", "").replace("-", "")
     expiry = expiry.replace("/", "").replace("-", "").replace(" ", "")
 
+    # --- Format Charge Amount ---
     try:
-        float(charge)
+        charge_value = float(charge.replace("$", "").strip())
+        charge = f"${charge_value:.2f}"
     except ValueError:
-        st.error("Charge amount must be numeric.")
+        st.error("Charge amount must be numeric (e.g., 29 or 29.00).")
         st.stop()
 
     # --- Save to Google Sheet ---
@@ -222,7 +224,3 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
-
-
-
-
