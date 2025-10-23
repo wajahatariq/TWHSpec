@@ -9,7 +9,13 @@ import requests
 
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
-st.markdown("""
+
+mode = st.sidebar.radio("Theme", ["Dark", "Light"], index=0)
+
+if mode == "Light":
+    st.markdown("<style>body{background-color:#fafafa;color:#111;}</style>", unsafe_allow_html=True)
+else:
+    st.markdown("""
 <style>
 
 /* ===== GLOBAL APP BACKGROUND ===== */
@@ -363,6 +369,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
