@@ -242,7 +242,7 @@ try:
             df_all = df_all.dropna(subset=["Timestamp"])
 
             now = datetime.now(tz)
-            start_date = datetime(now.year, now.month, 15, tzinfo=tz)
+            start_date = datetime(now.year, now.month, 15)
             df_filtered = df_all[df_all["Timestamp"] >= start_date]
 
             if df_filtered.empty:
@@ -302,3 +302,4 @@ try:
 
 except Exception as e:
     st.error(f"Error in AI Assistant section: {e}")
+
