@@ -7,83 +7,8 @@ import json
 import uuid
 import requests
 
-st.markdown("""
-    <style>
-    /* --- GLOBAL THEME --- */
-    [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: #fff;
-    }
-    [data-testid="stHeader"] {background: none;}
-    [data-testid="stToolbar"] {right: 2rem;}
-    [data-testid="stSidebar"] {
-        background: rgba(255,255,255,0.05);
-        backdrop-filter: blur(10px);
-    }
-
-    /* --- TITLES --- */
-    h1, h2, h3, h4, h5, h6 {
-        color: #fff !important;
-        text-shadow: 0px 0px 8px rgba(255,255,255,0.2);
-    }
-
-    /* --- FORMS --- */
-    input, select, textarea {
-        border-radius: 10px !important;
-    }
-
-    /* --- BUTTONS --- */
-    button[kind="primary"] {
-        background: linear-gradient(90deg, #ff6a00, #ee0979) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        transition: all 0.2s ease-in-out;
-    }
-    button[kind="primary"]:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
-    }
-
-    /* --- DATAFRAME --- */
-    .stDataFrame {
-        border-radius: 12px;
-        overflow: hidden;
-        background: rgba(255,255,255,0.05);
-    }
-
-    /* --- DIVIDERS --- */
-    hr {
-        margin-top: 3rem;
-        margin-bottom: 2rem;
-        border-color: rgba(255,255,255,0.1);
-    }
-
-    /* --- SUCCESS / INFO / ERROR STYLES --- */
-    .stAlert {
-        border-radius: 10px !important;
-        background: rgba(255,255,255,0.1) !important;
-        color: white !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
-st.markdown("""
-    <script>
-    const elements = document.querySelectorAll('.stApp *');
-    elements.forEach((el, i) => {
-        el.style.opacity = 0;
-        setTimeout(() => {
-            el.style.transition = 'opacity 0.6s ease';
-            el.style.opacity = 1;
-        }, i * 10);
-    });
-    </script>
-""", unsafe_allow_html=True)
-
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -236,7 +161,13 @@ try:
         if df.empty:
             st.info("No recent records (last 5 minutes).")
         else:
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(
+                df.style.set_properties(
+                    **{'background-color': '#1E2A38', 'color': 'white', 'border-color': '#444'}
+                ),
+                use_container_width=True,
+            )
+
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
@@ -299,4 +230,5 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
