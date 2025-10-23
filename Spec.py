@@ -9,6 +9,140 @@ import requests
 
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
+st.markdown("""
+<style>
+
+/* ===== GLOBAL APP BACKGROUND ===== */
+[data-testid="stAppViewContainer"] {
+    background: radial-gradient(circle at top left, #1b1b1b 0%, #0f0f0f 80%);
+    color: #e6e6e6;
+    font-family: "Inter", sans-serif;
+}
+
+/* ===== HEADER & TOOLBAR ===== */
+[data-testid="stHeader"], [data-testid="stToolbar"] {
+    background: transparent;
+}
+
+/* ===== TITLES ===== */
+h1, h2, h3, h4, h5, h6 {
+    color: #ff4b4b !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px;
+    text-shadow: 0px 0px 12px rgba(255, 75, 75, 0.2);
+}
+
+/* ===== PARAGRAPH / TEXT ===== */
+p, label, span, div {
+    color: #ddd !important;
+}
+
+/* ===== FORM INPUTS ===== */
+input, select, textarea {
+    border-radius: 10px !important;
+    border: 1px solid #333 !important;
+    background-color: #1c1c1c !important;
+    color: #f5f5f5 !important;
+    transition: all 0.2s ease-in-out;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #ff4b4b !important;
+    box-shadow: 0 0 6px rgba(255, 75, 75, 0.3);
+}
+
+/* ===== BUTTONS ===== */
+button[kind="primary"] {
+    background: linear-gradient(90deg, #ff4b4b, #cc2b2b) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease-in-out;
+}
+button[kind="primary"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255, 75, 75, 0.3);
+}
+
+/* ===== SECONDARY BUTTONS ===== */
+button[kind="secondary"] {
+    background: #2a2a2a !important;
+    color: #ff4b4b !important;
+    border: 1px solid #ff4b4b !important;
+    border-radius: 10px !important;
+}
+button[kind="secondary"]:hover {
+    background: #3a3a3a !important;
+}
+
+/* ===== DATAFRAME ===== */
+.stDataFrame {
+    border-radius: 10px;
+    overflow: hidden;
+    background: #181818;
+    box-shadow: 0 4px 16px rgba(255, 75, 75, 0.1);
+}
+thead tr th {
+    background-color: #ff4b4b !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: none !important;
+}
+tbody tr:hover {
+    background-color: rgba(255, 75, 75, 0.07) !important;
+}
+
+/* ===== ALERTS ===== */
+.stAlert {
+    border-radius: 10px !important;
+    background: rgba(255, 75, 75, 0.1) !important;
+    color: #fff !important;
+    border-left: 5px solid #ff4b4b !important;
+}
+
+/* ===== DIVIDERS ===== */
+hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 2rem 0;
+}
+
+/* ===== FORM CONTAINER ===== */
+section.main > div.block-container {
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+    max-width: 1250px;
+}
+
+/* ===== TOASTS ===== */
+.stToast {
+    border-radius: 8px !important;
+    background: #1f1f1f !important;
+    color: #fff !important;
+    border-left: 4px solid #ff4b4b !important;
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.15);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(#ff4b4b, #cc2b2b);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #111;
+}
+
+/* ===== SUCCESS COLOR OVERRIDE ===== */
+.stSuccess {
+    border-left-color: #00c896 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -229,6 +363,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
