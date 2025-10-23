@@ -280,7 +280,7 @@ try:
                         }
 
                         payload = {
-                            "model": "llama3-70b-8192",  # You can change to "mixtral-8x7b" if you prefer
+                            "model": "llama-3.3-70b-versatile",  # You can change to "mixtral-8x7b" if you prefer
                             "messages": [
                                 {"role": "system", "content": "You are an expert data analyst."},
                                 {"role": "user", "content": prompt}
@@ -302,4 +302,5 @@ try:
 
 except Exception as e:
     st.error(f"Error in AI Assistant section: {e}")
+
 
