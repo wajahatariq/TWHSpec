@@ -36,7 +36,17 @@ if st.button("Refresh Now"):
 # --- LOAD DATA FUNCTION ---
 def load_data(ws):
     records = ws.get_all_records()
-    return pd.DataFrame(records)
+    df = pd.DataFrame(records)
+
+    # Ensure 'Expiry Date' keeps leading zeros (if the column exists)
+    if "Expiry Date" in df.columns:
+        df["Expiry Date"] = df["Expiry Date"].astype(str).str.zfill(5)
+        # Optional: Reformat if needed to always look like MM/YY
+        df["Expiry Date"] = df["Expiry Date"].apply(
+            lambda x: x if "/" in x else f"{x[:2]}/{x[2:]}" if len(x) == 4 else x
+        )
+
+    return df
 
 # --- FILTER FUNCTION ---
 def process_dataframe(df):
