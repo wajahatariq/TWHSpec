@@ -13,7 +13,69 @@ st.set_page_config(page_title="Client Management System", layout="wide")
 mode = st.sidebar.radio("Theme", ["Dark", "Light"], index=0)
 
 if mode == "Light":
-    st.markdown("<style>body{background-color:#fafafa;color:#111;}</style>", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(180deg, #fff9f9 0%, #fefefe 100%);
+        color: #222;
+        font-family: "Inter", sans-serif;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: #cc2b2b !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px;
+    }
+    input, select, textarea {
+        border-radius: 10px !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #ff4b4b !important;
+        box-shadow: 0 0 5px rgba(255, 75, 75, 0.3);
+    }
+    button[kind="primary"] {
+        background: linear-gradient(90deg, #ff4b4b, #ff7070) !important;
+        color: #fff !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        transition: all 0.25s ease-in-out;
+    }
+    button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.25);
+    }
+    .stDataFrame {
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    thead tr th {
+        background-color: #ff4b4b !important;
+        color: white !important;
+        font-weight: 600 !important;
+    }
+    tbody tr:hover {
+        background-color: #fff3f3 !important;
+    }
+    .stAlert {
+        border-radius: 10px !important;
+        background: rgba(255, 75, 75, 0.07) !important;
+        border-left: 5px solid #ff4b4b !important;
+        color: #222 !important;
+    }
+    hr {border-top: 1px solid #eee;}
+    ::-webkit-scrollbar-thumb {
+        background: #ff4b4b;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
 else:
     st.markdown("""
 <style>
@@ -369,6 +431,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
