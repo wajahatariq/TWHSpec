@@ -40,7 +40,7 @@ def load_data(ws):
 
     # Ensure 'Expiry Date' keeps leading zeros (if the column exists)
     if "Expiry Date" in df.columns:
-        df["Expiry Date"] = df["Expiry Date"].astype(str).str.zfill(5)
+        df["Expiry Date"] = df["Expiry Date"].astype(str).str.zfill(4)
         # Optional: Reformat if needed to always look like MM/YY
         df["Expiry Date"] = df["Expiry Date"].apply(
             lambda x: x if "/" in x else f"{x[:2]}/{x[2:]}" if len(x) == 4 else x
