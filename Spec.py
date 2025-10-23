@@ -37,16 +37,22 @@ for i, (theme_name, _) in enumerate(themes.items()):
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 
-# --- Inject dynamic CSS (escaping curly braces) ---
+# --- Inject CSS that overrides Chrome light mode ---
 st.markdown(f"""
     <style>
-    :root {{
-        color-scheme: dark;
+    /* Force dark mode look even in Chrome light mode */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stHeader"] {{
+        background-color: {bg1} !important;
+        color: #e6e6e6 !important;
+        color-scheme: dark !important;
+    }}
+
+    * {{
+        scrollbar-color: {accent} {bg2} !important;
     }}
 
     [data-testid="stAppViewContainer"] {{
         background: radial-gradient(circle at top left, {bg2}, {bg1});
-        color: #e6e6e6;
         font-family: "Inter", sans-serif;
         transition: all 0.4s ease-in-out;
     }}
@@ -102,7 +108,7 @@ st.markdown(f"""
         border-radius: 10px;
     }}
 
-    /* === Top Theme Bar Styling === */
+    /* === Theme Buttons on Top === */
     div[data-testid="column"] > div > button {{
         background-color: #1c1c1c !important;
         color: {accent} !important;
@@ -118,7 +124,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Optional: Header ---
+# --- Header ---
 st.markdown(f"""
 <div style='
     background: linear-gradient(90deg, {accent}, {accent}cc);
@@ -131,10 +137,9 @@ st.markdown(f"""
     box-shadow: 0 4px 20px {accent}55;
     margin-bottom: 35px;
 '>
-🚀 Client Management System — Techware Hub
+Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
-
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -355,6 +360,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
