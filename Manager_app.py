@@ -72,11 +72,20 @@ def render_transaction_tabs(df, worksheet, label):
         else:
             for i, row in pending.iterrows():
                 with st.expander(f"{row['Agent Name']} — {row['Charge']} ({row['LLC']})"):
-                    st.write(f"**Card Number:** {row['Card Number']}")
+                    card_holder = str(row.get('Card Holder Name', '')).strip()
+                    name_parts = card_holder.split()
+                    
+                    first_name = name_parts[0] if len(name_parts) > 0 else ''
+                    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
+                    
+                    st.write(f"**First Name:** {first_name}")
+                    st.write(f"**Last Name:** {last_name}")
+
                     st.write(f"**Expiry Date:** {row['Expiry Date']}")
                     st.write(f"**Charge:** {row['Charge']}")
                     st.write(f"**Card Holder Name:** {row['Card Holder Name']}")
                     st.write(f"**Address:** {row['Address']}")
+                    st.write(f"**Card Holder Name:** {card_holder}")
                     st.write(f"**CVC:** {row['CVC']}")
 
                     row_number = i + 2  # header is row 1
