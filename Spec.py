@@ -14,20 +14,38 @@ st.set_page_config(page_title="Client Management System", layout="wide")
 st.markdown("""
     <style>
     :root {
-        color-scheme: dark;
+        color-scheme: dark light;
+        --accent-color: #ff4b4b;
+        --dark-bg: #0f0f0f;
+        --dark-surface: #1b1b1b;
+        --dark-text: #e6e6e6;
+        --light-bg: #f8f8f8;
+        --light-surface: #ffffff;
+        --light-text: #111111;
     }
 
+    /* === Base App Background === */
     [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at top left, #1b1b1b 0%, #0f0f0f 80%);
-        color: #e6e6e6;
+        background: radial-gradient(circle at top left, var(--dark-surface), var(--dark-bg));
+        color: var(--dark-text);
         font-family: "Inter", sans-serif;
+        transition: all 0.3s ease-in-out;
     }
 
+    @media (prefers-color-scheme: light) {
+        [data-testid="stAppViewContainer"] {
+            background: linear-gradient(145deg, var(--light-bg), var(--light-surface));
+            color: var(--light-text);
+        }
+    }
+
+    /* === Titles === */
     h1, h2, h3, h4, h5, h6 {
-        color: #ff4b4b !important;
-        text-shadow: 0px 0px 12px rgba(255,75,75,0.25);
+        color: var(--accent-color) !important;
+        text-shadow: 0px 0px 12px rgba(255, 75, 75, 0.25);
     }
 
+    /* === Inputs, Selects, Textareas === */
     input, select, textarea {
         border-radius: 10px !important;
         border: 1px solid #333 !important;
@@ -35,11 +53,20 @@ st.markdown("""
         color: #f5f5f5 !important;
     }
 
-    input:focus, select:focus, textarea:focus {
-        border-color: #ff4b4b !important;
-        box-shadow: 0 0 6px rgba(255, 75, 75, 0.3);
+    @media (prefers-color-scheme: light) {
+        input, select, textarea {
+            background-color: #fff !important;
+            border: 1px solid #ccc !important;
+            color: #111 !important;
+        }
     }
 
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 0 6px rgba(255, 75, 75, 0.4);
+    }
+
+    /* === Buttons === */
     button[kind="primary"] {
         background: linear-gradient(90deg, #ff4b4b, #cc2b2b) !important;
         color: #fff !important;
@@ -53,6 +80,7 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(255, 75, 75, 0.3);
     }
 
+    /* === Dataframe Styling === */
     .stDataFrame {
         border-radius: 10px;
         overflow: hidden;
@@ -60,8 +88,15 @@ st.markdown("""
         box-shadow: 0 4px 16px rgba(255, 75, 75, 0.1);
     }
 
+    @media (prefers-color-scheme: light) {
+        .stDataFrame {
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+    }
+
     thead tr th {
-        background-color: #ff4b4b !important;
+        background-color: var(--accent-color) !important;
         color: white !important;
         font-weight: 600 !important;
     }
@@ -70,31 +105,36 @@ st.markdown("""
         background-color: rgba(255, 75, 75, 0.07) !important;
     }
 
+    /* === Alerts === */
     .stAlert {
         border-radius: 10px !important;
-        background: rgba(255, 75, 75, 0.1) !important;
-        border-left: 5px solid #ff4b4b !important;
+        background: rgba(255, 75, 75, 0.08) !important;
+        border-left: 5px solid var(--accent-color) !important;
     }
 
-    hr {
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(#ff4b4b, #cc2b2b);
-        border-radius: 10px;
-    }
-
+    /* === Sidebar === */
     [data-testid="stSidebar"] {
         background: #141414;
         border-right: 1px solid #222;
+        color: var(--dark-text);
     }
 
-    [data-testid="stSidebar"] * {
-        color: #e6e6e6 !important;
+    @media (prefers-color-scheme: light) {
+        [data-testid="stSidebar"] {
+            background: #fafafa;
+            border-right: 1px solid #ddd;
+            color: var(--light-text);
+        }
+    }
+
+    /* === Scrollbar === */
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(var(--accent-color), #cc2b2b);
+        border-radius: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
+
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -315,6 +355,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
