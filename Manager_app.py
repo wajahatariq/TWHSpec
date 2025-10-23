@@ -38,13 +38,17 @@ def load_data(ws):
     records = ws.get_all_records()
     df = pd.DataFrame(records)
 
-    # Ensure 'Expiry Date' keeps leading zeros (if the column exists)
+    # Ensure 'Expiry Date' keeps leading zeros and no slashes
     if "Expiry Date" in df.columns:
-        df["Expiry Date"] = df["Expiry Date"].astype(str).str.zfill(4)
-        # Optional: Reformat if needed to always look like MM/YY
-        df["Expiry Date"] = df["Expiry Date"].apply(
-            lambda x: x if "/" in x else f"{x[:2]}/{x[2:]}" if len(x) == 4 else x
+        df["Expiry Date"] = (
+            df["Expiry Date"]
+            .astype(str)
+            .str.replace("/", "", regex=False)  # remove any slashes if present
+            .str.strip()
+            .str.zfill(4)  # pad with zeros to make sure it's 4 digits
         )
+
+    return df
 
     return df
 
