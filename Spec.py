@@ -46,93 +46,134 @@ st.markdown("""
     }
 
     /* === Inputs, Selects, Textareas === */
-    input, select, textarea {
+    input, select, textarea {themes = {
+    "Crimson Dark": {"bg1": "#0f0f0f", "bg2": "#1b1b1b", "accent": "#ff4b4b"},
+    "Emerald Noir": {"bg1": "#0f1a14", "bg2": "#13221a", "accent": "#00c781"},
+    "Royal Blue": {"bg1": "#0d1b2a", "bg2": "#1b263b", "accent": "#4da8da"},
+    "Golden Luxe": {"bg1": "#1a120b", "bg2": "#2b1b10", "accent": "#ffcc00"},
+    "Tech Silver": {"bg1": "#1a1a1a", "bg2": "#2a2a2a", "accent": "#c0c0c0"},
+    "Purple Haze": {"bg1": "#1a0b2e", "bg2": "#2b1250", "accent": "#b47cff"},
+    "Cyber Neon": {"bg1": "#060606", "bg2": "#101010", "accent": "#00ffff"},
+    "Matte Charcoal": {"bg1": "#121212", "bg2": "#1e1e1e", "accent": "#999999"},
+    "Rose Gold": {"bg1": "#2e1a1a", "bg2": "#3d2626", "accent": "#ffb6a0"},
+    "Aqua Mist": {"bg1": "#0d1f22", "bg2": "#15393d", "accent": "#29f0c8"},
+}
+
+# --- Keep current theme in session_state ---
+if "selected_theme" not in st.session_state:
+    st.session_state.selected_theme = "Crimson Dark"
+
+# --- Horizontal theme buttons ---
+cols = st.columns(len(themes))
+for i, (theme_name, _) in enumerate(themes.items()):
+    if cols[i].button(theme_name):
+        st.session_state.selected_theme = theme_name
+
+# --- Extract selected theme colors ---
+selected = themes[st.session_state.selected_theme]
+bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
+
+# --- Inject dynamic CSS based on selected theme ---
+st.markdown(f"""
+    <style>
+    :root {{
+        color-scheme: dark;
+    }}
+
+    [data-testid="stAppViewContainer"] {{
+        background: radial-gradient(circle at top left, {bg2}, {bg1});
+        color: #e6e6e6;
+        font-family: "Inter", sans-serif;
+        transition: all 0.4s ease-in-out;
+    }}
+
+    h1, h2, h3, h4, h5, h6 {{
+        color: {accent} !important;
+        text-shadow: 0px 0px 12px {accent}33;
+    }}
+
+    input, select, textarea {{
         border-radius: 10px !important;
         border: 1px solid #333 !important;
         background-color: #1c1c1c !important;
         color: #f5f5f5 !important;
-    }
+    }}
 
-    @media (prefers-color-scheme: light) {
-        input, select, textarea {
-            background-color: #fff !important;
-            border: 1px solid #ccc !important;
-            color: #111 !important;
-        }
-    }
+    input:focus, select:focus, textarea:focus {{
+        border-color: {accent} !important;
+        box-shadow: 0 0 6px {accent}66;
+    }}
 
-    input:focus, select:focus, textarea:focus {
-        border-color: var(--accent-color) !important;
-        box-shadow: 0 0 6px rgba(255, 75, 75, 0.4);
-    }
-
-    /* === Buttons === */
-    button[kind="primary"] {
-        background: linear-gradient(90deg, #ff4b4b, #cc2b2b) !important;
+    button[kind="primary"] {{
+        background: linear-gradient(90deg, {accent}, {accent}cc) !important;
         color: #fff !important;
         border-radius: 10px !important;
         border: none !important;
         transition: all 0.25s ease-in-out;
-    }
+    }}
 
-    button[kind="primary"]:hover {
+    button[kind="primary"]:hover {{
         transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(255, 75, 75, 0.3);
-    }
+        box-shadow: 0 4px 20px {accent}55;
+    }}
 
-    /* === Dataframe Styling === */
-    .stDataFrame {
-        border-radius: 10px;
-        overflow: hidden;
-        background: #181818;
-        box-shadow: 0 4px 16px rgba(255, 75, 75, 0.1);
-    }
-
-    @media (prefers-color-scheme: light) {
-        .stDataFrame {
-            background: #ffffff;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-        }
-    }
-
-    thead tr th {
-        background-color: var(--accent-color) !important;
+    thead tr th {{
+        background-color: {accent} !important;
         color: white !important;
         font-weight: 600 !important;
-    }
+    }}
 
-    tbody tr:hover {
-        background-color: rgba(255, 75, 75, 0.07) !important;
-    }
+    tbody tr:hover {{
+        background-color: {accent}14 !important;
+    }}
 
-    /* === Alerts === */
-    .stAlert {
+    .stAlert {{
         border-radius: 10px !important;
-        background: rgba(255, 75, 75, 0.08) !important;
-        border-left: 5px solid var(--accent-color) !important;
-    }
+        background: {accent}14 !important;
+        border-left: 5px solid {accent} !important;
+    }}
 
-    /* === Sidebar === */
-    [data-testid="stSidebar"] {
+    ::-webkit-scrollbar-thumb {{
+        background: linear-gradient({accent}, {accent}cc);
+        border-radius: 10px;
+    }}
+
+    [data-testid="stSidebar"] {{
         background: #141414;
         border-right: 1px solid #222;
-        color: var(--dark-text);
-    }
+    }}
 
-    @media (prefers-color-scheme: light) {
-        [data-testid="stSidebar"] {
-            background: #fafafa;
-            border-right: 1px solid #ddd;
-            color: var(--light-text);
-        }
-    }
-
-    /* === Scrollbar === */
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(var(--accent-color), #cc2b2b);
-        border-radius: 10px;
-    }
+    /* === Top Theme Bar Styling === */
+    div[data-testid="column"] > div > button {{
+        background-color: #1c1c1c !important;
+        color: {accent} !important;
+        border-radius: 10px !important;
+        border: 1px solid {accent}33 !important;
+        font-weight: 500 !important;
+        transition: all 0.3s ease;
+    }}
+    div[data-testid="column"] > div > button:hover {{
+        background-color: {accent}33 !important;
+        transform: translateY(-2px);
+    }}
     </style>
+""", unsafe_allow_html=True)
+
+# --- Optional: Header ---
+st.markdown(f"""
+<div style='
+    background: linear-gradient(90deg, {accent}, {accent}cc);
+    color: white;
+    padding: 20px 28px;
+    border-radius: 14px;
+    font-size: 22px;
+    font-weight: 600;
+    text-align:center;
+    box-shadow: 0 4px 20px {accent}55;
+    margin-bottom: 35px;
+'>
+Client Management System — Techware Hub
+</div>
 """, unsafe_allow_html=True)
 
 tz = pytz.timezone("Asia/Karachi")
@@ -355,6 +396,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
