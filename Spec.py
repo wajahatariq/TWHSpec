@@ -9,6 +9,114 @@ import requests
 
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
+st.markdown("""
+    <style>
+    /* --- GLOBAL LAYOUT --- */
+    [data-testid="stAppViewContainer"] {
+        background-color: #f6f7fb;
+    }
+    [data-testid="stHeader"], [data-testid="stToolbar"] {
+        background: transparent;
+    }
+
+    /* --- TITLES --- */
+    h1, h2, h3, h4, h5, h6 {
+        color: #1a1a1a !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px;
+    }
+
+    /* --- TEXT --- */
+    p, label, span, div {
+        color: #333 !important;
+    }
+
+    /* --- FORM INPUTS --- */
+    input, select, textarea {
+        border-radius: 10px !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    input:focus, select:focus, textarea:focus {
+        border-color: #ff4b4b !important;
+        box-shadow: 0 0 5px rgba(255, 75, 75, 0.3);
+    }
+
+    /* --- BUTTONS --- */
+    button[kind="primary"] {
+        background: linear-gradient(90deg, #ff4b4b, #ff6b6b) !important;
+        color: #fff !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        transition: all 0.25s ease-in-out;
+    }
+    button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 75, 75, 0.25);
+    }
+
+    /* --- DATAFRAME --- */
+    .stDataFrame {
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    /* --- TABLE CELLS --- */
+    table {
+        border-collapse: collapse !important;
+        width: 100%;
+    }
+    td, th {
+        border: none !important;
+        padding: 10px 14px !important;
+    }
+    tbody tr:hover {
+        background-color: #fff4f4 !important;
+    }
+
+    /* --- ALERTS --- */
+    .stAlert {
+        border-radius: 10px !important;
+        background: rgba(255, 75, 75, 0.07) !important;
+        color: #111 !important;
+        border-left: 5px solid #ff4b4b !important;
+    }
+
+    /* --- DIVIDERS --- */
+    hr {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 2rem 0;
+    }
+
+    /* --- FORM CONTAINER --- */
+    section.main > div.block-container {
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+        max-width: 1300px;
+    }
+
+    /* --- TOASTS --- */
+    .stToast {
+        border-radius: 8px !important;
+        background: #fff !important;
+        color: #111 !important;
+        border-left: 4px solid #ff4b4b !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    /* --- SUCCESS COLOR OVERRIDE --- */
+    .stSuccess {
+        border-left-color: #00b894 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -69,6 +177,23 @@ with st.form("transaction_form"):
         provider = st.selectbox("Provider", PROVIDERS, key="provider")
         date_of_charge = st.date_input("Date of Charge", key="date_of_charge", value=datetime.now().date())
     submitted = st.form_submit_button("Submit")
+
+st.markdown("""
+    <div style='
+        background: linear-gradient(90deg, #ff4b4b, #ff6b6b);
+        color: white;
+        padding: 18px 28px;
+        border-radius: 12px;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 20px rgba(255, 75, 75, 0.3);
+        margin-bottom: 30px;
+    '>
+        🚀 Client Management System
+    </div>
+""", unsafe_allow_html=True)
+
 
 # --- VALIDATION & SAVE ---
 if submitted:
@@ -230,5 +355,6 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
