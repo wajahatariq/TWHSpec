@@ -63,7 +63,7 @@ with st.form("transaction_form"):
     with col2:
         card_number = st.text_input("Card Number", key="card_number")
         expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
-        cvc = st.number_input("CVC", min_value=0, max_value=999, step=1, key="cvc")
+        cvc = st.text_input("CVC", key="cvc")
         charge = st.text_input("Charge Amount", key="charge")
         llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
         provider = st.selectbox("Provider", PROVIDERS, key="provider")
@@ -224,3 +224,4 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
