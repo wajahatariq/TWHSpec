@@ -10,43 +10,7 @@ import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
-
-st.markdown("""
-    <style>
-    :root {
-        color-scheme: dark light;
-        --accent-color: #ff4b4b;
-        --dark-bg: #0f0f0f;
-        --dark-surface: #1b1b1b;
-        --dark-text: #e6e6e6;
-        --light-bg: #f8f8f8;
-        --light-surface: #ffffff;
-        --light-text: #111111;
-    }
-
-    /* === Base App Background === */
-    [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at top left, var(--dark-surface), var(--dark-bg));
-        color: var(--dark-text);
-        font-family: "Inter", sans-serif;
-        transition: all 0.3s ease-in-out;
-    }
-
-    @media (prefers-color-scheme: light) {
-        [data-testid="stAppViewContainer"] {
-            background: linear-gradient(145deg, var(--light-bg), var(--light-surface));
-            color: var(--light-text);
-        }
-    }
-
-    /* === Titles === */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--accent-color) !important;
-        text-shadow: 0px 0px 12px rgba(255, 75, 75, 0.25);
-    }
-
-    /* === Inputs, Selects, Textareas === */
-    input, select, textarea {themes = {
+themes = {
     "Crimson Dark": {"bg1": "#0f0f0f", "bg2": "#1b1b1b", "accent": "#ff4b4b"},
     "Emerald Noir": {"bg1": "#0f1a14", "bg2": "#13221a", "accent": "#00c781"},
     "Royal Blue": {"bg1": "#0d1b2a", "bg2": "#1b263b", "accent": "#4da8da"},
@@ -73,7 +37,7 @@ for i, (theme_name, _) in enumerate(themes.items()):
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 
-# --- Inject dynamic CSS based on selected theme ---
+# --- Inject dynamic CSS (escaping curly braces) ---
 st.markdown(f"""
     <style>
     :root {{
@@ -138,11 +102,6 @@ st.markdown(f"""
         border-radius: 10px;
     }}
 
-    [data-testid="stSidebar"] {{
-        background: #141414;
-        border-right: 1px solid #222;
-    }}
-
     /* === Top Theme Bar Styling === */
     div[data-testid="column"] > div > button {{
         background-color: #1c1c1c !important;
@@ -172,7 +131,7 @@ st.markdown(f"""
     box-shadow: 0 4px 20px {accent}55;
     margin-bottom: 35px;
 '>
-Client Management System — Techware Hub
+🚀 Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
 
@@ -396,6 +355,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
