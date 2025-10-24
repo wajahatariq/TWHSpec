@@ -12,51 +12,53 @@ st.set_page_config(page_title="Client Management System", layout="wide")
 
 # --- LIGHT THEMES ---
 light_themes = {
-    "Blush White":     {"bg1": "#ffffff", "bg2": "#f9f3f2", "accent": "#ff5f6d"},
-    "Ocean Mist":      {"bg1": "#f2fbfd", "bg2": "#e4f9ff", "accent": "#00aaff"},
-    "Ivory Gold":      {"bg1": "#fffaf0", "bg2": "#fdf5e6", "accent": "#d4af37"},
-    "Rose Quartz":     {"bg1": "#fff0f5", "bg2": "#ffe4e1", "accent": "#ff69b4"},
-    "Arctic Blue":     {"bg1": "#f7fbff", "bg2": "#e8f1fa", "accent": "#4682b4"},
-    "Peach Glow":      {"bg1": "#fff7f3", "bg2": "#ffe9df", "accent": "#ff7e5f"},
-    "Lavender Sky":    {"bg1": "#f8f4ff", "bg2": "#ede7ff", "accent": "#a780ff"},
-    "Mint Dream":      {"bg1": "#f3fff9", "bg2": "#e3fdf3", "accent": "#34d399"},
-    "Champagne":       {"bg1": "#fffaf5", "bg2": "#fff3e9", "accent": "#ffb347"},
-    "Powder Blue":     {"bg1": "#f5faff", "bg2": "#e9f2ff", "accent": "#5dade2"},
-    "Sunlit Coral":    {"bg1": "#fff5f0", "bg2": "#ffe0d9", "accent": "#ff8360"},
-    "Skyline Blue":    {"bg1": "#f0faff", "bg2": "#dceeff", "accent": "#3b82f6"},
-    "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
-    "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
-    "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
-    "Peach Fizz":      {"bg1": "#fff7f5", "bg2": "#ffe8e0", "accent": "#ff6f91"},
-    "Aurora Dawn":     {"bg1": "#f9faff", "bg2": "#e7f0ff", "accent": "#7f5af0"},
-    "Buttercream":     {"bg1": "#fffaf0", "bg2": "#fff3e2", "accent": "#ffca3a"},
-    "Soft Lilac":      {"bg1": "#f9f5ff", "bg2": "#efe7ff", "accent": "#c084fc"},
-    "Seaside Foam":    {"bg1": "#f2fcff", "bg2": "#d9f2ff", "accent": "#22d3ee"},
+    "Sunlit Coral":       {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
+    "Skyline Blue":       {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
+    "Golden Sand":        {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
+    "Lilac Mist":         {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
+    "Mint Breeze":        {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+    "Peachy Glow":        {"bg1": "#fff4f0", "bg2": "#ffe4d9", "accent": "#ff7e5f"},
+    "Icy Lavender":       {"bg1": "#f7f5ff", "bg2": "#e7e0ff", "accent": "#b57dfb"},
+    "Sky Dusk":           {"bg1": "#f0f4ff", "bg2": "#d9e3ff", "accent": "#5f7fff"},
+    "Creamy Amber":       {"bg1": "#fff9f2", "bg2": "#fff1d6", "accent": "#ffb347"},
+    "Aqua Pearl":         {"bg1": "#f2fffe", "bg2": "#d9fff9", "accent": "#34d399"},
+    "Rose Petal":         {"bg1": "#fff0f0", "bg2": "#ffe0e0", "accent": "#ff4d6d"},
+    "Lemon Chiffon":      {"bg1": "#fffde7", "bg2": "#fff7c7", "accent": "#facc15"},
+    "Frosted Mint":       {"bg1": "#f0fff4", "bg2": "#d0ffe0", "accent": "#12b886"},
+    "Powder Blue":        {"bg1": "#f0f7ff", "bg2": "#dceaff", "accent": "#5dade2"},
+    "Lavender Lace":      {"bg1": "#faf6ff", "bg2": "#eae0ff", "accent": "#9f7aea"},
+    "Coral Cream":        {"bg1": "#fff6f0", "bg2": "#ffe5d5", "accent": "#ff7f50"},
+    "Sky Morning":        {"bg1": "#f4f9ff", "bg2": "#dceeff", "accent": "#4dabf7"},
+    "Vanilla Glow":       {"bg1": "#fffaf0", "bg2": "#fff2d8", "accent": "#fbbf24"},
+    "Seaside Mist":       {"bg1": "#f0fdfa", "bg2": "#d4f7f0", "accent": "#22d3ee"},
+    "Blush Petal":        {"bg1": "#fff5f7", "bg2": "#ffe4ec", "accent": "#f43f5e"},
 }
+
 
 # --- DARK THEMES (10 upgraded) ---
 dark_themes = {
-    "Crimson Dark":    {"bg1": "#0f0f0f", "bg2": "#1b1b1b", "accent": "#ff4b4b"},
-    "Emerald Noir":    {"bg1": "#0f1a14", "bg2": "#13221a", "accent": "#00c781"},
-    "Royal Blue":      {"bg1": "#0d1b2a", "bg2": "#1b263b", "accent": "#4da8da"},
-    "Golden Luxe":     {"bg1": "#1a120b", "bg2": "#2b1b10", "accent": "#ffcc00"},
-    "Cyber Neon":      {"bg1": "#060606", "bg2": "#101010", "accent": "#00ffff"},
-    "Violet Eclipse":  {"bg1": "#140019", "bg2": "#1e0027", "accent": "#b537f2"},
-    "Aqua Blaze":      {"bg1": "#001a1f", "bg2": "#002b33", "accent": "#00f0ff"},
-    "Rose Inferno":    {"bg1": "#1a0008", "bg2": "#29000d", "accent": "#ff1e56"},
-    "Steel Night":     {"bg1": "#121212", "bg2": "#1f1f1f", "accent": "#7f8c8d"},
-    "Aurora Pulse":    {"bg1": "#080808", "bg2": "#151515", "accent": "#f72585"},
-    "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
-    "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
-    "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
-    "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
-    "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
-    "Midnight Orchid": {"bg1": "#0c0015", "bg2": "#1a002a", "accent": "#da70d6"},
-    "Cyber Teal":      {"bg1": "#001212", "bg2": "#002626", "accent": "#00fff0"},
-    "Inferno Red":     {"bg1": "#1c0000", "bg2": "#330000", "accent": "#ff2400"},
-    "Electric Blue":   {"bg1": "#000b1a", "bg2": "#001f33", "accent": "#00bfff"},
-    "Purple Haze":     {"bg1": "#120018", "bg2": "#250033", "accent": "#9b30ff"},
+    "Obsidian Night":     {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
+    "Crimson Shadow":     {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
+    "Deep Ocean":         {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
+    "Neon Violet":        {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
+    "Emerald Abyss":      {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+    "Cyber Red":          {"bg1": "#100000", "bg2": "#300000", "accent": "#ff1e56"},
+    "Royal Teal":         {"bg1": "#001f1f", "bg2": "#003333", "accent": "#00d4d4"},
+    "Midnight Purple":    {"bg1": "#0d001d", "bg2": "#1b0035", "accent": "#9b59b6"},
+    "Steel Grey":         {"bg1": "#121212", "bg2": "#1f1f1f", "accent": "#7f8c8d"},
+    "Aurora Pulse":       {"bg1": "#080808", "bg2": "#151515", "accent": "#f72585"},
+    "Lava Core":          {"bg1": "#1a0000", "bg2": "#330000", "accent": "#ff5733"},
+    "Galactic Blue":      {"bg1": "#000a1a", "bg2": "#001f33", "accent": "#4da8da"},
+    "Neon Green":         {"bg1": "#001000", "bg2": "#002200", "accent": "#00ff66"},
+    "Violet Storm":       {"bg1": "#1a001a", "bg2": "#330033", "accent": "#d900ff"},
+    "Midnight Cyan":      {"bg1": "#001f1f", "bg2": "#003737", "accent": "#00ffff"},
+    "Red Ember":          {"bg1": "#140000", "bg2": "#2a0000", "accent": "#ff4b4b"},
+    "Electric Indigo":    {"bg1": "#0a001a", "bg2": "#1a0033", "accent": "#8c00ff"},
+    "Cosmic Teal":        {"bg1": "#001f1a", "bg2": "#003333", "accent": "#00e5ff"},
+    "Steel Violet":       {"bg1": "#0f0d1a", "bg2": "#1b1833", "accent": "#9b59b6"},
+    "Aurora Green":       {"bg1": "#001a0d", "bg2": "#00331a", "accent": "#00ff99"},
 }
+
 
 # --- Session Defaults ---
 if "theme_mode" not in st.session_state:
@@ -426,6 +428,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
