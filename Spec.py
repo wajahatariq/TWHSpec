@@ -50,7 +50,7 @@ dark_themes = {
     "Lava Core":          {"bg1": "#1a0000", "bg2": "#330000", "accent": "#ff5733"},
     "Galactic Blue":      {"bg1": "#000a1a", "bg2": "#001f33", "accent": "#4da8da"},
     "Neon Green":         {"bg1": "#001000", "bg2": "#002200", "accent": "#00ff66"},
-    "Golden Luxe":        {"bg1": "#fff8e7", "bg2": "#fff1c9", "accent": "#d4af37"},
+    "Golden Chrome":      {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"}
     "Midnight Cyan":      {"bg1": "#001f1f", "bg2": "#003737", "accent": "#00ffff"},
     "Red Ember":          {"bg1": "#140000", "bg2": "#2a0000", "accent": "#ff4b4b"},
     "Electric Indigo":    {"bg1": "#0a001a", "bg2": "#1a0033", "accent": "#8c00ff"},
@@ -428,6 +428,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
