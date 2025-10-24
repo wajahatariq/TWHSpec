@@ -10,8 +10,6 @@ import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
-st.markdown(header_html, unsafe_allow_html=True)
-
 # --- LIGHT THEMES ---
 light_themes = {
     "Sunlit Coral":       {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
@@ -429,6 +427,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
