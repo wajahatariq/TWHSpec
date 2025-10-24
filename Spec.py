@@ -71,8 +71,17 @@ text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 input_bg = "#fff" if st.session_state.theme_mode == "Light" else "#1c1c1c"
 input_border = "#ccc" if st.session_state.theme_mode == "Light" else "#333"
 
+# active theme for pulse effect
+active_theme = st.session_state.selected_theme
+
 st.markdown(f"""
     <style>
+    @keyframes pulseGlow {{
+        0% {{ box-shadow: 0 0 0px {accent}44; }}
+        50% {{ box-shadow: 0 0 14px {accent}88; }}
+        100% {{ box-shadow: 0 0 0px {accent}44; }}
+    }}
+
     html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stHeader"] {{
         background-color: {bg1} !important;
         color: {text_color} !important;
@@ -131,6 +140,14 @@ st.markdown(f"""
         transform: scale(1.04);
     }}
 
+    /* Active theme glowing pulse */
+    div[data-testid="column"] > div > button:has(span:contains("{active_theme}")) {{
+        background: {accent}22 !important;
+        color: white !important;
+        border: 1px solid {accent}cc !important;
+        animation: pulseGlow 2s infinite ease-in-out;
+    }}
+
     ::-webkit-scrollbar-thumb {{
         background: linear-gradient({accent}, {accent}cc);
         border-radius: 10px;
@@ -150,6 +167,23 @@ st.markdown(f"""
         border-left: 5px solid {accent} !important;
     }}
     </style>
+""", unsafe_allow_html=True)
+
+# --- Header (optional) ---
+st.markdown(f"""
+<div style='
+    background: linear-gradient(90deg, {accent}, {accent}cc);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+'>
+🚀 Client Management System — Techware Hub
+</div>
 """, unsafe_allow_html=True)
 
 # --- Header (optional) ---
@@ -389,6 +423,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
