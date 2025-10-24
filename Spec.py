@@ -10,12 +10,20 @@ import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
+st.set_page_config(page_title="Client Management System", layout="wide")
+
+# --- LIGHT THEMES ---
 light_themes = {
     "Blush White": {"bg1": "#ffffff", "bg2": "#f9f3f2", "accent": "#ff5f6d"},
     "Ocean Mist": {"bg1": "#f2fbfd", "bg2": "#e4f9ff", "accent": "#00aaff"},
     "Ivory Gold": {"bg1": "#fffaf0", "bg2": "#fdf5e6", "accent": "#d4af37"},
     "Rose Quartz": {"bg1": "#fff0f5", "bg2": "#ffe4e1", "accent": "#ff69b4"},
+    "Arctic Blue": {"bg1": "#f7fbff", "bg2": "#e8f1fa", "accent": "#4682b4"},
+    "Peach Glow": {"bg1": "#fff7f3", "bg2": "#ffe9df", "accent": "#ff7e5f"},
+    "Lavender Sky": {"bg1": "#f8f4ff", "bg2": "#ede7ff", "accent": "#a780ff"},
     "Mint Dream": {"bg1": "#f3fff9", "bg2": "#e3fdf3", "accent": "#34d399"},
+    "Champagne": {"bg1": "#fffaf5", "bg2": "#fff3e9", "accent": "#ffb347"},
+    "Powder Blue": {"bg1": "#f5faff", "bg2": "#e9f2ff", "accent": "#5dade2"},
 }
 
 # --- DARK THEMES ---
@@ -24,7 +32,12 @@ dark_themes = {
     "Emerald Noir": {"bg1": "#0f1a14", "bg2": "#13221a", "accent": "#00c781"},
     "Royal Blue": {"bg1": "#0d1b2a", "bg2": "#1b263b", "accent": "#4da8da"},
     "Golden Luxe": {"bg1": "#1a120b", "bg2": "#2b1b10", "accent": "#ffcc00"},
+    "Cyber Neon": {"bg1": "#060606", "bg2": "#101010", "accent": "#00ffff"},
     "Violet Eclipse": {"bg1": "#140019", "bg2": "#1e0027", "accent": "#b537f2"},
+    "Aqua Blaze": {"bg1": "#001a1f", "bg2": "#002b33", "accent": "#00f0ff"},
+    "Rose Inferno": {"bg1": "#1a0008", "bg2": "#29000d", "accent": "#ff1e56"},
+    "Steel Night": {"bg1": "#121212", "bg2": "#1f1f1f", "accent": "#7f8c8d"},
+    "Aurora Pulse": {"bg1": "#080808", "bg2": "#151515", "accent": "#f72585"},
 }
 
 # --- Session Defaults ---
@@ -48,17 +61,29 @@ if st.session_state.selected_theme not in themes:
 
 # --- Capsule Buttons ---
 cols = st.columns(len(themes))
-for i, theme_name in enumerate(themes):
+for i, (theme_name, data) in enumerate(themes.items()):
+    accent = data["accent"]
+    style = f"""
+        background-color: transparent;
+        border: 1px solid {accent}55;
+        border-radius: 999px;
+        color: {accent};
+        font-weight: 600;
+        padding: 0.45rem 1rem;
+        box-shadow: 0 0 6px {accent}33;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    """
     if cols[i].button(theme_name, key=f"theme_{theme_name}"):
         st.session_state.selected_theme = theme_name
 
+# --- Extract Selected Theme ---
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
 # --- Header ---
-st.markdown(
-    f"""
+st.markdown(f"""
 <div style="
     background: linear-gradient(90deg, {accent}, {accent}cc);
     color: white;
@@ -72,17 +97,14 @@ st.markdown(
 ">
 Client Management System — Techware Hub
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # --- CSS + Animations ---
-st.markdown(
-    f"""
+st.markdown(f"""
 <style>
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}55; }}
-    50% {{ box-shadow: 0 0 18px {accent}aa; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
     100% {{ box-shadow: 0 0 0px {accent}55; }}
 }}
 @keyframes bounce {{
@@ -107,34 +129,26 @@ h1, h2, h3, h4, h5, h6 {{
 }}
 
 div[data-testid="column"] > div > button {{
-    background-color: transparent !important;
-    color: {accent} !important;
     border-radius: 999px !important;
-    border: 1px solid {accent}55 !important;
     font-weight: 600 !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: 0 0 6px {accent}22;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease !important;
 }}
 div[data-testid="column"] > div > button:hover {{
     background: {accent}22 !important;
     color: white !important;
-    box-shadow: 0 0 20px {accent}88, inset 0 0 10px {accent}55;
-    transform: scale(1.05);
+    box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
+    transform: scale(1.07);
     animation: bounce 0.4s ease;
 }}
-
 div[data-testid="column"] > div > button:has(span:contains('{st.session_state.selected_theme}')) {{
     background: {accent}33 !important;
     color: white !important;
     border: 1px solid {accent}cc !important;
-    animation: pulseGlow 2.2s infinite ease-in-out;
-    box-shadow: 0 0 16px {accent}99;
+    animation: pulseGlow 2.3s infinite ease-in-out;
+    box-shadow: 0 0 18px {accent}bb !important;
 }}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 st.write(f"### Current Theme: `{st.session_state.selected_theme}` — Mode: `{st.session_state.theme_mode}`")
 st.write("This is your customized dark/light animated capsule theme system ✨")
@@ -359,6 +373,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
