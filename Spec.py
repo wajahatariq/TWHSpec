@@ -10,85 +10,81 @@ import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
-import streamlit as st
-
-# --- LIGHT THEMES (Vibrant, soft gradients, premium tones) ---
 light_themes = {
     "Blush White": {"bg1": "#ffffff", "bg2": "#f9f3f2", "accent": "#ff5f6d"},
     "Ocean Mist": {"bg1": "#f2fbfd", "bg2": "#e4f9ff", "accent": "#00aaff"},
     "Ivory Gold": {"bg1": "#fffaf0", "bg2": "#fdf5e6", "accent": "#d4af37"},
     "Rose Quartz": {"bg1": "#fff0f5", "bg2": "#ffe4e1", "accent": "#ff69b4"},
-    "Arctic Blue": {"bg1": "#f7fbff", "bg2": "#e8f1fa", "accent": "#4682b4"},
-    "Peach Glow": {"bg1": "#fff7f3", "bg2": "#ffe9df", "accent": "#ff7e5f"},
-    "Lavender Sky": {"bg1": "#f8f4ff", "bg2": "#ede7ff", "accent": "#a780ff"},
     "Mint Dream": {"bg1": "#f3fff9", "bg2": "#e3fdf3", "accent": "#34d399"},
-    "Champagne": {"bg1": "#fffaf5", "bg2": "#fff3e9", "accent": "#ffb347"},
-    "Powder Blue": {"bg1": "#f5faff", "bg2": "#e9f2ff", "accent": "#5dade2"},
 }
 
-# --- DARK THEMES (Moody, neon-infused, premium looks) ---
+# --- DARK THEMES ---
 dark_themes = {
     "Crimson Dark": {"bg1": "#0f0f0f", "bg2": "#1b1b1b", "accent": "#ff4b4b"},
     "Emerald Noir": {"bg1": "#0f1a14", "bg2": "#13221a", "accent": "#00c781"},
     "Royal Blue": {"bg1": "#0d1b2a", "bg2": "#1b263b", "accent": "#4da8da"},
     "Golden Luxe": {"bg1": "#1a120b", "bg2": "#2b1b10", "accent": "#ffcc00"},
-    "Cyber Neon": {"bg1": "#060606", "bg2": "#101010", "accent": "#00ffff"},
     "Violet Eclipse": {"bg1": "#140019", "bg2": "#1e0027", "accent": "#b537f2"},
-    "Aqua Blaze": {"bg1": "#001a1f", "bg2": "#002b33", "accent": "#00f0ff"},
-    "Rose Inferno": {"bg1": "#1a0008", "bg2": "#29000d", "accent": "#ff1e56"},
-    "Steel Night": {"bg1": "#121212", "bg2": "#1f1f1f", "accent": "#7f8c8d"},
-    "Aurora Pulse": {"bg1": "#080808", "bg2": "#151515", "accent": "#f72585"},
 }
 
-# --- Session State Defaults ---
+# --- Session Defaults ---
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
 if "selected_theme" not in st.session_state:
     st.session_state.selected_theme = None
 
-# --- Mode Toggle (Top Buttons) ---
-col1, col2, _, _ = st.columns([1, 1, 6, 1])
-switched_mode = False
+# --- Mode Toggle ---
+col1, col2, _ = st.columns([1, 1, 6])
 with col1:
     if st.button("🌞 Light Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Light":
-            st.session_state.theme_mode = "Light"
-            switched_mode = True
+        st.session_state.theme_mode = "Light"
 with col2:
     if st.button("🌙 Dark Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Dark":
-            st.session_state.theme_mode = "Dark"
-            switched_mode = True
+        st.session_state.theme_mode = "Dark"
 
-# --- Theme Set Selection ---
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-
-if switched_mode or st.session_state.selected_theme not in themes:
+if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
 
-# --- Capsule Buttons for Themes ---
+# --- Capsule Buttons ---
 cols = st.columns(len(themes))
-for i, (theme_name, _) in enumerate(themes.items()):
+for i, theme_name in enumerate(themes):
     if cols[i].button(theme_name, key=f"theme_{theme_name}"):
         st.session_state.selected_theme = theme_name
 
-selected = themes.get(st.session_state.selected_theme, list(themes.values())[0])
+selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
-
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
-input_bg = "#fff" if st.session_state.theme_mode == "Light" else "#1c1c1c"
-input_border = "#ccc" if st.session_state.theme_mode == "Light" else "#333"
-active_theme = st.session_state.selected_theme
 
-# --- Inject Styles ---
-st.markdown(f"""
+# --- Header ---
+st.markdown(
+    f"""
+<div style="
+    background: linear-gradient(90deg, {accent}, {accent}cc);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+">
+Client Management System — Techware Hub
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+# --- CSS + Animations ---
+st.markdown(
+    f"""
 <style>
 @keyframes pulseGlow {{
-    0% {{ box-shadow: 0 0 0px {accent}44; }}
-    50% {{ box-shadow: 0 0 14px {accent}aa; }}
-    100% {{ box-shadow: 0 0 0px {accent}44; }}
+    0% {{ box-shadow: 0 0 0px {accent}55; }}
+    50% {{ box-shadow: 0 0 18px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}55; }}
 }}
-
 @keyframes bounce {{
     0%, 100% {{ transform: translateY(0); }}
     50% {{ transform: translateY(-3px); }}
@@ -99,48 +95,26 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-tes
     color: {text_color} !important;
     color-scheme: {"light" if st.session_state.theme_mode == "Light" else "dark"} !important;
 }}
-
 [data-testid="stAppViewContainer"] {{
     background: radial-gradient(circle at top left, {bg2}, {bg1});
     font-family: "Inter", sans-serif;
-    transition: all 0.28s ease-in-out;
+    transition: all 0.3s ease-in-out;
 }}
 
 h1, h2, h3, h4, h5, h6 {{
     color: {accent} !important;
-    text-shadow: 0px 0px 10px {accent}33;
+    text-shadow: 0 0 10px {accent}33;
 }}
 
-input, select, textarea {{
-    border-radius: 10px !important;
-    border: 1px solid {input_border} !important;
-    background-color: {input_bg} !important;
-    color: {text_color} !important;
-}}
-
-button[kind="primary"] {{
-    background: linear-gradient(90deg, {accent}, {accent}cc) !important;
-    color: #fff !important;
-    border-radius: 999px !important;
-    border: none !important;
-    transition: all 0.22s ease-in-out;
-    box-shadow: 0 0 10px {accent}44;
-}}
-button[kind="primary"]:hover {{
-    transform: scale(1.03);
-    box-shadow: 0 0 22px {accent}66;
-}}
-
-/* Capsule buttons */
 div[data-testid="column"] > div > button {{
     background-color: transparent !important;
     color: {accent} !important;
     border-radius: 999px !important;
     border: 1px solid {accent}55 !important;
     font-weight: 600 !important;
-    transition: all 0.3s ease;
     padding: 0.45rem 1rem !important;
     box-shadow: 0 0 6px {accent}22;
+    transition: all 0.3s ease;
 }}
 div[data-testid="column"] > div > button:hover {{
     background: {accent}22 !important;
@@ -150,35 +124,20 @@ div[data-testid="column"] > div > button:hover {{
     animation: bounce 0.4s ease;
 }}
 
-/* Active theme glowing pulse */
-div[data-testid="column"] > div > button:has(span:contains("{active_theme}")) {{
+div[data-testid="column"] > div > button:has(span:contains('{st.session_state.selected_theme}')) {{
     background: {accent}33 !important;
     color: white !important;
     border: 1px solid {accent}cc !important;
-    animation: pulseGlow 2.5s infinite ease-in-out;
-    box-shadow: 0 0 16px {accent}88;
-}}
-
-::-webkit-scrollbar-thumb {{
-    background: linear-gradient({accent}, {accent}cc);
-    border-radius: 10px;
-}}
-
-thead tr th {{
-    background-color: {accent} !important;
-    color: white !important;
-    font-weight: 600 !important;
-}}
-tbody tr:hover {{
-    background-color: {accent}11 !important;
-}}
-.stAlert {{
-    border-radius: 10px !important;
-    background: {accent}14 !important;
-    border-left: 5px solid {accent} !important;
+    animation: pulseGlow 2.2s infinite ease-in-out;
+    box-shadow: 0 0 16px {accent}99;
 }}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
+
+st.write(f"### Current Theme: `{st.session_state.selected_theme}` — Mode: `{st.session_state.theme_mode}`")
+st.write("This is your customized dark/light animated capsule theme system ✨")
 
 tz = pytz.timezone("Asia/Karachi")
 
@@ -400,6 +359,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
