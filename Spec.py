@@ -236,7 +236,7 @@ def clear_form():
     st.session_state.card_holder = ""
     st.session_state.card_number = ""
     st.session_state.expiry = ""
-    st.session_state.cvc = 0
+    st.session_state.cvc = ""
     st.session_state.charge = ""
     st.session_state.llc = "Select LLC"
     st.session_state.provider = "Select Provider"
@@ -464,4 +464,5 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
 
