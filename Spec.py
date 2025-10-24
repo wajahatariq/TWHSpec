@@ -65,6 +65,13 @@ if "theme_mode" not in st.session_state:
 if "selected_theme" not in st.session_state:
     st.session_state.selected_theme = None
 
+# --- SELECT THEME ---
+themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+
+# Only set default if selected_theme is None or not in current themes
+if st.session_state.selected_theme is None or st.session_state.selected_theme not in themes:
+    st.session_state.selected_theme = list(themes.keys())[0]
+
 # --- Mode Toggle ---
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
@@ -457,3 +464,4 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
