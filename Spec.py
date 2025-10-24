@@ -71,46 +71,7 @@ text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
 # --- Header ---
 st.markdown(f"""
-<style>
-/* ---------------- keyframes ---------------- */
-@keyframes pulseGlow {{
-  0% {{ box-shadow: 0 0 0px {accent}44; }}
-  50% {{ box-shadow: 0 0 20px {accent}aa; }}
-  100% {{ box-shadow: 0 0 0px {accent}44; }}
-}}
-
-@keyframes bounce {{
-  0%, 100% {{ transform: translateY(0); }}
-  50% {{ transform: translateY(-3px); }}
-}}
-
-@keyframes fadeIn {{
-  0% {{ opacity: 0; transform: translateY(8px); }}
-  100% {{ opacity: 1; transform: translateY(0); }}
-}}
-
-@keyframes shimmerText {{
-  0% {{ background-position: -200% 0; }}
-  100% {{ background-position: 200% 0; }}
-}}
-
-@keyframes bgShift {{
-  0% {{ background-position: 0% 0%; }}
-  50% {{ background-position: 50% 50%; }}
-  100% {{ background-position: 0% 0%; }}
-}}
-
-/* ---------------- BODY & BACKGROUND ---------------- */
-[data-testid="stAppViewContainer"] {{
-    background: radial-gradient(circle at top left, {bg2}, {bg1});
-    font-family: "Inter", sans-serif;
-    background-size: 400% 400%;
-    animation: bgShift 60s ease infinite;
-    transition: all 0.3s ease-in-out;
-}}
-
-/* ---------------- HEADER ---------------- */
-div[style*="Client Management System"] {{
+<div id="top-header" style="
     background: linear-gradient(90deg, {accent}, #ffffff, {accent});
     color: transparent;
     padding: 18px 24px;
@@ -122,48 +83,76 @@ div[style*="Client Management System"] {{
     margin-bottom: 28px;
     background-clip: text;
     -webkit-background-clip: text;
-    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+">
+Client Management System — Techware Hub
+</div>
+""", unsafe_allow_html=True)
+
+# --- CSS & Animations ---
+st.markdown(f"""
+<style>
+/* Keyframes */
+@keyframes pulseGlow {{
+  0% {{ box-shadow: 0 0 0px {accent}44; }}
+  50% {{ box-shadow: 0 0 20px {accent}aa; }}
+  100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+@keyframes bounce {{
+  0%,100% {{ transform: translateY(0); }}
+  50% {{ transform: translateY(-3px); }}
+}}
+@keyframes shimmerText {{
+  0% {{ background-position: -200% 0; }}
+  100% {{ background-position: 200% 0; }}
+}}
+@keyframes fadeIn {{
+  0% {{ opacity: 0; transform: translateY(10px); }}
+  100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
-/* ---------------- CAPSULE THEME BUTTONS ---------------- */
-div.stButton > button {{
+/* Body & App */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {{
+    background-color: {bg1} !important;
+    color: {text_color} !important;
+    color-scheme: {"light" if st.session_state.theme_mode == "Light" else "dark"} !important;
+}}
+[data-testid="stAppViewContainer"] {{
+    background: radial-gradient(circle at top left, {bg2}, {bg1});
+    font-family: "Inter", sans-serif;
+    transition: all 0.3s ease-in-out;
+}}
+
+/* Header */
+#top-header {{
+    animation: shimmerText 4s linear infinite, fadeIn 1s ease;
+}}
+
+/* Capsule Buttons */
+div[data-testid="column"] > div > button {{
     border-radius: 999px !important;
     font-weight: 600 !important;
     transition: all 0.3s ease !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: 0 0 6px {accent}33;
+    border: 1px solid {accent}55;
+    color: {accent};
     background-color: transparent !important;
-    color: {accent} !important;
-    border: 1px solid {accent}55 !important;
+    box-shadow: 0 0 6px {accent}33;
 }}
-
-div.stButton > button:hover {{
+div[data-testid="column"] > div > button:hover {{
     background: {accent}22 !important;
     color: white !important;
     box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
     transform: scale(1.07);
     animation: bounce 0.4s ease;
 }}
-
-/* ---------------- TABLE ROWS ---------------- */
-tbody tr:hover {{
-    background-color: {accent}11 !important;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
-    box-shadow: 0 0 8px {accent}55;
-}}
-
-/* ---------------- SCROLLBAR ---------------- */
-::-webkit-scrollbar {{
-    width: 10px;
-}}
-::-webkit-scrollbar-thumb {{
-    background: linear-gradient({accent}, {accent}cc);
-    border-radius: 10px;
+div[data-testid="column"] > div > button:has(span:contains('{st.session_state.selected_theme}')) {{
+    background: {accent}33 !important;
+    color: white !important;
+    border: 1px solid {accent}cc !important;
+    animation: pulseGlow 2.3s infinite ease-in-out;
+    box-shadow: 0 0 18px {accent}bb !important;
 }}
 </style>
 """, unsafe_allow_html=True)
-
 
 tz = pytz.timezone("Asia/Karachi")
 
@@ -385,6 +374,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
