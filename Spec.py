@@ -85,8 +85,13 @@ st.markdown(f"""
 <style>
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
-    50% {{ box-shadow: 0 0 14px {accent}88; }}
+    50% {{ box-shadow: 0 0 14px {accent}aa; }}
     100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+
+@keyframes bounce {{
+    0%, 100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-3px); }}
 }}
 
 html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stHeader"] {{
@@ -133,21 +138,25 @@ div[data-testid="column"] > div > button {{
     border-radius: 999px !important;
     border: 1px solid {accent}55 !important;
     font-weight: 600 !important;
-    transition: all 0.22s ease;
+    transition: all 0.3s ease;
     padding: 0.45rem 1rem !important;
+    box-shadow: 0 0 6px {accent}22;
 }}
 div[data-testid="column"] > div > button:hover {{
     background: {accent}22 !important;
-    box-shadow: 0 0 12px {accent}55;
-    transform: scale(1.04);
+    color: white !important;
+    box-shadow: 0 0 20px {accent}88, inset 0 0 10px {accent}55;
+    transform: scale(1.05);
+    animation: bounce 0.4s ease;
 }}
 
 /* Active theme glowing pulse */
 div[data-testid="column"] > div > button:has(span:contains("{active_theme}")) {{
-    background: {accent}22 !important;
+    background: {accent}33 !important;
     color: white !important;
     border: 1px solid {accent}cc !important;
-    animation: pulseGlow 2s infinite ease-in-out;
+    animation: pulseGlow 2.5s infinite ease-in-out;
+    box-shadow: 0 0 16px {accent}88;
 }}
 
 ::-webkit-scrollbar-thumb {{
@@ -169,23 +178,6 @@ tbody tr:hover {{
     border-left: 5px solid {accent} !important;
 }}
 </style>
-""", unsafe_allow_html=True)
-
-# --- Header ---
-st.markdown(f"""
-<div style="
-    background: linear-gradient(90deg, {accent}, {accent}cc);
-    color: white;
-    padding: 18px 24px;
-    border-radius: 12px;
-    font-size: 20px;
-    font-weight: 600;
-    text-align:center;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-">
-    Client Management System — Techware Hub
-</div>
 """, unsafe_allow_html=True)
 
 tz = pytz.timezone("Asia/Karachi")
@@ -408,6 +400,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
