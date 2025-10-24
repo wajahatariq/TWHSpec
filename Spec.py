@@ -67,10 +67,10 @@ if "selected_theme" not in st.session_state:
 # --- Mode Toggle ---
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
-    if st.button("🌞 Light Mode", use_container_width=True):
+    if st.button("Light Mode", use_container_width=True):
         st.session_state.theme_mode = "Light"
 with col2:
-    if st.button("🌙 Dark Mode", use_container_width=True):
+    if st.button("Dark Mode", use_container_width=True):
         st.session_state.theme_mode = "Dark"
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
@@ -421,6 +421,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
