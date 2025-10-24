@@ -161,6 +161,7 @@ components.html(f"""
 </script>
 """, height=0)
 
+
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -381,6 +382,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
