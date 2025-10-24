@@ -56,8 +56,8 @@ text_color = "#111" if st.session_state.theme_mode=="Light" else "#e6e6e6"
 
 st.markdown(f"""
 <div style="
-    background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-    color: transparent;
+    background-color: {accent};
+    color: white;
     padding: 18px 24px;
     border-radius: 12px;
     font-size: 22px;
@@ -65,9 +65,7 @@ st.markdown(f"""
     text-align:center;
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+    animation: fadeIn 1s ease;
 ">
 Client Management System — Techware Hub
 </div>
