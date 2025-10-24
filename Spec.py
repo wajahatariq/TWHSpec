@@ -78,12 +78,17 @@ if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
 
 # --- Capsule Buttons ---
-cols = st.columns(len(themes))
-for i, (theme_name, data) in enumerate(themes.items()):
-    accent = data["accent"]
-    if cols[i].button(theme_name, key=f"theme_{theme_name}"):
-        st.session_state.selected_theme = theme_name
+theme_names = list(themes.keys())
+num_per_row = 10  # Number of buttons per row
 
+for i in range(0, len(theme_names), num_per_row):
+    cols = st.columns(num_per_row)
+    for j, theme_name in enumerate(theme_names[i:i+num_per_row]):
+        data = themes[theme_name]
+        accent = data["accent"]
+        if cols[j].button(theme_name, key=f"theme_{theme_name}"):
+            st.session_state.selected_theme = theme_name
+            
 # --- Extract Selected Theme ---
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
@@ -421,6 +426,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
