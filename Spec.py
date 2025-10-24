@@ -165,7 +165,7 @@ st.markdown(f"""
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
 '>
-🚀 Client Management System — Techware Hub
+Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
 
@@ -389,6 +389,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
