@@ -208,6 +208,62 @@ tbody tr:hover {{
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown(f"""
+<style>
+/* ---------------- FORM CONTAINER ---------------- */
+[data-testid="stForm"] {{
+    background: {"#f9f9f9" if st.session_state.theme_mode=="Light" else "#1a1a1a"};
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px {accent}33;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}}
+
+/* ---------------- FORM INPUTS ---------------- */
+input, select, textarea {{
+    border-radius: 10px !important;
+    border: 1px solid {accent}55 !important;
+    background-color: {"#fff" if st.session_state.theme_mode=="Light" else "#1c1c1c"} !important;
+    color: {text_color} !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.8rem !important;
+    transition: all 0.25s ease-in-out !important;
+}}
+input:focus, select:focus, textarea:focus {{
+    border: 1px solid {accent}cc !important;
+    box-shadow: 0 0 12px {accent}55 !important;
+    outline: none !important;
+    transform: scale(1.02);
+}}
+
+/* ---------------- FORM BUTTONS ---------------- */
+div.stButton > button {{
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease !important;
+    padding: 0.5rem 1rem !important;
+    box-shadow: 0 0 6px {accent}33;
+    background-color: {accent} !important;
+    color: #fff !important;
+    border: none !important;
+}}
+div.stButton > button:hover {{
+    background-color: {accent}cc !important;
+    box-shadow: 0 0 18px {accent}88, inset 0 0 8px {accent}66;
+    transform: scale(1.05);
+}}
+
+/* ---------------- FORM TITLES ---------------- */
+[data-testid="stForm"] h2, [data-testid="stForm"] h3 {{
+    color: {accent} !important;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 8px {accent}33;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -457,5 +513,6 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
 
 
