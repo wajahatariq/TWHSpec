@@ -5,6 +5,141 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 
+# --- CONFIG ---
+st.set_page_config(page_title="Manager Dashboard", layout="wide")
+light_themes = {
+    "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
+    "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
+    "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
+    "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
+    "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+}
+
+dark_themes = {
+    "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
+    "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
+    "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
+    "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
+    "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+}
+
+# --- SESSION STATE ---
+if "theme_mode" not in st.session_state:
+    st.session_state.theme_mode = "Dark"
+if "selected_theme" not in st.session_state:
+    st.session_state.selected_theme = None
+
+# --- MODE TOGGLE ---
+col1, col2, _ = st.columns([1,1,6])
+with col1:
+    if st.button("🌞 Light Mode", use_container_width=True):
+        st.session_state.theme_mode = "Light"
+with col2:
+    if st.button("🌙 Dark Mode", use_container_width=True):
+        st.session_state.theme_mode = "Dark"
+
+themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+if st.session_state.selected_theme not in themes:
+    st.session_state.selected_theme = list(themes.keys())[0]
+
+# --- CAPSULE BUTTONS ---
+cols = st.columns(len(themes))
+for i, (theme_name, data) in enumerate(themes.items()):
+    accent = data["accent"]
+    if cols[i].button(theme_name, key=f"theme_{theme_name}"):
+        st.session_state.selected_theme = theme_name
+
+# --- SELECTED THEME ---
+selected = themes[st.session_state.selected_theme]
+bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
+text_color = "#111" if st.session_state.theme_mode=="Light" else "#e6e6e6"
+
+# --- HEADER ---
+st.markdown(f"""
+<div style="
+    background: linear-gradient(90deg, {accent}, {accent}cc);
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+">
+Client Management System — Techware Hub
+</div>
+""", unsafe_allow_html=True)
+
+# --- CSS + ANIMATIONS ---
+st.markdown(f"""
+<style>
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0px {accent}55; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}55; }}
+}}
+@keyframes bounce {{
+    0%,100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-3px); }}
+}}
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stHeader"] {{
+    background-color: {bg1} !important;
+    color: {text_color} !important;
+    color-scheme: {"light" if st.session_state.theme_mode=="Light" else "dark"} !important;
+}}
+[data-testid="stAppViewContainer"] {{
+    background: radial-gradient(circle at top left, {bg2}, {bg1});
+    font-family: "Inter", sans-serif;
+    transition: all 0.3s ease-in-out;
+}}
+h1,h2,h3,h4,h5,h6 {{
+    color: {accent} !important;
+    text-shadow: 0px 0px 10px {accent}33;
+}}
+div[data-testid="column"] > div > button {{
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}}
+div[data-testid="column"] > div > button:hover {{
+    background: {accent}22 !important;
+    color: white !important;
+    box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
+    transform: scale(1.07);
+    animation: bounce 0.4s ease;
+}}
+div[data-testid="column"] > div > button:has(span:contains('{st.session_state.selected_theme}')) {{
+    background: {accent}33 !important;
+    color: white !important;
+    border: 1px solid {accent}cc !important;
+    animation: pulseGlow 2.3s infinite ease-in-out;
+    box-shadow: 0 0 18px {accent}bb !important;
+}}
+::-webkit-scrollbar-thumb {{
+    background: linear-gradient({accent}, {accent}cc);
+    border-radius: 10px;
+}}
+thead tr th {{
+    background-color: {accent} !important;
+    color: white !important;
+    font-weight: 600 !important;
+}}
+tbody tr:hover {{
+    background-color: {accent}11 !important;
+}}
+.stAlert {{
+    border-radius: 10px !important;
+    background: {accent}14 !important;
+    border-left: 5px solid {accent} !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+
+tz = pytz.timezone("Asia/Karachi")
+
+
 def send_pushbullet_notification(title, message):
     try:
         access_token = st.secrets["pushbullet_token"]
@@ -15,11 +150,6 @@ def send_pushbullet_notification(title, message):
             st.warning("Pushbullet notification failed to send.")
     except Exception as e:
         st.error(f"Pushbullet error: {e}")
-
-# --- CONFIG ---
-st.set_page_config(page_title="Manager Dashboard", layout="wide")
-tz = pytz.timezone("Asia/Karachi")
-
 # --- GOOGLE SHEET SETUP ---
 creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
