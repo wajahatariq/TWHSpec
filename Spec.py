@@ -149,10 +149,6 @@ div[data-testid="column"] > div > button:has(span:contains('{st.session_state.se
 }}
 </style>
 """, unsafe_allow_html=True)
-
-st.write(f"### Current Theme: `{st.session_state.selected_theme}` — Mode: `{st.session_state.theme_mode}`")
-st.write("This is your customized dark/light animated capsule theme system ✨")
-
 tz = pytz.timezone("Asia/Karachi")
 
 # --- GOOGLE SHEET SETUP ---
@@ -373,6 +369,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
