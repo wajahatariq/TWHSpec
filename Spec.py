@@ -10,6 +10,26 @@ import requests
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
+
+logo_url = "https://raw.githubusercontent.com/yourusername/yourrepo/main/logo.png"  # replace with your logo URL
+
+header_html = f"""
+<div style="
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: {accent};
+    padding: 12px 24px;
+    border-radius: 10px;
+    box-shadow: 0 4px 18px {accent}55;
+">
+    <img src='{logo_url}' width='40' height='40' style='border-radius: 5px;'/>
+    <h2 style='margin:0; color:white;'>Client Management System — Techware Hub</h2>
+</div>
+"""
+
+st.markdown(header_html, unsafe_allow_html=True)
+
 # --- LIGHT THEMES ---
 light_themes = {
     "Sunlit Coral":       {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
@@ -428,6 +448,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
