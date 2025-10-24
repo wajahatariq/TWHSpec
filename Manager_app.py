@@ -54,31 +54,7 @@ selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode=="Light" else "#e6e6e6"
 
-# st.markdown(f"""
-# <div style="
-#     background-color: {accent};
-#     color: white;
-#     padding: 18px 24px;
-#     border-radius: 12px;
-#     font-size: 22px;
-#     font-weight: 700;
-#     text-align:center;
-#     box-shadow: 0 4px 18px {accent}55;
-#     margin-bottom: 28px;
-#     animation: fadeIn 1s ease;
-# ">
-# Client Management System — Techware Hub
-# </div>
-# """, unsafe_allow_html=True)
-
 st.markdown(f"""
-<style>
-@keyframes shimmerText {{
-  0% {{ background-position: -200% 0; }}
-  100% {{ background-position: 200% 0; }}
-}}
-</style>
-
 <div style="
     background-color: {accent};
     color: white;
@@ -89,17 +65,9 @@ st.markdown(f"""
     text-align:center;
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
+    animation: fadeIn 1s ease;
 ">
-    <span style="
-        background: linear-gradient(90deg, #ffffff, #ffffff33, #ffffff);
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-        animation: shimmerText 2.5s linear infinite;
-        display: inline-block;
-    ">
-        Client Management System — Techware Hub
-    </span>
+Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
 
