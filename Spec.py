@@ -383,28 +383,34 @@ except Exception as e:
     df_all = pd.DataFrame()
 
 if not df_all.empty:
+    # --- RECENT DATA (last 5 minutes) ---
+    now = datetime.now(tz).replace(tzinfo=None)
+    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+    if "Timestamp" in df_all.columns:
+        df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce").dt.tz_localize(None)
+        df_recent = df_all[df_all["Timestamp"] >= cutoff]
+    else:
+        df_recent = pd.DataFrame()
+
     record = None  # Initialize
 
-    # --- USER INPUT ---
-    user_input = st.text_input("Enter Client Name (for recent leads) or Record ID (for older leads)").strip()
+    # --- SELECT MODE ---
+    mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Select by Name", "Older - Enter Record ID"])
 
-    if user_input:
-        now = datetime.now(tz).replace(tzinfo=None)
-        cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+    if mode.startswith("Recent") and not df_recent.empty:
+        client_names = df_recent["Name"].unique().tolist()
+        selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
 
-        # Check recent leads (last 5 minutes) by Name
-        if "Timestamp" in df_all.columns:
-            df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce").dt.tz_localize(None)
-            df_recent = df_all[df_all["Timestamp"] >= cutoff]
-        else:
-            df_recent = pd.DataFrame()
+        if selected_client != "Select Client":
+            record = df_recent[df_recent["Name"] == selected_client].iloc[0]
 
-        if user_input in df_recent["Name"].values:
-            record = df_recent[df_recent["Name"] == user_input].iloc[0]
-        elif user_input in df_all["Record_ID"].values:
-            record = df_all[df_all["Record_ID"] == user_input].iloc[0]
-        else:
-            st.warning("No matching Name or Record ID found.")
+    elif mode.startswith("Older") and not df_all.empty:
+        record_id_input = st.text_input("Enter Record ID")
+        if record_id_input:
+            if record_id_input in df_all["Record_ID"].values:
+                record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
+            else:
+                st.warning("No matching Record ID found.")
 
     # --- EDIT FORM ---
     if record is not None:
@@ -450,4 +456,3 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
-
