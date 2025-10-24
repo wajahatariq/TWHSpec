@@ -368,19 +368,56 @@ try:
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
-# --- EDIT LEAD SECTION ---
 st.divider()
-st.subheader("Edit Lead (From Last 5 Minutes)")
+st.subheader("Edit Lead")
 
-if 'df' in locals() and not df.empty:
-    client_names = df["Name"].unique().tolist()
-    selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
+# --- FETCH ALL DATA ---
+try:
+    all_records = worksheet.get_all_records()
+    if all_records:
+        df_all = pd.DataFrame(all_records)
+    else:
+        df_all = pd.DataFrame()
+except Exception as e:
+    st.error(f"Error loading sheet data: {e}")
+    df_all = pd.DataFrame()
 
-    if selected_client != "Select Client":
-        record = df[df["Name"] == selected_client].iloc[0]
-        record_id = record["Record_ID"]
+if not df_all.empty:
+    # --- RECENT DATA (last 5 minutes) ---
+    now = datetime.now(tz).replace(tzinfo=None)
+    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+    if "Timestamp" in df_all.columns:
+        df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
+        df_all["Timestamp"] = df_all["Timestamp"].dt.tz_localize(None)
+        df_recent = df_all[df_all["Timestamp"] >= cutoff]
+    else:
+        df_recent = pd.DataFrame()
 
-        st.info(f"Editing Record ID: {record_id}")
+    # --- OLD DATA (all records) ---
+    df_old = df_all
+
+    # --- SELECT MODE ---
+    mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Select by Name", "Older - Select by Record ID"])
+
+    if mode.startswith("Recent") and not df_recent.empty:
+        client_names = df_recent["Name"].unique().tolist()
+        selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
+
+        if selected_client != "Select Client":
+            record = df_recent[df_recent["Name"] == selected_client].iloc[0]
+
+    elif mode.startswith("Older") and not df_old.empty:
+        record_ids = df_old["Record_ID"].unique().tolist()
+        selected_id = st.selectbox("Select Record ID", ["Select Record ID"] + record_ids)
+
+        if selected_id != "Select Record ID":
+            record = df_old[df_old["Record_ID"] == selected_id].iloc[0]
+    else:
+        st.info("No data available for this mode.")
+        record = None
+
+    if record is not None:
+        st.info(f"Editing Record ID: {record['Record_ID']}")
 
         with st.form("edit_lead_form"):
             col1, col2 = st.columns(2)
@@ -404,14 +441,12 @@ if 'df' in locals() and not df.empty:
 
         if updated:
             try:
-                all_records = worksheet.get_all_records()
-                df_all = pd.DataFrame(all_records)
                 if "Record_ID" in df_all.columns:
-                    row_index = df_all.index[df_all["Record_ID"] == record_id].tolist()
+                    row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
                     if row_index:
-                        row_num = row_index[0] + 2  # +2 because sheet rows start at 1 and header row is row 1
+                        row_num = row_index[0] + 2
                         updated_data = [
-                            record_id, new_agent_name, new_name, new_phone, new_address, new_email,
+                            record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
                             new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
                             new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
                             record["Status"], str(record["Timestamp"])
@@ -426,49 +461,4 @@ if 'df' in locals() and not df.empty:
             except Exception as e:
                 st.error(f"Error updating lead: {e}")
 else:
-    st.info("No recent data to edit (last 5 minutes).")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    st.info("No data available to edit.")
