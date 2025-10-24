@@ -212,8 +212,8 @@ st.markdown(f"""
 <style>
 /* ---------------- FORM CONTAINER ---------------- */
 [data-testid="stForm"] {{
-    background: {"#f9f9f9" if st.session_state.theme_mode=="Light" else "#1a1a1a"};
-    padding: 1rem 1.5rem;
+    background: {"#f9f9f9" if st.session_state.theme_mode=="Light" else "#1c1c1c"};
+    padding: 1.2rem 1.5rem;
     border-radius: 12px;
     box-shadow: 0 6px 18px {accent}33;
     transition: all 0.3s ease;
@@ -224,20 +224,41 @@ st.markdown(f"""
 input, select, textarea {{
     border-radius: 10px !important;
     border: 1px solid {accent}55 !important;
-    background-color: {"#fff" if st.session_state.theme_mode=="Light" else "#1c1c1c"} !important;
+    background-color: {"#fff" if st.session_state.theme_mode=="Light" else "#1a1a1a"} !important;
     color: {text_color} !important;
     padding: 0.5rem 0.75rem !important;
     margin-bottom: 0.8rem !important;
     transition: all 0.25s ease-in-out !important;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='{accent}' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.75rem center !important;
+    background-size: 1rem !important;
 }}
+
+/* ---------------- INPUT PLACEHOLDERS ---------------- */
+input::placeholder, textarea::placeholder, select option[value=""] {{
+    color: {accent}77 !important;
+    font-weight: 500;
+}}
+
+/* ---------------- FORM FOCUS & ANIMATION ---------------- */
 input:focus, select:focus, textarea:focus {{
     border: 1px solid {accent}cc !important;
     box-shadow: 0 0 12px {accent}55 !important;
     outline: none !important;
     transform: scale(1.02);
+    animation: pulseGlow 1.5s infinite ease-in-out;
 }}
 
-/* ---------------- FORM BUTTONS ---------------- */
+/* ---------------- SELECT DROPDOWN HOVER GLOW ---------------- */
+select:hover {{
+    animation: pulseGlow 2s infinite alternate;
+}}
+
+/* ---------------- CAPSULE FORM BUTTONS ---------------- */
 div.stButton > button {{
     border-radius: 999px !important;
     font-weight: 600 !important;
@@ -259,6 +280,13 @@ div.stButton > button:hover {{
     color: {accent} !important;
     margin-bottom: 1rem;
     text-shadow: 0 0 8px {accent}33;
+}}
+
+/* ---------------- KEYFRAMES ---------------- */
+@keyframes pulseGlow {{
+  0% {{ box-shadow: 0 0 0px {accent}44; }}
+  50% {{ box-shadow: 0 0 18px {accent}aa; }}
+  100% {{ box-shadow: 0 0 0px {accent}44; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -513,6 +541,7 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
 
 
 
