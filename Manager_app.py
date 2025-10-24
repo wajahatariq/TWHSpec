@@ -54,6 +54,25 @@ selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode=="Light" else "#e6e6e6"
 
+st.markdown(f"""
+<div style="
+    background: linear-gradient(90deg, {accent}, #ffffff, {accent});
+    color: transparent;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+">
+Client Management System — Techware Hub
+</div>
+""", unsafe_allow_html=True)
+
 # --- HEADER ---
 st.markdown(f"""
 <style>
