@@ -26,50 +26,63 @@ dark_themes = {
     "Cyber Neon": {"bg1": "#060606", "bg2": "#101010", "accent": "#00ffff"},
 }
 
-# --- Session States ---
+# --- Session State Defaults (safe init) ---
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
+# selected_theme may be stale from a previous run; we'll normalize it below
 if "selected_theme" not in st.session_state:
-    st.session_state.selected_theme = "Crimson Dark"
+    st.session_state.selected_theme = None
 
-# --- Mode Toggle Buttons ---
+# --- Mode Toggle Buttons (top-left) ---
 col1, col2, _, _ = st.columns([1, 1, 6, 1])
+switched_mode = False
 with col1:
     if st.button("🌞 Light Mode", use_container_width=True):
-        st.session_state.theme_mode = "Light"
-        st.session_state.selected_theme = list(light_themes.keys())[0]
+        if st.session_state.theme_mode != "Light":
+            st.session_state.theme_mode = "Light"
+            switched_mode = True
 with col2:
     if st.button("🌙 Dark Mode", use_container_width=True):
-        st.session_state.theme_mode = "Dark"
-        st.session_state.selected_theme = list(dark_themes.keys())[0]
+        if st.session_state.theme_mode != "Dark":
+            st.session_state.theme_mode = "Dark"
+            switched_mode = True
 
-# --- Load themes based on mode ---
+# --- Choose theme set based on current mode ---
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+
+# --- Ensure selected_theme is valid for the current modeset ---
+if switched_mode or st.session_state.selected_theme not in themes:
+    # assign first available theme for the current mode
+    st.session_state.selected_theme = list(themes.keys())[0]
 
 # --- Theme Selection Buttons (Glowing Capsules) ---
 cols = st.columns(len(themes))
 for i, (theme_name, _) in enumerate(themes.items()):
-    btn_style = "primary" if st.session_state.selected_theme == theme_name else "secondary"
+    # visual difference for active theme
     if cols[i].button(theme_name, key=f"theme_{theme_name}"):
         st.session_state.selected_theme = theme_name
 
-# --- Extract selected theme colors ---
-selected = themes[st.session_state.selected_theme]
+# --- Extract selected theme safely ---
+selected = themes.get(st.session_state.selected_theme, list(themes.values())[0])
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 
-# --- Universal Style (Overrides Chrome Light Mode too) ---
+# --- Inject CSS (handles both modes; colors depend on selected) ---
+text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
+input_bg = "#fff" if st.session_state.theme_mode == "Light" else "#1c1c1c"
+input_border = "#ccc" if st.session_state.theme_mode == "Light" else "#333"
+
 st.markdown(f"""
     <style>
     html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"], [data-testid="stHeader"] {{
         background-color: {bg1} !important;
-        color: {"#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"} !important;
+        color: {text_color} !important;
         color-scheme: {"light" if st.session_state.theme_mode == "Light" else "dark"} !important;
     }}
 
     [data-testid="stAppViewContainer"] {{
         background: radial-gradient(circle at top left, {bg2}, {bg1});
         font-family: "Inter", sans-serif;
-        transition: all 0.4s ease-in-out;
+        transition: all 0.28s ease-in-out;
     }}
 
     h1, h2, h3, h4, h5, h6 {{
@@ -79,9 +92,14 @@ st.markdown(f"""
 
     input, select, textarea {{
         border-radius: 10px !important;
-        border: 1px solid #3333 !important;
-        background-color: {"#fff" if st.session_state.theme_mode == "Light" else "#1c1c1c"} !important;
-        color: {"#111" if st.session_state.theme_mode == "Light" else "#f5f5f5"} !important;
+        border: 1px solid {input_border} !important;
+        background-color: {input_bg} !important;
+        color: {text_color} !important;
+    }}
+
+    input:focus, select:focus, textarea:focus {{
+        border-color: {accent} !important;
+        box-shadow: 0 0 6px {accent}66;
     }}
 
     button[kind="primary"] {{
@@ -89,12 +107,12 @@ st.markdown(f"""
         color: #fff !important;
         border-radius: 999px !important;
         border: none !important;
-        transition: all 0.25s ease-in-out;
-        box-shadow: 0 0 12px {accent}55;
+        transition: all 0.22s ease-in-out;
+        box-shadow: 0 0 10px {accent}44;
     }}
     button[kind="primary"]:hover {{
-        transform: scale(1.05);
-        box-shadow: 0 0 25px {accent}88;
+        transform: scale(1.03);
+        box-shadow: 0 0 22px {accent}66;
     }}
 
     /* Capsule buttons */
@@ -103,21 +121,21 @@ st.markdown(f"""
         color: {accent} !important;
         border-radius: 999px !important;
         border: 1px solid {accent}55 !important;
-        font-weight: 500 !important;
-        transition: all 0.3s ease;
-        padding: 0.5rem 1rem !important;
+        font-weight: 600 !important;
+        transition: all 0.22s ease;
+        padding: 0.45rem 1rem !important;
     }}
     div[data-testid="column"] > div > button:hover {{
         background: {accent}22 !important;
         box-shadow: 0 0 12px {accent}55;
-        transform: scale(1.05);
+        transform: scale(1.04);
     }}
 
-    /* Scrollbar + alerts + tables */
     ::-webkit-scrollbar-thumb {{
         background: linear-gradient({accent}, {accent}cc);
         border-radius: 10px;
     }}
+
     thead tr th {{
         background-color: {accent} !important;
         color: white !important;
@@ -134,18 +152,18 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
+# --- Header (optional) ---
 st.markdown(f"""
 <div style='
     background: linear-gradient(90deg, {accent}, {accent}cc);
     color: white;
-    padding: 20px 28px;
-    border-radius: 14px;
-    font-size: 22px;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 20px;
     font-weight: 600;
     text-align:center;
-    box-shadow: 0 4px 20px {accent}55;
-    margin-bottom: 35px;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
 '>
 🚀 Client Management System — Techware Hub
 </div>
@@ -371,6 +389,7 @@ if 'df' in locals() and not df.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No recent data to edit (last 5 minutes).")
+
 
 
 
