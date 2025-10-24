@@ -383,39 +383,30 @@ except Exception as e:
     df_all = pd.DataFrame()
 
 if not df_all.empty:
-    # --- RECENT DATA (last 5 minutes) ---
-    now = datetime.now(tz).replace(tzinfo=None)
-    cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
-    if "Timestamp" in df_all.columns:
-        df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
-        df_all["Timestamp"] = df_all["Timestamp"].dt.tz_localize(None)
-        df_recent = df_all[df_all["Timestamp"] >= cutoff]
-    else:
-        df_recent = pd.DataFrame()
+    record = None  # Initialize
 
-    # --- OLD DATA (all records) ---
-    df_old = df_all
+    # --- USER INPUT ---
+    user_input = st.text_input("Enter Client Name (for recent leads) or Record ID (for older leads)").strip()
 
-    # --- SELECT MODE ---
-    mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Select by Name", "Older - Select by Record ID"])
+    if user_input:
+        now = datetime.now(tz).replace(tzinfo=None)
+        cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
 
-    if mode.startswith("Recent") and not df_recent.empty:
-        client_names = df_recent["Name"].unique().tolist()
-        selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
+        # Check recent leads (last 5 minutes) by Name
+        if "Timestamp" in df_all.columns:
+            df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce").dt.tz_localize(None)
+            df_recent = df_all[df_all["Timestamp"] >= cutoff]
+        else:
+            df_recent = pd.DataFrame()
 
-        if selected_client != "Select Client":
-            record = df_recent[df_recent["Name"] == selected_client].iloc[0]
+        if user_input in df_recent["Name"].values:
+            record = df_recent[df_recent["Name"] == user_input].iloc[0]
+        elif user_input in df_all["Record_ID"].values:
+            record = df_all[df_all["Record_ID"] == user_input].iloc[0]
+        else:
+            st.warning("No matching Name or Record ID found.")
 
-    elif mode.startswith("Older") and not df_old.empty:
-        record_ids = df_old["Record_ID"].unique().tolist()
-        selected_id = st.selectbox("Select Record ID", ["Select Record ID"] + record_ids)
-
-        if selected_id != "Select Record ID":
-            record = df_old[df_old["Record_ID"] == selected_id].iloc[0]
-    else:
-        st.info("No data available for this mode.")
-        record = None
-
+    # --- EDIT FORM ---
     if record is not None:
         st.info(f"Editing Record ID: {record['Record_ID']}")
 
@@ -441,24 +432,22 @@ if not df_all.empty:
 
         if updated:
             try:
-                if "Record_ID" in df_all.columns:
-                    row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                    if row_index:
-                        row_num = row_index[0] + 2
-                        updated_data = [
-                            record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
-                            new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
-                            new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                            record["Status"], str(record["Timestamp"])
-                        ]
-                        worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
-                        st.success(f"Lead for {new_name} updated successfully!")
-                        st.rerun()
-                    else:
-                        st.error("Record not found in sheet. Try refreshing the page.")
+                row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
+                if row_index:
+                    row_num = row_index[0] + 2
+                    updated_data = [
+                        record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
+                        new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
+                        new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
+                        record["Status"], str(record["Timestamp"])
+                    ]
+                    worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                    st.success(f"Lead for {new_name} updated successfully!")
+                    st.rerun()
                 else:
-                    st.error("No 'Record_ID' column found in sheet.")
+                    st.error("Record not found in sheet. Try refreshing the page.")
             except Exception as e:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
