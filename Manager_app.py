@@ -375,10 +375,42 @@ if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
     st.stop()
 
 st.title("Manager Transaction Dashboard")
-st.sidebar.success(f"Welcome, {st.session_state['user_id']}")
-if st.sidebar.button("Logout"):
+# --- TOP-RIGHT LOGOUT BUTTON ---
+st.markdown(f"""
+    <div style="
+        position: absolute;
+        top: 25px;
+        right: 30px;
+        z-index: 100;
+    ">
+        <form action="" method="get">
+            <button type="submit"
+                style="
+                    background-color: {accent};
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    box-shadow: 0 2px 6px {accent}55;
+                    transition: all 0.3s ease;
+                "
+                onmouseover="this.style.backgroundColor='{accent}cc'"
+                onmouseout="this.style.backgroundColor='{accent}'"
+                name="logout"
+            >
+                Logout
+            </button>
+        </form>
+    </div>
+""", unsafe_allow_html=True)
+
+# --- LOGOUT HANDLER ---
+if st.query_params.get("logout") is not None:
     st.session_state["logged_in"] = False
     st.rerun()
+
 
 
 # --- LOAD DATA FOR BOTH SHEETS ---
