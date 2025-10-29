@@ -533,7 +533,7 @@ Only mention general trends, issues, or data quality insights — no detailed ro
 try:
     from litellm import completion
     ai_response = completion(
-        model="llama-3.2-70b-versatile",
+        model="groq/llama-3.2-70b-versatile",
         messages=[{"role": "user", "content": summary_text}],
         api_key=st.secrets["GROQ_API_KEY"]
     )
