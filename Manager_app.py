@@ -611,8 +611,11 @@ st.subheader("Transaction Chart (15th to Today)")
 
 if not df_all.empty:
     # --- Preprocess ---
-    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"]).dt.date
-    df_all["ChargeFloat"] = df_all["Charge"].replace('[\$,]', '', regex=True).astype(float)
+    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors='coerce').dt.date
+    df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce')
+    
+    # Remove invalid entries
+    df_all = df_all.dropna(subset=["Date of Charge", "ChargeFloat"])
 
     # --- Filters ---
     col_f1, col_f2 = st.columns(2)
