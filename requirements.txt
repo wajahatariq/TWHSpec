@@ -3,4 +3,4 @@ gspread
 pandas
 requests
 pytz
-firebase-admin
+litellm
