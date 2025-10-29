@@ -185,6 +185,35 @@ creds = st.secrets["gcp_service_account"]
 gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 
+import hashlib
+
+# --- USERS SHEET ---
+users_ws = gc.open(SHEET_NAME).worksheet("Sheet3")
+
+# --- FUNCTIONS FOR USERS ---
+def load_users():
+    """Load users from Sheet3 into a DataFrame."""
+    records = users_ws.get_all_records()
+    return pd.DataFrame(records)
+
+def hash_password(password):
+    """Return a SHA-256 hash of the password."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def add_user(user_id, password):
+    """Add a new user to Sheet3 (hashed password)."""
+    hashed_pw = hash_password(password)
+    users_ws.append_row([user_id, hashed_pw])
+
+def validate_login(user_id, password):
+    """Check login credentials."""
+    users_df = load_users()
+    if users_df.empty:
+        return False
+    hashed_pw = hash_password(password)
+    match = users_df[(users_df["ID"] == user_id) & (users_df["Password"] == hashed_pw)]
+    return not match.empty
+
 # Access the two worksheets
 spectrum_ws = gc.open(SHEET_NAME).worksheet("Sheet1")
 insurance_ws = gc.open(SHEET_NAME).worksheet("Sheet2")
@@ -295,7 +324,57 @@ def render_transaction_tabs(df, worksheet, label):
         else:
             st.dataframe(processed)
 
+# --- AUTHENTICATION SYSTEM ---
+def login_signup_screen():
+    st.title("🔐 Manager Portal")
+
+    option = st.radio("Select an option", ["Sign In", "Sign Up"])
+
+    if option == "Sign In":
+        st.subheader("Login to Continue")
+        user_id = st.text_input("User ID")
+        password = st.text_input("Password", type="password")
+
+        if st.button("Login"):
+            if validate_login(user_id, password):
+                st.session_state["logged_in"] = True
+                st.session_state["user_id"] = user_id
+                st.success("✅ Login successful!")
+                st.rerun()
+            else:
+                st.error("❌ Invalid ID or password")
+
+    elif option == "Sign Up":
+        st.subheader("Create a New Account")
+        new_id = st.text_input("Choose User ID")
+        new_password = st.text_input("Choose Password", type="password")
+        confirm_password = st.text_input("Confirm Password", type="password")
+
+        if st.button("Register"):
+            if not new_id or not new_password:
+                st.warning("Please fill in all fields.")
+            elif new_password != confirm_password:
+                st.warning("Passwords do not match.")
+            else:
+                users_df = load_users()
+                if not users_df.empty and new_id in users_df["ID"].values:
+                    st.error("User ID already exists. Try a different one.")
+                else:
+                    add_user(new_id, new_password)
+                    st.success("🎉 Account created! You can now log in.")
+                    st.rerun()
+
+# --- CHECK LOGIN STATE ---
+if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    login_signup_screen()
+    st.stop()
+
 st.title("Manager Transaction Dashboard")
+st.sidebar.success(f"Welcome, {st.session_state['user_id']}")
+if st.sidebar.button("Logout"):
+    st.session_state["logged_in"] = False
+    st.rerun()
+
 
 # --- LOAD DATA FOR BOTH SHEETS ---
 df_spectrum = load_data(spectrum_ws)
