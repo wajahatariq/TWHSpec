@@ -601,31 +601,19 @@ Only return a concise structured answer (bullet points / short paragraphs).
 """
 
 if st.button("Analyze with AI"):
-    with st.spinner("Calling AI — this can take a few seconds..."):
-        try:
-            resp = completion(
-                model="groq/llama-3.3-70b-versatile",   # adjust if you use different Groq model
-                messages=[
-                    {"role": "system", "content": "You are a precise financial analyst. Be concise and numeric."},
-                    {"role": "user", "content": ai_input},
-                ],
-                api_key=st.secrets["GROQ_API_KEY"],
-                max_tokens=600,
-                temperature=0.0,
-            )
-            # litellm/completion returns structure; adapt if your litellm version returns differently
-            ai_text = None
-            if isinstance(resp, dict):
-                # common shape: resp["choices"][0]["message"]["content"]
-                try:
-                    ai_text = resp["choices"][0]["message"]["content"]
-                except Exception:
-                    ai_text = str(resp)
-            else:
-                ai_text = str(resp)
-
-            st.success("Analysis Complete")
-            st.markdown("#### AI summary / insights")
-            st.markdown(ai_text)
-        except Exception as e:
-            st.error(f"AI call failed: {e}")
+    with st.spinner("Analyzing data with AI..."):
+        ai_response = completion(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": ai_input}],
+            api_key=st.secrets["GROQ_API_KEY"],
+        )
+    
+    st.success("Analysis Complete")
+    
+    st.subheader("AI summary / insights")
+    
+    try:
+        ai_summary = ai_response.choices[0].message.content
+        st.markdown(f"### AI Summary\n\n{ai_summary}")
+    except Exception as e:
+        st.error(f"AI analysis failed to display: {e}")
