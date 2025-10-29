@@ -281,9 +281,7 @@ def load_data(ws):
 
     return df
 
-    return df
-
-# --- FILTER FUNCTION ---
+ # --- FILTER FUNCTION ---
 def process_dataframe(df):
     DELETE_AFTER_MINUTES = 5
     if df.empty:
@@ -357,14 +355,6 @@ def render_transaction_tabs(df, worksheet, label):
                             worksheet.update_cell(row_number, col_number, "Declined")
                             st.error("Declined successfully!")
                             st.rerun()
-
-    # --- PROCESSED TAB ---
-    with subtab2:
-        st.subheader(f"Processed Transactions (last {DELETE_AFTER_MINUTES} minutes)")
-        if processed.empty:
-            st.info("No processed transactions yet.")
-        else:
-            st.dataframe(processed)
 
 # --- CLEAR SIGNUP FIELDS AFTER SUCCESS ---
 if st.session_state.get("clear_signup_fields"):
