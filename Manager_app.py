@@ -345,11 +345,11 @@ def login_signup_screen():
 
     elif option == "Sign Up":
         st.subheader("Create a New Account")
-
+    
         new_id = st.text_input("Choose User ID", key="signup_id")
         new_pw = st.text_input("Choose Password", type="password", key="signup_pw")
         confirm_pw = st.text_input("Confirm Password", type="password", key="signup_confirm")
-
+    
         if st.button("Register", key="register_btn"):
             if not new_id or not new_pw:
                 st.warning("Please fill in all fields.")
@@ -362,10 +362,14 @@ def login_signup_screen():
                 else:
                     add_user(new_id, new_pw)
                     st.success("🎉 Account created! You can now log in.")
-                    # clear fields after successful signup
-                    st.session_state.signup_id = ""
-                    st.session_state.signup_pw = ""
-                    st.session_state.signup_confirm = ""
+    
+                    # safely reset input fields
+                    st.session_state["signup_id"] = ""
+                    st.session_state["signup_pw"] = ""
+                    st.session_state["signup_confirm"] = ""
+    
+                    st.rerun()
+    
 
 # --- CHECK LOGIN STATE ---
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
