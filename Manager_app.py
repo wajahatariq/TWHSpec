@@ -615,27 +615,23 @@ st.subheader("Dynamic Transaction Charts")
 # --- Ensure df_all is already loaded ---
 if 'df_all' in locals() and not df_all.empty:
 
-    # --- Preprocess ---
     df_chart = df_all.copy()
     df_chart["Date of Charge"] = pd.to_datetime(df_chart["Date of Charge"], errors='coerce')
     df_chart["ChargeFloat"] = pd.to_numeric(df_chart["Charge"], errors='coerce')
 
-    # --- Filter by Status, Charge Type, and Agent ---
     AGENTS = ["Haziq", "Arham", "Ali Arham", "Kaleem"]
     status_options = ["All Status"] + df_chart["Status"].dropna().unique().tolist()
-    charge_options = ["All Types"] + df_chart["Charge Type"].dropna().unique().tolist()
 
-    col1, col2, col3 = st.columns(3)
+    # --- Filters ---
+    col1, col2 = st.columns(2)
     with col1:
         selected_agent = st.selectbox("Select Agent", ["All Agents"] + AGENTS)
     with col2:
         selected_status = st.selectbox("Filter by Status", status_options)
-    with col3:
-        selected_charge = st.selectbox("Filter by Charge Type", charge_options)
 
     # --- Date range picker ---
-    min_date = df_chart["Date of Charge"].min().date() if not df_chart.empty else datetime.today().date()
-    max_date = df_chart["Date of Charge"].max().date() if not df_chart.empty else datetime.today().date()
+    min_date = df_chart["Date of Charge"].min().date()
+    max_date = df_chart["Date of Charge"].max().date()
     start_date, end_date = st.date_input("Select Date Range", [min_date, max_date])
 
     # --- Apply filters ---
@@ -643,8 +639,6 @@ if 'df_all' in locals() and not df_all.empty:
         df_chart = df_chart[df_chart["Agent Name"] == selected_agent]
     if selected_status != "All Status":
         df_chart = df_chart[df_chart["Status"] == selected_status]
-    if selected_charge != "All Types":
-        df_chart = df_chart[df_chart["Charge Type"] == selected_charge]
 
     df_chart = df_chart[(df_chart["Date of Charge"].dt.date >= start_date) & 
                         (df_chart["Date of Charge"].dt.date <= end_date)]
@@ -652,7 +646,6 @@ if 'df_all' in locals() and not df_all.empty:
     if df_chart.empty:
         st.info("No data available for selected filters and date range.")
     else:
-        # --- Chart type selection ---
         chart_type = st.selectbox(
             "Select Chart Type",
             ["Line Chart", "Bar Chart", "Pie Chart (by Agent)", "Box Plot"]
@@ -667,9 +660,8 @@ if 'df_all' in locals() and not df_all.empty:
             ax.set_xlabel("Date")
             ax.set_ylabel("Total Charge")
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
-            ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.xticks(rotation=45)
-            plt.grid(alpha=0.3)
+            ax.grid(alpha=0.3)
 
         elif chart_type == "Bar Chart":
             daily_sum = df_chart.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
@@ -678,14 +670,12 @@ if 'df_all' in locals() and not df_all.empty:
             ax.set_xlabel("Date")
             ax.set_ylabel("Total Charge")
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
-            ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.xticks(rotation=45)
-            plt.grid(alpha=0.3)
+            ax.grid(alpha=0.3)
 
         elif chart_type == "Pie Chart (by Agent)":
             agent_sum = df_chart.groupby("Agent Name")["ChargeFloat"].sum()
-            agent_sum = agent_sum.reindex(AGENTS)  # enforce Haziq, Arham, Ali Arham, Kaleem order
-            agent_sum = agent_sum.dropna()
+            agent_sum = agent_sum.reindex(AGENTS).dropna()
             ax.pie(agent_sum, labels=agent_sum.index, autopct='%1.1f%%', startangle=90, colors=plt.cm.tab20.colors)
             ax.set_title("Charges Distribution by Agent", fontsize=14, fontweight='bold')
 
@@ -697,6 +687,9 @@ if 'df_all' in locals() and not df_all.empty:
             plt.suptitle("")  # remove default title
 
         st.pyplot(fig)
+
+else:
+    st.info("No transaction data available to generate chart.")
 
 else:
     st.info("No transaction data available to generate chart.")
