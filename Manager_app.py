@@ -608,105 +608,84 @@ import matplotlib.dates as mdates
 import numpy as np
 
 st.divider()
-st.subheader("Ultra Transaction Analytics")
+st.subheader("Dynamic Transaction Insights")
 
 if not df_all.empty:
-    # --- Preprocess dates and charges ---
-    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors="coerce").dt.date
-    df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce')
+    # --- Convert date & charge ---
+    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors="coerce")
+    df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
 
-    # --- Filters & Date Range ---
-    AGENTS = ["All Agents"] + sorted(df_all["Agent Name"].dropna().unique().tolist())
-    col_f1, col_f2, col_f3 = st.columns([1, 1, 1])
-    with col_f1:
-        agent_filter = st.selectbox("Filter by Agent", AGENTS)
-    with col_f2:
-        status_filter = st.selectbox("Filter by Status", ["All Status"] + df_all["Status"].dropna().unique().tolist())
-    with col_f3:
-        chart_type = st.selectbox("Chart Type", ["Bar", "Stacked Bar", "Bar + Rolling Avg"])
-    
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
-        start_date = st.date_input("From", datetime.now(tz).replace(day=15).date())
-    with col_d2:
-        end_date = st.date_input("To", datetime.now(tz).date())
+    # --- Filters ---
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + sorted(df_all["Agent Name"].unique()))
+    with col2:
+        status_filter = st.selectbox("Filter by Status", ["All Status"] + sorted(df_all["Status"].unique()))
+    with col3:
+        # Custom date range
+        min_date = df_all["Date of Charge"].min().date()
+        max_date = df_all["Date of Charge"].max().date()
+        date_range = st.date_input("Select Date Range", [min_date, max_date], min_value=min_date, max_value=max_date)
 
-    # --- Filter Data ---
     df_chart = df_all.copy()
     if agent_filter != "All Agents":
         df_chart = df_chart[df_chart["Agent Name"] == agent_filter]
     if status_filter != "All Status":
         df_chart = df_chart[df_chart["Status"] == status_filter]
-
-    df_chart = df_chart[(df_chart["Date of Charge"] >= start_date) & (df_chart["Date of Charge"] <= end_date)]
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+        df_chart = df_chart[(df_chart["Date of Charge"].dt.date >= start_date) & (df_chart["Date of Charge"].dt.date <= end_date)]
 
     if not df_chart.empty:
-        daily_sum = df_chart.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
-        peak_day = daily_sum.loc[daily_sum["ChargeFloat"].idxmax()]
-
-        # Gradient colors for bars
-        colors = plt.cm.viridis(np.linspace(0.2, 0.9, len(daily_sum)))
-
-        fig, ax = plt.subplots(figsize=(14, 6))
+        daily_sum = df_chart.groupby(df_chart["Date of Charge"].dt.date)["ChargeFloat"].sum().reset_index()
         
-        if chart_type == "Bar":
-            ax.bar(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color=colors, edgecolor='black', linewidth=0.5)
-        elif chart_type == "Stacked Bar":
-            status_pivot = df_chart.pivot_table(index="Date of Charge", columns="Status", values="ChargeFloat", aggfunc="sum", fill_value=0)
-            status_colors = {"Charged": "green", "Declined": "red", "Pending": "yellow", "Charge Back": "orange"}
-            status_cols = [c for c in ["Charged", "Declined", "Pending", "Charge Back"] if c in status_pivot.columns]
-            bottom = np.zeros(len(status_pivot))
-            for c in status_cols:
-                ax.bar(status_pivot.index, status_pivot[c], bottom=bottom, color=status_colors[c], label=c, edgecolor='black')
-                bottom += status_pivot[c].values
-            ax.legend()
-        elif chart_type == "Bar + Rolling Avg":
-            ax.bar(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color=colors, edgecolor='black', linewidth=0.5)
-            daily_sum["RollingAvg"] = daily_sum["ChargeFloat"].rolling(window=3, min_periods=1).mean()
-            ax.plot(daily_sum["Date of Charge"], daily_sum["RollingAvg"], color='orange', linewidth=2.5, marker='o', label="3-day Rolling Avg")
-            ax.legend()
-
-        # Highlight peak day
-        ax.annotate(f"Peak: ${peak_day['ChargeFloat']:.2f}",
-                    xy=(peak_day["Date of Charge"], peak_day["ChargeFloat"]),
-                    xytext=(0, 20), textcoords='offset points',
-                    ha='center', va='bottom',
-                    fontsize=10, fontweight='bold',
-                    color='red',
-                    arrowprops=dict(arrowstyle="->", color='red', lw=1.5))
-
-        # Axis formatting
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+        # --- Gradient Area Chart ---
+        fig1, ax1 = plt.subplots(figsize=(14,5))
+        x = daily_sum["Date of Charge"]
+        y = daily_sum["ChargeFloat"]
+        ax1.plot(x, y, color='darkblue', linewidth=2, marker='o')
+        ax1.fill_between(x, y, color='skyblue', alpha=0.3)
+        max_day = daily_sum.loc[y.idxmax()]
+        min_day = daily_sum.loc[y.idxmin()]
+        ax1.scatter(max_day["Date of Charge"], max_day["ChargeFloat"], s=150, color='green', zorder=5)
+        ax1.scatter(min_day["Date of Charge"], min_day["ChargeFloat"], s=150, color='red', zorder=5)
+        ax1.text(max_day["Date of Charge"], max_day["ChargeFloat"]+10, f'Max ${max_day["ChargeFloat"]:.2f}', ha='center', color='green')
+        ax1.text(min_day["Date of Charge"], min_day["ChargeFloat"]-10, f'Min ${min_day["ChargeFloat"]:.2f}', ha='center', color='red')
+        ax1.set_title("Gradient Area Daily Charges", fontsize=14, fontweight='bold')
+        ax1.set_xlabel("Date")
+        ax1.set_ylabel("Total Charge ($)")
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
         plt.xticks(rotation=45)
-        ax.set_ylabel("Total Charge ($)", fontsize=12, fontweight='bold')
-        ax.set_xlabel("Date", fontsize=12, fontweight='bold')
-        ax.set_title(f"Total Charges from {start_date} to {end_date}", fontsize=16, fontweight='bold')
-        ax.grid(alpha=0.3)
+        plt.grid(alpha=0.3)
+        st.pyplot(fig1)
 
-        st.pyplot(fig)
+        # --- Circular Polar Chart ---
+        fig2 = plt.figure(figsize=(8,8))
+        ax2 = fig2.add_subplot(111, polar=True)
+        theta = np.linspace(0, 2 * np.pi, len(daily_sum))
+        r = daily_sum["ChargeFloat"].values
+        colors = plt.cm.plasma(r / max(r))
+        bars = ax2.bar(theta, r, color=colors, alpha=0.8)
+        ax2.set_xticks(theta)
+        ax2.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], fontsize=8)
+        ax2.set_yticklabels([])
+        ax2.set_title("Circular Daily Charges Overview", fontsize=14, fontweight='bold', pad=20)
+        st.pyplot(fig2)
 
-        # Ultra Insights Panel
-        st.markdown("### Analytics Panel")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Charge", f"${df_chart['ChargeFloat'].sum():,.2f}")
-        with col2:
-            st.metric("Average Daily Charge", f"${daily_sum['ChargeFloat'].mean():,.2f}")
-        with col3:
-            st.metric("Peak Charge Day", str(peak_day["Date of Charge"]))
-
-        # Top agents
-        st.markdown("#### Top Agents by Total Charge")
-        top_agents = df_chart.groupby("Agent Name")["ChargeFloat"].sum().sort_values(ascending=False).head(5)
-        st.bar_chart(top_agents)
-
-        # Status breakdown
-        st.markdown("#### Status Distribution")
-        st.bar_chart(df_chart["Status"].value_counts())
+        # --- Sparkline Heatmap ---
+        fig3, ax3 = plt.subplots(figsize=(14,2))
+        charge_values = daily_sum["ChargeFloat"].values
+        heatmap = ax3.imshow([charge_values], cmap='YlOrRd', aspect='auto')
+        ax3.set_xticks(range(len(daily_sum)))
+        ax3.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], rotation=45, fontsize=9)
+        ax3.set_yticks([])
+        ax3.set_title("Daily Charge Heatmap", fontsize=14, fontweight='bold', pad=10)
+        plt.colorbar(heatmap, orientation='vertical', label='Charge Amount')
+        st.pyplot(fig3)
 
     else:
-        st.info("No data available for selected filters and date range.")
+        st.info("No transaction data available for the selected filters and date range.")
 else:
-    st.info("No transaction data available to generate chart.")
+    st.info("No transaction data to display charts.")
+
 
