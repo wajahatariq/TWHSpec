@@ -464,31 +464,41 @@ with main_tab2:
 
 with main_tab3:
     st.subheader("Edit Transaction Status (by Record ID)")
-    
-    # --- FETCH ALL DATA ---
+
+    # --- Select Sheet ---
+    sheet_option = st.selectbox("Select Sheet", ["Spectrum (Sheet1)", "Insurance (Sheet2)"])
+    try:
+        worksheet = spectrum_ws if sheet_option.startswith("Spectrum") else insurance_ws
+    except NameError:
+        st.error("Worksheet not defined. Make sure spectrum_ws and insurance_ws are initialized.")
+        st.stop()
+
+    # --- Fetch all data ---
     try:
         all_records = worksheet.get_all_records()
         df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
     except Exception as e:
         st.error(f"Error loading sheet data: {e}")
         df_all = pd.DataFrame()
-    
+
     if not df_all.empty:
-        record_id_input = st.text_input("Enter Record ID to search")
+        record_id_input = st.text_input("Enter Record ID to search").strip()
         record = None
-    
+
         if record_id_input:
-            matched = df_all[df_all["Record_ID"] == record_id_input.strip()]
+            matched = df_all[df_all["Record_ID"] == record_id_input]
             if not matched.empty:
                 record = matched.iloc[0]
             else:
                 st.warning("No matching Record ID found.")
-    
+
         if record is not None:
             st.info(f"Editing Record ID: {record['Record_ID']}")
-    
+
             with st.form("edit_charge_status_form"):
                 col1, col2 = st.columns(2)
+
+                # --- Read-only client info ---
                 with col1:
                     st.text_input("Agent Name", value=record["Agent Name"], disabled=True)
                     st.text_input("Client Name", value=record["Name"], disabled=True)
@@ -496,6 +506,7 @@ with main_tab3:
                     st.text_input("Address", value=record["Address"], disabled=True)
                     st.text_input("Email", value=record["Email"], disabled=True)
                     st.text_input("Card Holder Name", value=record["Card Holder Name"], disabled=True)
+
                 with col2:
                     st.text_input("Card Number", value=record["Card Number"], disabled=True)
                     st.text_input("Expiry Date", value=record["Expiry Date"], disabled=True)
@@ -513,9 +524,10 @@ with main_tab3:
                         ["Pending", "Charged", "Declined", "Charge Back"],
                         index=["Pending", "Charged", "Declined", "Charge Back"].index(record["Status"])
                     )
-    
+
                 updated = st.form_submit_button("Update Record")
-    
+
+            # --- Update Google Sheet ---
             if updated:
                 try:
                     row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
@@ -529,7 +541,7 @@ with main_tab3:
                         ]
                         worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                         st.success(f"Record {record['Record_ID']} updated successfully!")
-                        st.rerun()
+                        st.experimental_rerun()
                     else:
                         st.error("Record not found in sheet. Try refreshing the page.")
                 except Exception as e:
