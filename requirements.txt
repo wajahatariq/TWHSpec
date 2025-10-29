@@ -7,3 +7,4 @@ litellm
 reportlab
 tabulate
 matplotlib
+seaborn 
