@@ -478,25 +478,37 @@ with main_tab3:
     else:
         st.dataframe(df_insurance, use_container_width=True)
 
+
 # --- AI ANALYTICS SECTION (Spectrum Only) ---
 import pandas as pd
 from datetime import datetime, timedelta
 from litellm import completion
 
-# --- Load Spectrum Data directly from gspread worksheet ---
+st.subheader("AI Insights — Spectrum Summary (Since 15th of Last Month)")
+
+# --- Load Spectrum Data directly ---
 def get_worksheet_data(worksheet):
-    """Fetch data from a gspread worksheet and convert to DataFrame"""
     records = worksheet.get_all_records()
-    df = pd.DataFrame(records)
-    return df
+    return pd.DataFrame(records)
 
-sheet1 = get_worksheet_data(spectrum_ws)  # Spectrum only
+sheet1 = get_worksheet_data(spectrum_ws)
 
-# --- Clean Currency Columns ---
-def clean_currency_columns(df):
-    """Clean currency-style columns safely and convert numeric values to float."""
+# --- Auto-detect date column ---
+def get_date_column(df):
+    possible_names = ["date", "date of charge", "timestamp", "created"]
     for col in df.columns:
-        # Only try cleaning if column has at least one string with $ or ,
+        if any(name in col.lower() for name in possible_names):
+            return col
+    return None
+
+date_col = get_date_column(sheet1)
+if not date_col:
+    st.error("❌ No date column found. Please ensure the sheet has a 'Date of Charge' column.")
+    st.stop()
+
+# --- Clean currency-style columns ---
+def clean_currency_columns(df):
+    for col in df.columns:
         if df[col].astype(str).str.contains(r"[\$\,]", regex=True).any():
             cleaned = (
                 df[col]
@@ -504,74 +516,76 @@ def clean_currency_columns(df):
                 .str.replace(r"[^\d.\-]", "", regex=True)
                 .replace("", "0")
             )
-            # Safely convert to float (non-convertible -> NaN -> 0)
             df[col] = pd.to_numeric(cleaned, errors="coerce").fillna(0.0)
     return df
 
-
 df = clean_currency_columns(sheet1)
 
-# --- Filter Data since 15th of last month ---
+# --- Date filtering ---
+df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+df = df.dropna(subset=[date_col])
+
 today = datetime.today()
-first_of_this_month = datetime(today.year, today.month, 1)
-fifteenth_last_month = first_of_this_month - timedelta(days=(today.day + 15))
+first_of_this_month = today.replace(day=1)
+fifteenth_last_month = (first_of_this_month - timedelta(days=1)).replace(day=15)
+filtered_df = df[df[date_col] >= fifteenth_last_month]
 
-if "Date" not in df.columns:
-    st.error("'Date' column not found in Spectrum sheet.")
-else:
-    # Convert to datetime safely
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    filtered_df = df[df["Date"] >= fifteenth_last_month]
+if filtered_df.empty:
+    st.info("No records found since the 15th of last month.")
+    st.stop()
 
-    # --- AI Prompt ---
-    ai_input = f"""
-    You are a financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
+# --- Create AI summary prompt ---
+ai_input = f"""
+You are a senior financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
 
-    Return a concise and readable summary including:
-    - Total transactions
-    - Total and average amount
-    - Any outliers or anomalies
-    - Spending patterns or insights
-    - Duplicate or missing entries
+Return a short, structured, and clear summary including:
+- Total number of transactions
+- Total and average Charge
+- Any high or low outliers
+- Observed payment or agent patterns
+- Any data inconsistencies or missing info
 
-    Data sample (up to 25 rows):
-    {filtered_df.head(25).to_markdown()}
-    """
+Data sample (up to 25 rows):
+{filtered_df.head(25).to_markdown()}
+"""
 
-    st.subheader("AI Insights — Spectrum Summary (Since 15th of Last Month)")
+try:
+    with st.spinner("Analyzing Spectrum data with Groq AI..."):
+        ai_response = completion(
+            model="groq/llama-3.1-70b-versatile",  # ✅ Active Groq model
+            messages=[{"role": "user", "content": ai_input}],
+            api_key=st.secrets["GROQ_API_KEY"],
+        )
+        summary = ai_response["choices"][0]["message"]["content"]
+        st.markdown(summary)
+except Exception as e:
+    st.error(f"AI analysis failed: {e}")
 
-    try:
-        with st.spinner("Analyzing with Groq AI..."):
-            ai_response = completion(
-                model="groq/llama-3.3-70b-versatile",  # ✅ correct supported model
-                messages=[{"role": "user", "content": ai_input}],
-                api_key=st.secrets["GROQ_API_KEY"],
-            )
-            summary = ai_response["choices"][0]["message"]["content"]
-            st.markdown(summary)
-    except Exception as e:
-        st.error(f"AI analysis failed: {e}")
+# --- Chatbot Q&A Section ---
+st.markdown("### Ask AI About Spectrum Data")
 
-    # --- Chatbot Q&A ---
-    st.markdown("### Ask AI about Spectrum Data")
-    user_question = st.text_input("Enter your question:", placeholder="e.g. Which client made the biggest purchase?")
-    if st.button("Ask AI"):
+user_question = st.text_input("Enter your question:", placeholder="e.g. Which agent processed the most transactions?")
+if st.button("Ask AI"):
+    if user_question.strip():
         try:
             chat_prompt = f"""
-            Based on Spectrum transaction data since {fifteenth_last_month.date()},
-            answer this question accurately:
+            You are an expert data analyst. Based on Spectrum transaction data since {fifteenth_last_month.date()},
+            answer this question accurately and concisely:
 
             {user_question}
 
-            Data sample (up to 25 rows):
+            Use this data sample for context (up to 25 rows):
             {filtered_df.head(25).to_markdown()}
             """
 
             chat_response = completion(
-                model="groq/llama-3.3-70b-versatile",  # ✅ Groq-supported model
+                model="groq/llama-3.1-70b-versatile",
                 messages=[{"role": "user", "content": chat_prompt}],
                 api_key=st.secrets["GROQ_API_KEY"],
             )
             st.success(chat_response["choices"][0]["message"]["content"])
         except Exception as e:
             st.error(f"AI query failed: {e}")
+    else:
+        st.warning("Please enter a question before asking AI.")
+
