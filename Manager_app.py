@@ -484,16 +484,16 @@ import pandas as pd
 from datetime import datetime, timedelta
 from litellm import completion
 
-st.subheader("AI Insights — Spectrum Summary (Since 15th of Last Month)")
+st.subheader("AI Insights — Spectrum Summary (Dynamic 15th → Today)")
 
-# --- Load Spectrum Data directly ---
+# --- Load Spectrum Data ---
 def get_worksheet_data(worksheet):
     records = worksheet.get_all_records()
     return pd.DataFrame(records)
 
 sheet1 = get_worksheet_data(spectrum_ws)
 
-# --- Auto-detect date column ---
+# --- Detect date column ---
 def get_date_column(df):
     possible_names = ["date", "date of charge", "timestamp", "created"]
     for col in df.columns:
@@ -503,56 +503,68 @@ def get_date_column(df):
 
 date_col = get_date_column(sheet1)
 if not date_col:
-    st.error("❌ No date column found. Please ensure the sheet has a 'Date of Charge' column.")
+    st.error("❌ No date column found. Please ensure there's a 'Date of Charge' column.")
     st.stop()
 
-# --- Clean currency-style columns ---
+# --- Clean numeric values ---
 def clean_currency_columns(df):
     for col in df.columns:
         if df[col].astype(str).str.contains(r"[\$\,]", regex=True).any():
-            cleaned = (
+            df[col] = (
                 df[col]
                 .astype(str)
                 .str.replace(r"[^\d.\-]", "", regex=True)
                 .replace("", "0")
             )
-            df[col] = pd.to_numeric(cleaned, errors="coerce").fillna(0.0)
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
     return df
 
 df = clean_currency_columns(sheet1)
 
-# --- Date filtering ---
-df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-df = df.dropna(subset=[date_col])
+# --- Dynamic date range (15th rule) ---
+tz = pytz.timezone("Asia/Karachi")
+today = datetime.now(tz).replace(tzinfo=None)
 
-today = datetime.today()
-first_of_this_month = today.replace(day=1)
-fifteenth_last_month = (first_of_this_month - timedelta(days=1)).replace(day=15)
-filtered_df = df[df[date_col] >= fifteenth_last_month]
+if today.day >= 15:
+    start_date = datetime(today.year, today.month, 15)
+else:
+    prev_month = today.month - 1 or 12
+    prev_year = today.year if today.month != 1 else today.year - 1
+    start_date = datetime(prev_year, prev_month, 15)
 
-if filtered_df.empty:
-    st.info("No records found since the 15th of last month.")
+end_date = today
+
+# --- Filter data ---
+date_col = "Date of Charge"
+if date_col not in df.columns:
+    st.error(f"'{date_col}' column not found in Spectrum sheet.")
     st.stop()
 
-# --- Create AI summary prompt ---
-ai_input = f"""
-You are a senior financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
+df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+filtered_df = df[(df[date_col].notna()) & (df[date_col] >= start_date) & (df[date_col] <= end_date)]
 
-Return a short, structured, and clear summary including:
-- Total number of transactions
-- Total and average Charge
-- Any high or low outliers
-- Observed payment or agent patterns
-- Any data inconsistencies or missing info
+period_text = f"{start_date.date()} → {end_date.date()}"
+st.caption(f"Analyzing data from {period_text}")
+
+# --- AI Summary Prompt ---
+ai_input = f"""
+You are a financial analyst. Analyze Spectrum transaction data for the period {period_text}.
+
+Please include:
+- Total transactions
+- Total and average charge
+- Outliers or unusual patterns
+- Agent-level performance notes
+- Missing or inconsistent data observations
 
 Data sample (up to 25 rows):
 {filtered_df.head(25).to_markdown()}
 """
 
 try:
-    with st.spinner("Analyzing Spectrum data with Groq AI..."):
+    with st.spinner("Analyzing Spectrum data using Groq AI..."):
         ai_response = completion(
-            model="groq/llama-3.1-8b-instant",  # ✅ Active Groq model
+            model="groq/llama-3.1-8b-instant",  # ✅ Current active Groq model
             messages=[{"role": "user", "content": ai_input}],
             api_key=st.secrets["GROQ_API_KEY"],
         )
@@ -561,23 +573,26 @@ try:
 except Exception as e:
     st.error(f"AI analysis failed: {e}")
 
-# --- Chatbot Q&A Section ---
-st.markdown("### Ask AI About Spectrum Data")
+# --- Q&A Chat Section ---
+st.markdown("### 💬 Ask AI About Spectrum Data")
 
-user_question = st.text_input("Enter your question:", placeholder="e.g. Which agent processed the most transactions?")
+user_question = st.text_input(
+    "Enter your question:",
+    placeholder="e.g. Which agent processed the highest total charge?"
+)
+
 if st.button("Ask AI"):
     if user_question.strip():
+        chat_prompt = f"""
+        You are a senior data analyst. Based on Spectrum transaction data from {period_text},
+        answer this user question clearly and concisely:
+
+        {user_question}
+
+        Use this data sample (up to 25 rows):
+        {filtered_df.head(25).to_markdown()}
+        """
         try:
-            chat_prompt = f"""
-            You are an expert data analyst. Based on Spectrum transaction data since {fifteenth_last_month.date()},
-            answer this question accurately and concisely:
-
-            {user_question}
-
-            Use this data sample for context (up to 25 rows):
-            {filtered_df.head(25).to_markdown()}
-            """
-
             chat_response = completion(
                 model="groq/llama-3.1-8b-instant",
                 messages=[{"role": "user", "content": chat_prompt}],
@@ -588,4 +603,5 @@ if st.button("Ask AI"):
             st.error(f"AI query failed: {e}")
     else:
         st.warning("Please enter a question before asking AI.")
+
 
