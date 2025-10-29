@@ -455,12 +455,26 @@ if st.query_params.get("logout") is not None:
 df_spectrum = load_data(spectrum_ws)
 df_insurance = load_data(insurance_ws)
 
-main_tab1, main_tab2 = st.tabs(["Spectrum", "Insurance"])
+main_tab1, main_tab2, main_tab3 = st.tabs(["Spectrum", "Insurance", "Updated Data"])
 
-# --- SPECTRUM TAB ---
 with main_tab1:
     render_transaction_tabs(df_spectrum, spectrum_ws, "spectrum")
 
-# --- INSURANCE TAB ---
 with main_tab2:
     render_transaction_tabs(df_insurance, insurance_ws, "insurance")
+
+with main_tab3:
+    st.subheader("Spectrum Data (Sheet1)")
+    if df_spectrum.empty:
+        st.info("No data available in Spectrum (Sheet1).")
+    else:
+        st.dataframe(df_spectrum, use_container_width=True)
+
+    st.divider()
+
+    st.subheader("Insurance Data (Sheet2)")
+    if df_insurance.empty:
+        st.info("No data available in Insurance (Sheet2).")
+    else:
+        st.dataframe(df_insurance, use_container_width=True)
+
