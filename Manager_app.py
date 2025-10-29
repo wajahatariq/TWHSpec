@@ -691,6 +691,4 @@ if 'df_all' in locals() and not df_all.empty:
 else:
     st.info("No transaction data available to generate chart.")
 
-else:
-    st.info("No transaction data available to generate chart.")
 
