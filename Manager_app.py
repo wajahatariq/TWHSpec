@@ -453,6 +453,52 @@ if st.query_params.get("logout") is not None:
 df_spectrum = load_data(spectrum_ws)
 df_insurance = load_data(insurance_ws)
 
+# --- EDIT STATUS SECTION ---
+st.markdown(f"""
+<div style="
+    background-color: {accent}22;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px {accent}33;
+">
+<h4 style="color:{accent};margin-bottom:10px;">Edit Transaction Status</h4>
+</div>
+""", unsafe_allow_html=True)
+
+with st.form("edit_status_form"):
+    sheet_choice = st.selectbox("Select Sheet", ["Spectrum (Sheet1)", "Insurance (Sheet2)"])
+    record_id = st.text_input("Enter Record ID")
+    new_status = st.selectbox("Select New Status", ["Charged", "Declined", "Charge Back", "Pending"])
+    submitted = st.form_submit_button("Update Status")
+
+    if submitted:
+        if not record_id:
+            st.warning("Please enter a Record ID.")
+        else:
+            try:
+                # Choose worksheet based on selection
+                target_ws = spectrum_ws if "Spectrum" in sheet_choice else insurance_ws
+
+                # Fetch all records
+                all_records = target_ws.get_all_records()
+
+                # Find the record index
+                found = False
+                for i, record in enumerate(all_records, start=2):  # row 1 is header
+                    if str(record.get("ID", "")).strip() == str(record_id).strip():
+                        col_num = list(record.keys()).index("Status") + 1
+                        target_ws.update_cell(i, col_num, new_status)
+                        st.success(f"✅ Status for ID {record_id} updated to '{new_status}' successfully!")
+                        found = True
+                        break
+
+                if not found:
+                    st.error("❌ Record ID not found in the selected sheet.")
+
+            except Exception as e:
+                st.error(f"Error updating status: {e}")
+
 main_tab1, main_tab2, main_tab3 = st.tabs(["Spectrum", "Insurance", "Updated Data"])
 
 with main_tab1:
