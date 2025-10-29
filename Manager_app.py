@@ -478,142 +478,88 @@ with main_tab3:
     else:
         st.dataframe(df_insurance, use_container_width=True)
 
-try:
-    from litellm import completion
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-    from tabulate import tabulate
-    import io
-    import base64
-except Exception as e:
-    st.error(f"Missing AI/pdf deps: {e}. Install litellm, reportlab, tabulate.")
-    raise
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
+from litellm import completion
 
-st.markdown("---")
-st.markdown("### 🤖 AI Insights (Groq via LiteLLM)")
+# --- Load Spectrum Data ---
+sheet1 = get_worksheet_data("company transactions", 0)  # Sheet1 = Spectrum
 
+# --- Clean Currency Columns ---
 def clean_currency_columns(df):
-    """Remove $ and commas from any object columns that look like money, convert to numeric when possible."""
-    df = df.copy()
     for col in df.columns:
-        if df[col].dtype == "object":
-            # Check if column has $ or commas in many rows
-            sample = df[col].dropna().astype(str).head(50).to_list()
-            looks_like_money = any('$' in s or ',' in s for s in sample)
-            if looks_like_money:
-                # remove $ and commas
-                df[col] = df[col].astype(str).str.replace(r'[\$,]', '', regex=True).str.strip()
-                # try convert to numeric; if all convertable make numeric, else keep as object
-                df[col] = pd.to_numeric(df[col], errors='ignore')
+        if df[col].astype(str).str.contains(r"[\$\,]").any():
+            df[col] = (
+                df[col]
+                .astype(str)
+                .str.replace(r"[^\d.\-]", "", regex=True)
+                .replace("", 0)
+                .astype(float)
+            )
     return df
 
-def df_head_markdown(df, rows=20):
-    return df.head(rows).to_markdown(index=False)
+df = clean_currency_columns(sheet1)
 
-def create_pdf_from_df(df, filename):
-    """Create a simple PDF table (ReportLab). Returns bytes."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    # prepare data
-    data = [list(df.columns)]
-    # Limit rows to 60 for PDF
-    for i, row in df.head(60).iterrows():
-        data.append([str(x) for x in row.tolist()])
-    table = Table(data, repeatRows=1)
-    style = TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f0f0f0")),
-        ('GRID', (0,0), (-1,-1), 0.25, colors.grey),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-    ])
-    table.setStyle(style)
-    doc.build([table])
-    pdf_bytes = buffer.getvalue()
-    buffer.close()
-    return pdf_bytes
+# --- Filter data since 15th of last month ---
+today = datetime.today()
+first_of_this_month = datetime(today.year, today.month, 1)
+fifteenth_last_month = first_of_this_month - timedelta(days=15 + today.day)
+filtered_df = df[
+    df["Date"].apply(
+        lambda x: datetime.strptime(str(x), "%Y-%m-%d") >= fifteenth_last_month
+    )
+]
 
-# Prepare dataframes (use your app df variables)
-df1 = df_spectrum.copy() if 'df_spectrum' in globals() else load_data(spectrum_ws)
-df2 = df_insurance.copy() if 'df_insurance' in globals() else load_data(insurance_ws)
-
-# Clean them
-df1_clean = clean_currency_columns(df1)
-df2_clean = clean_currency_columns(df2)
-
-st.markdown("**Preview — cleaned heads**")
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("**Sheet1 (Spectrum) — head**")
-    st.dataframe(df1_clean.head(10), use_container_width=True)
-with col2:
-    st.markdown("**Sheet2 (Insurance) — head**")
-    st.dataframe(df2_clean.head(10), use_container_width=True)
-
-# Create small diagnostic summary BEFORE sending to AI (so AI has the numbers too)
-def numeric_summary(df):
-    nums = df.select_dtypes(include=['number'])
-    if nums.shape[1] == 0:
-        return "No numeric columns detected."
-    out = []
-    for c in nums.columns:
-        out.append(f"{c}: count={nums[c].count()}, sum={nums[c].sum():,.2f}, mean={nums[c].mean():.2f}, min={nums[c].min()}, max={nums[c].max()}")
-    return "\n".join(out)
-
-summary_text = (
-    "Sheet1 summary:\n" + numeric_summary(df1_clean) +
-    "\n\nSheet2 summary:\n" + numeric_summary(df2_clean)
-)
-
-# Optional: create PDFs and provide download links (for manual review / archival)
-if st.button("Make PDFs for both sheets (for archival)"):
-    try:
-        pdf1 = create_pdf_from_df(df1_clean, "sheet1.pdf")
-        pdf2 = create_pdf_from_df(df2_clean, "sheet2.pdf")
-        b1 = base64.b64encode(pdf1).decode()
-        b2 = base64.b64encode(pdf2).decode()
-        href1 = f'<a href="data:application/pdf;base64,{b1}" download="sheet1.pdf">Download Sheet1 PDF</a>'
-        href2 = f'<a href="data:application/pdf;base64,{b2}" download="sheet2.pdf">Download Sheet2 PDF</a>'
-        st.markdown(href1, unsafe_allow_html=True)
-        st.markdown(href2, unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"PDF creation failed: {e}")
-
-# Prepare AI input (keep it small — use heads and numeric summary)
+# --- AI prompt ---
 ai_input = f"""
-You are a helpful financial analyst.
+You are a financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
 
-Provide:
-- A clean numeric summary.
-- Totals and averages for numeric columns.
-- Top 3 largest numeric values (by column).
-- Any obvious anomalies.
+Return a concise and readable summary including:
+- Total transactions
+- Total and average amount
+- Any outliers or anomalies
+- Spending patterns or insights
+- Duplicate or missing entries
 
-Sheet1 (Spectrum) head:
-{df_head_markdown(df1_clean, rows=12)}
-
-Sheet2 (Insurance) head:
-{df_head_markdown(df2_clean, rows=12)}
-
-Numeric summaries:
-{summary_text}
-
-Only return a concise structured answer (bullet points / short paragraphs).
+Data (sample of up to 25 rows):
+{filtered_df.head(25).to_markdown()}
 """
 
-if st.button("Analyze with AI"):
-    with st.spinner("Analyzing data with AI..."):
+st.subheader("💡 AI Insights for Spectrum (since 15th of last month)")
+
+# --- AI Summary ---
+try:
+    with st.spinner("Analyzing with Groq AI..."):
         ai_response = completion(
             model="groq/llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": ai_input}],
             api_key=st.secrets["GROQ_API_KEY"],
         )
-    
-    st.success("Analysis Complete")
-    
-    st.subheader("AI summary / insights")
-    
+        summary = ai_response["choices"][0]["message"]["content"]
+        st.markdown(summary)
+except Exception as e:
+    st.error(f"AI analysis failed: {e}")
+
+# --- Chatbot Section ---
+st.markdown("### 🤖 Ask AI about Spectrum Data")
+user_question = st.text_input("Enter your question:", placeholder="e.g. Which client had the largest transaction?")
+if st.button("Ask AI"):
     try:
-        ai_summary = ai_response.choices[0].message.content
-        st.markdown(f"### AI Summary\n\n{ai_summary}")
+        chat_prompt = f"""
+        Based on Spectrum transaction data since {fifteenth_last_month.date()},
+        answer the following question accurately:
+        {user_question}
+
+        Here is a data sample (up to 25 rows):
+        {filtered_df.head(25).to_markdown()}
+        """
+
+        chat_response = completion(
+            model="groq/llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": chat_prompt}],
+            api_key=st.secrets["GROQ_API_KEY"],
+        )
+        st.success(chat_response["choices"][0]["message"]["content"])
     except Exception as e:
-        st.error(f"AI analysis failed to display: {e}")
+        st.error(f"AI query failed: {e}")
