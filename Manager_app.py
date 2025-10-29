@@ -556,7 +556,7 @@ with main_tab3:
             
                         worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                         st.success(f"Record {record['Record_ID']} updated successfully!")
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.error("Record not found in sheet. Try refreshing the page.")
                 except Exception as e:
