@@ -602,3 +602,55 @@ with main_tab3:
     else:
         st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+st.divider()
+st.subheader("Transaction Chart (15th to Today)")
+
+if not df_all.empty:
+    # --- Preprocess ---
+    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"]).dt.date
+    df_all["ChargeFloat"] = df_all["Charge"].replace('[\$,]', '', regex=True).astype(float)
+
+    # --- Filters ---
+    col_f1, col_f2 = st.columns(2)
+    with col_f1:
+        agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + AGENTS[1:])
+    with col_f2:
+        status_filter = st.selectbox("Filter by Status", ["All Status"] + df_all["Status"].unique().tolist())
+
+    df_chart = df_all.copy()
+    if agent_filter != "All Agents":
+        df_chart = df_chart[df_chart["Agent Name"] == agent_filter]
+    if status_filter != "All Status":
+        df_chart = df_chart[df_chart["Status"] == status_filter]
+
+    # --- Only from 15th to today ---
+    today = datetime.now(tz).date()
+    fifteenth = datetime(today.year, today.month, 15).date()
+    df_chart = df_chart[df_chart["Date of Charge"] >= fifteenth]
+
+    if not df_chart.empty:
+        daily_sum = df_chart.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], marker='o', color=accent)
+        ax.set_title(f"Daily Charges from {fifteenth} to {today}", fontsize=14, fontweight='bold')
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Total Charge ($)")
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+        plt.xticks(rotation=45)
+        plt.grid(alpha=0.3)
+        st.pyplot(fig)
+    else:
+        st.info("No data available for selected filters from 15th to today.")
+else:
+    st.info("No transaction data available to generate chart.")
+
+else:
+    st.info("No transaction data available to generate chart.")
+
+
