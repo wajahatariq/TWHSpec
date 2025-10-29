@@ -449,8 +449,6 @@ if st.query_params.get("logout") is not None:
     st.session_state["logged_in"] = False
     st.rerun()
 
-
-
 # --- LOAD DATA FOR BOTH SHEETS ---
 df_spectrum = load_data(spectrum_ws)
 df_insurance = load_data(insurance_ws)
@@ -480,16 +478,17 @@ with main_tab3:
 
 
 # --- AI ANALYTICS SECTION (Spectrum Only) ---
-# --- AI ANALYTICS SECTION (Spectrum Only) ---
 st.subheader("AI Insights — Spectrum Summary + Q&A (Dynamic 15th → Today)")
 
-# --- Ensure numeric stats are computed ---
-total_txns = len(filtered_df)
-total_charge = filtered_df["Charge"].sum() if "Charge" in filtered_df.columns else 0
-avg_charge = filtered_df["Charge"].mean() if "Charge" in filtered_df.columns else 0
+if 'filtered_df' in locals() and not filtered_df.empty:
 
-# --- Prepare base AI prompt (for summary and Q&A) ---
-base_ai_prompt = f"""
+    # --- Ensure numeric stats are computed ---
+    total_txns = len(filtered_df)
+    total_charge = filtered_df["Charge"].sum() if "Charge" in filtered_df.columns else 0
+    avg_charge = filtered_df["Charge"].mean() if "Charge" in filtered_df.columns else 0
+
+    # --- Prepare base AI prompt (for summary and Q&A) ---
+    base_ai_prompt = f"""
 You are a senior financial analyst. You have access to Spectrum transaction data from {start_date.date()} to {end_date.date()}.
 
 Stats:
@@ -501,42 +500,49 @@ Use this data sample (up to 25 rows):
 {filtered_df.head(25).to_markdown()}
 """
 
-# --- Generate and cache AI summary ---
-if "spectrum_ai_summary" not in st.session_state:
-    summary_prompt = base_ai_prompt + "\n\nWrite a short, clear summary (5–7 bullet points max). Only mention general trends, issues, or data quality insights — do not list individual transactions."
-    try:
-        with st.spinner("Generating Spectrum summary using AI..."):
-            ai_response = completion(
-                model="groq/llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": summary_prompt}],
-                api_key=st.secrets["GROQ_API_KEY"],
-            )
-            st.session_state["spectrum_ai_summary"] = ai_response["choices"][0]["message"]["content"]
-    except Exception as e:
-        st.error(f"AI summary failed: {e}")
-
-# --- Display AI summary ---
-if "spectrum_ai_summary" in st.session_state:
-    st.markdown(st.session_state["spectrum_ai_summary"])
-
-# --- Q&A Chat Section ---
-st.markdown("Ask AI About Spectrum Data")
-
-user_question = st.text_input(
-    "Enter your question:",
-    placeholder="e.g. Which agent processed the highest total charge?"
-)
-
-if st.button("Ask AI Question"):
-    if user_question.strip():
-        chat_prompt = base_ai_prompt + f"\n\nQuestion: {user_question}\nAnswer clearly and concisely based on the data above."
+    # --- Generate and cache AI summary ---
+    if "spectrum_ai_summary" not in st.session_state:
+        summary_prompt = base_ai_prompt + "\n\nWrite a short, clear summary (5–7 bullet points max). Only mention general trends, issues, or data quality insights — do not list individual transactions."
         try:
-            chat_response = completion(
-                model="groq/llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": chat_prompt}],
-                api_key=st.secrets["GROQ_API_KEY"],
-            )
-            st.success(chat_response["choices"][0]["message"]["content"])
+            with st.spinner("Generating Spectrum summary using AI..."):
+                ai_response = completion(
+                    model="groq/llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": summary_prompt}],
+                    api_key=st.secrets["GROQ_API_KEY"],
+                )
+                st.session_state["spectrum_ai_summary"] = ai_response["choices"][0]["message"]["content"]
+        except Exception as e:
+            st.error(f"AI summary failed: {e}")
+
+    # --- Display AI summary ---
+    if "spectrum_ai_summary" in st.session_state:
+        st.markdown(st.session_state["spectrum_ai_summary"])
+
+    # --- Q&A Chat Section ---
+    st.markdown("Ask AI About Spectrum Data")
+
+    user_question = st.text_input(
+        "Enter your question:",
+        placeholder="e.g. Which agent processed the highest total charge?"
+    )
+
+    if st.button("Ask AI Question"):
+        if user_question.strip():
+            chat_prompt = base_ai_prompt + f"\n\nQuestion: {user_question}\nAnswer clearly and concisely based on the data above."
+            try:
+                chat_response = completion(
+                    model="groq/llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": chat_prompt}],
+                    api_key=st.secrets["GROQ_API_KEY"],
+                )
+                st.success(chat_response["choices"][0]["message"]["content"])
+            except Exception as e:
+                st.error(f"AI query failed: {e}")
+        else:
+            st.warning("Please enter a question before asking AI.")
+else:
+    st.info("No Spectrum data available for AI analysis in the selected date range.")
+
         except Exception as e:
             st.error(f"AI query failed: {e}")
     else:
