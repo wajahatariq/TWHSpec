@@ -549,22 +549,18 @@ with main_tab3:
                 deleted = st.form_submit_button("Delete Record", help="Permanently delete this record")
                 
                 if deleted:
-                    confirm = st.warning(
-                        f"Are you sure you want to permanently delete Record ID {record['Record_ID']}?",
-                        icon="⚠️"
-                    )
-                    if st.button(f"Confirm Delete {record['Record_ID']}", key=f"confirm_delete_{record['Record_ID']}"):
-                        try:
-                            row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                            if row_index:
-                                row_num = row_index[0] + 2  # header = row 1
-                                worksheet.delete_rows(row_num)
-                                st.success(f"Record {record['Record_ID']} deleted successfully!")
-                                st.rerun()
-                            else:
-                                st.error("Record not found in sheet. Try refreshing the page.")
-                        except Exception as e:
-                            st.error(f"Error deleting record: {e}")
+                    try:
+                        row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
+                        if row_index:
+                            row_num = row_index[0] + 2  # header = row 1
+                            worksheet.delete_rows(row_num)
+                            st.success(f"Record {record['Record_ID']} deleted successfully!")
+                            st.rerun()
+                        else:
+                            st.error("Record not found in sheet. Try refreshing the page.")
+                    except Exception as e:
+                        st.error(f"Error deleting record: {e}")
+
 
             # --- Update Google Sheet ---
             if updated:
