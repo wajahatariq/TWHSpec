@@ -486,7 +486,7 @@ with main_tab3:
                     # Find the record index by ID
                     found = False
                     for i, record in enumerate(all_records, start=2):  # Row 1 = headers
-                        if str(record.get("ID", "")).strip() == str(record_id).strip():
+                        if str(record.get("Record_ID", "")).strip() == str(record_id).strip():
                             col_num = list(record.keys()).index("Status") + 1
                             target_ws.update_cell(i, col_num, new_status)
                             st.success(f"Status for ID {record_id} updated to '{new_status}' successfully!")
