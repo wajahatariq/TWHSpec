@@ -480,119 +480,56 @@ with main_tab3:
 
 
 # --- AI ANALYTICS SECTION (Spectrum Only) ---
-import pandas as pd
-from datetime import datetime, timedelta
-from litellm import completion
+# --- AI ANALYTICS SECTION (Spectrum Only) ---
+st.subheader("AI Insights — Spectrum Summary + Q&A (Dynamic 15th → Today)")
 
-st.subheader("🤖 AI Insights — Spectrum Summary (Dynamic 15th → Today)")
+# --- Ensure numeric stats are computed ---
+total_txns = len(filtered_df)
+total_charge = filtered_df["Charge"].sum() if "Charge" in filtered_df.columns else 0
+avg_charge = filtered_df["Charge"].mean() if "Charge" in filtered_df.columns else 0
 
-# --- Load Spectrum Data ---
-def get_worksheet_data(worksheet):
-    records = worksheet.get_all_records()
-    return pd.DataFrame(records)
-
-sheet1 = get_worksheet_data(spectrum_ws)
-
-# --- Detect date column ---
-def get_date_column(df):
-    possible_names = ["date", "date of charge", "timestamp", "created"]
-    for col in df.columns:
-        if any(name in col.lower() for name in possible_names):
-            return col
-    return None
-
-date_col = get_date_column(sheet1)
-if not date_col:
-    st.error("❌ No date column found. Please ensure there's a 'Date of Charge' column.")
-    st.stop()
-
-# --- Clean numeric values ---
-def clean_currency_columns(df):
-    for col in df.columns:
-        if df[col].astype(str).str.contains(r"[\$\,]", regex=True).any():
-            df[col] = (
-                df[col]
-                .astype(str)
-                .str.replace(r"[^\d.\-]", "", regex=True)
-                .replace("", "0")
-            )
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
-    return df
-
-df = clean_currency_columns(sheet1)
-
-# --- Dynamic date range (15th rule) ---
-tz = pytz.timezone("Asia/Karachi")
-today = datetime.now(tz).replace(tzinfo=None)
-
-if today.day >= 15:
-    start_date = datetime(today.year, today.month, 15)
-else:
-    prev_month = today.month - 1 or 12
-    prev_year = today.year if today.month != 1 else today.year - 1
-    start_date = datetime(prev_year, prev_month, 15)
-
-end_date = today
-
-# --- Filter data ---
-date_col = "Date of Charge"
-if date_col not in df.columns:
-    st.error(f"'{date_col}' column not found in Spectrum sheet.")
-    st.stop()
-
-df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-filtered_df = df[(df[date_col].notna()) & (df[date_col] >= start_date) & (df[date_col] <= end_date)]
-
-period_text = f"{start_date.date()} → {end_date.date()}"
-st.caption(f"Analyzing data from {period_text}")
-
-# --- AI Summary Prompt ---
-ai_input = f"""
-You are a financial analyst. Write a short, clear summary (5–7 bullet points max) of these Spectrum transactions.
+# --- Prepare base AI prompt (for summary and Q&A) ---
+base_ai_prompt = f"""
+You are a senior financial analyst. You have access to Spectrum transaction data from {start_date.date()} to {end_date.date()}.
 
 Stats:
-• Period: {start_date} to {today}
 • Total transactions: {total_txns}
 • Total charge: ${total_charge:,.2f}
-• Average charge: ${avg_charge}
+• Average charge: ${avg_charge:,.2f}
 
-Only mention general trends, issues, or data quality insights — no detailed rows.
-
-Data sample (up to 25 rows):
+Use this data sample (up to 25 rows):
 {filtered_df.head(25).to_markdown()}
 """
 
-try:
-    with st.spinner("Analyzing Spectrum data using Groq AI..."):
-        ai_response = completion(
-            model="groq/llama-3.1-8b-instant",  # ✅ Current active Groq model
-            messages=[{"role": "user", "content": ai_input}],
-            api_key=st.secrets["GROQ_API_KEY"],
-        )
-        summary = ai_response["choices"][0]["message"]["content"]
-        st.markdown(summary)
-except Exception as e:
-    st.error(f"AI analysis failed: {e}")
+# --- Generate and cache AI summary ---
+if "spectrum_ai_summary" not in st.session_state:
+    summary_prompt = base_ai_prompt + "\n\nWrite a short, clear summary (5–7 bullet points max). Only mention general trends, issues, or data quality insights — do not list individual transactions."
+    try:
+        with st.spinner("Generating Spectrum summary using AI..."):
+            ai_response = completion(
+                model="groq/llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": summary_prompt}],
+                api_key=st.secrets["GROQ_API_KEY"],
+            )
+            st.session_state["spectrum_ai_summary"] = ai_response["choices"][0]["message"]["content"]
+    except Exception as e:
+        st.error(f"AI summary failed: {e}")
+
+# --- Display AI summary ---
+if "spectrum_ai_summary" in st.session_state:
+    st.markdown(st.session_state["spectrum_ai_summary"])
 
 # --- Q&A Chat Section ---
-st.markdown("###Ask AI About Spectrum Data")
+st.markdown("Ask AI About Spectrum Data")
 
 user_question = st.text_input(
     "Enter your question:",
     placeholder="e.g. Which agent processed the highest total charge?"
 )
 
-if st.button("Ask AI"):
+if st.button("Ask AI Question"):
     if user_question.strip():
-        chat_prompt = f"""
-        You are a senior data analyst. Based on Spectrum transaction data from {period_text},
-        answer this user question clearly and concisely:
-
-        {user_question}
-
-        Use this data sample (up to 25 rows):
-        {filtered_df.head(25).to_markdown()}
-        """
+        chat_prompt = base_ai_prompt + f"\n\nQuestion: {user_question}\nAnswer clearly and concisely based on the data above."
         try:
             chat_response = completion(
                 model="groq/llama-3.1-8b-instant",
