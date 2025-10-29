@@ -480,128 +480,71 @@ with main_tab3:
 
 
 # --- AI ANALYTICS SECTION (Spectrum Only) ---
+import datetime
 import pandas as pd
-from datetime import datetime, timedelta
 from litellm import completion
 
-st.subheader("AI Insights — Spectrum Summary (Dynamic 15th → Today)")
+st.subheader("💡 AI Insights — Spectrum Summary (15th → Today)")
 
-# --- Load Spectrum Data ---
-def get_worksheet_data(worksheet):
-    records = worksheet.get_all_records()
-    return pd.DataFrame(records)
-
-sheet1 = get_worksheet_data(spectrum_ws)
-
-# --- Detect date column ---
-def get_date_column(df):
-    possible_names = ["date", "date of charge", "timestamp", "created"]
-    for col in df.columns:
-        if any(name in col.lower() for name in possible_names):
-            return col
-    return None
-
-date_col = get_date_column(sheet1)
-if not date_col:
-    st.error("❌ No date column found. Please ensure there's a 'Date of Charge' column.")
+# --- Get Spectrum (Sheet1) Data ---
+try:
+    sheet1 = get_worksheet_data("company transactions", 0)  # Sheet1 = Spectrum
+except Exception as e:
+    st.error(f"Error loading Spectrum sheet: {e}")
     st.stop()
 
-# --- Clean numeric values ---
-def clean_currency_columns(df):
-    for col in df.columns:
-        if df[col].astype(str).str.contains(r"[\$\,]", regex=True).any():
-            df[col] = (
-                df[col]
-                .astype(str)
-                .str.replace(r"[^\d.\-]", "", regex=True)
-                .replace("", "0")
-            )
-            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0)
-    return df
-
-df = clean_currency_columns(sheet1)
-
-# --- Dynamic date range (15th rule) ---
-tz = pytz.timezone("Asia/Karachi")
-today = datetime.now(tz).replace(tzinfo=None)
-
-if today.day >= 15:
-    start_date = datetime(today.year, today.month, 15)
-else:
-    prev_month = today.month - 1 or 12
-    prev_year = today.year if today.month != 1 else today.year - 1
-    start_date = datetime(prev_year, prev_month, 15)
-
-end_date = today
-
-# --- Filter data ---
-date_col = "Date of Charge"
-if date_col not in df.columns:
-    st.error(f"'{date_col}' column not found in Spectrum sheet.")
+# --- Data Cleaning ---
+df = pd.DataFrame(sheet1)
+df.columns = df.columns.str.strip()
+if "Charge" not in df.columns or "Status" not in df.columns or "Date of Charge" not in df.columns:
+    st.error("Required columns missing (Charge, Status, Date of Charge)")
     st.stop()
 
-df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-filtered_df = df[(df[date_col].notna()) & (df[date_col] >= start_date) & (df[date_col] <= end_date)]
+# Clean Charge Column
+def clean_currency(val):
+    try:
+        return float(str(val).replace("$", "").replace(",", "").strip())
+    except:
+        return None
 
-period_text = f"{start_date.date()} → {end_date.date()}"
-st.caption(f"Analyzing data from {period_text}")
+df["Charge"] = df["Charge"].apply(clean_currency)
 
-# --- AI Summary Prompt ---
-ai_input = f"""
-You are a financial analyst. Analyze Spectrum transaction data for the period {period_text}.
+# --- Filter Dates (15th of current month → today) ---
+today = datetime.date.today()
+start_date = datetime.date(today.year, today.month, 15)
+df["Date of Charge"] = pd.to_datetime(df["Date of Charge"], errors="coerce").dt.date
+filtered_df = df[
+    (df["Date of Charge"] >= start_date)
+    & (df["Date of Charge"] <= today)
+    & (df["Status"].str.lower() == "charged")
+]
 
-Please include:
-- Total transactions
-- Total and average charge
-- Outliers or unusual patterns
-- Agent-level performance notes
-- Missing or inconsistent data observations
+# --- Quick Stats ---
+total_txns = len(filtered_df)
+total_charge = filtered_df["Charge"].sum()
+avg_charge = round(filtered_df["Charge"].mean(), 2) if total_txns > 0 else 0
 
-Data sample (up to 25 rows):
-{filtered_df.head(25).to_markdown()}
+# --- AI Summary ---
+summary_text = f"""
+You are a financial analyst. Write a short, clear summary (5–7 bullet points max) of these Spectrum transactions.
+
+Stats:
+• Period: {start_date} to {today}
+• Total transactions: {total_txns}
+• Total charge: ${total_charge:,.2f}
+• Average charge: ${avg_charge}
+
+Only mention general trends, issues, or data quality insights — no detailed rows.
 """
 
 try:
-    with st.spinner("Analyzing Spectrum data using Groq AI..."):
-        ai_response = completion(
-            model="groq/llama-3.1-8b-instant",  # ✅ Current active Groq model
-            messages=[{"role": "user", "content": ai_input}],
-            api_key=st.secrets["GROQ_API_KEY"],
-        )
-        summary = ai_response["choices"][0]["message"]["content"]
-        st.markdown(summary)
+    ai_response = completion(
+        model="llama-3.2-70b-versatile",
+        messages=[{"role": "user", "content": summary_text}],
+        api_key=st.secrets["GROQ_API_KEY"]
+    )
+    st.markdown("### 📊 AI Summary")
+    st.write(ai_response["choices"][0]["message"]["content"])
+
 except Exception as e:
     st.error(f"AI analysis failed: {e}")
-
-# --- Q&A Chat Section ---
-st.markdown("### 💬 Ask AI About Spectrum Data")
-
-user_question = st.text_input(
-    "Enter your question:",
-    placeholder="e.g. Which agent processed the highest total charge?"
-)
-
-if st.button("Ask AI"):
-    if user_question.strip():
-        chat_prompt = f"""
-        You are a senior data analyst. Based on Spectrum transaction data from {period_text},
-        answer this user question clearly and concisely:
-
-        {user_question}
-
-        Use this data sample (up to 25 rows):
-        {filtered_df.head(25).to_markdown()}
-        """
-        try:
-            chat_response = completion(
-                model="groq/llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": chat_prompt}],
-                api_key=st.secrets["GROQ_API_KEY"],
-            )
-            st.success(chat_response["choices"][0]["message"]["content"])
-        except Exception as e:
-            st.error(f"AI query failed: {e}")
-    else:
-        st.warning("Please enter a question before asking AI.")
-
-
