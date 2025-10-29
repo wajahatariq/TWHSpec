@@ -649,8 +649,3 @@ if not df_all.empty:
         st.info("No data available for selected filters from 15th to today.")
 else:
     st.info("No transaction data available to generate chart.")
-
-else:
-    st.info("No transaction data available to generate chart.")
-
-
