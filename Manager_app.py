@@ -478,3 +478,54 @@ with main_tab3:
     else:
         st.dataframe(df_insurance, use_container_width=True)
 
+import pandas as pd
+from litellm import completion
+
+st.markdown("### AI Data Insights")
+
+try:
+    # Clean and prepare both sheet data
+    df1_clean = sheet1.copy()
+    df2_clean = sheet2.copy()
+
+    for df in [df1_clean, df2_clean]:
+        for col in df.columns:
+            if df[col].dtype == "object":
+                # Clean currency or numeric-looking text
+                df[col] = df[col].replace('[\$,]', '', regex=True)
+                df[col] = pd.to_numeric(df[col], errors='ignore')
+
+    # Combine both sheets into one text for AI
+    ai_input_text = f"""
+    Sheet1 Data Preview:
+    {df1_clean.head(15).to_markdown(index=False)}
+
+    Sheet2 Data Preview:
+    {df2_clean.head(15).to_markdown(index=False)}
+    """
+
+    if st.button("Analyze Data with AI", use_container_width=True):
+        with st.spinner("Analyzing your data using Groq AI..."):
+            response = completion(
+                model="groq/llama3-70b-8192",  # Groq-hosted LLaMA 3 model
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are an AI financial analyst. "
+                            "Analyze the provided data to find key insights, "
+                            "summaries, trends, and potential anomalies. "
+                            "Be concise and numeric where possible."
+                        ),
+                    },
+                    {"role": "user", "content": ai_input_text},
+                ],
+                api_key=st.secrets["GROQ_API_KEY"],
+            )
+
+        st.success("AI Analysis Complete")
+        st.markdown("#### Insights:")
+        st.markdown(response["choices"][0]["message"]["content"])
+
+except Exception as e:
+    st.error(f"AI analysis failed: {e}")
