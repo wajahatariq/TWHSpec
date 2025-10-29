@@ -494,16 +494,20 @@ sheet1 = get_worksheet_data(spectrum_ws)  # Spectrum only
 
 # --- Clean Currency Columns ---
 def clean_currency_columns(df):
+    """Clean currency-style columns safely and convert numeric values to float."""
     for col in df.columns:
-        if df[col].astype(str).str.contains(r"[\$\,]").any():
-            df[col] = (
+        # Only try cleaning if column has at least one string with $ or ,
+        if df[col].astype(str).str.contains(r"[\$\,]", regex=True).any():
+            cleaned = (
                 df[col]
                 .astype(str)
                 .str.replace(r"[^\d.\-]", "", regex=True)
-                .replace("", 0)
-                .astype(float)
+                .replace("", "0")
             )
+            # Safely convert to float (non-convertible -> NaN -> 0)
+            df[col] = pd.to_numeric(cleaned, errors="coerce").fillna(0.0)
     return df
+
 
 df = clean_currency_columns(sheet1)
 
