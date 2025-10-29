@@ -6,3 +6,4 @@ pytz
 litellm
 reportlab
 tabulate
+matplotlib
