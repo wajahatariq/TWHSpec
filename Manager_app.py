@@ -607,94 +607,95 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
+# --- Filter Agents ---
+TARGET_AGENTS = ["Haziq", "Arham", "Ali Arham", "Kaleem"]
+df_chart = df_all[df_all["Agent Name"].isin(TARGET_AGENTS)].copy()
+df_chart["Date of Charge"] = pd.to_datetime(df_chart["Date of Charge"], errors="coerce")
+df_chart["ChargeFloat"] = pd.to_numeric(df_chart["Charge"].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
 
 st.divider()
-st.subheader("Advanced Agent-Focused Transaction Insights")
+st.subheader("Dynamic Transaction Charts")
 
-# Filter agents to only the ones we want
-TARGET_AGENTS = ["Haziq", "Arham", "Ali Arham", "Kaleem"]
+# --- Chart Selector ---
+chart_type = st.selectbox(
+    "Select Chart Type",
+    ["Gradient Area", "Circular Polar", "Heatmap", "Pie by Agent", "Top Agents Bar"]
+)
 
-if not df_all.empty:
-    # --- Convert date & charge ---
-    df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors="coerce")
-    df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+# --- Common Filters ---
+min_date = df_chart["Date of Charge"].min().date()
+max_date = df_chart["Date of Charge"].max().date()
+date_range = st.date_input("Select Date Range", [min_date, max_date], min_value=min_date, max_value=max_date)
 
-    # --- Agent and Date Filters ---
-    col1, col2 = st.columns(2)
-    with col1:
-        agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + TARGET_AGENTS)
-    with col2:
-        min_date = df_all["Date of Charge"].min().date()
-        max_date = df_all["Date of Charge"].max().date()
-        date_range = st.date_input("Select Date Range", [min_date, max_date], min_value=min_date, max_value=max_date)
+agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + TARGET_AGENTS)
+charge_filter = st.selectbox("Filter by Charge Type", ["All Types"] + df_chart["Charge Type"].unique().tolist())
 
-    df_chart = df_all[df_all["Agent Name"].isin(TARGET_AGENTS)]
-    if agent_filter != "All Agents":
-        df_chart = df_chart[df_chart["Agent Name"] == agent_filter]
+# --- Apply Filters ---
+if agent_filter != "All Agents":
+    df_chart = df_chart[df_chart["Agent Name"] == agent_filter]
+if charge_filter != "All Types":
+    df_chart = df_chart[df_chart["Charge Type"] == charge_filter]
 
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-        df_chart = df_chart[(df_chart["Date of Charge"].dt.date >= start_date) & (df_chart["Date of Charge"].dt.date <= end_date)]
+if len(date_range) == 2:
+    start_date, end_date = date_range
+    df_chart = df_chart[(df_chart["Date of Charge"].dt.date >= start_date) &
+                        (df_chart["Date of Charge"].dt.date <= end_date)]
 
-    if not df_chart.empty:
-        daily_sum = df_chart.groupby(df_chart["Date of Charge"].dt.date)["ChargeFloat"].sum().reset_index()
-        agent_sum = df_chart.groupby("Agent Name")["ChargeFloat"].sum().reset_index()
+# --- If no data after filters ---
+if df_chart.empty:
+    st.info("No data available for selected filters and date range.")
+    st.stop()
 
-        # --- Gradient Area Chart ---
-        fig1, ax1 = plt.subplots(figsize=(14,5))
-        x = daily_sum["Date of Charge"]
-        y = daily_sum["ChargeFloat"]
-        ax1.plot(x, y, color='navy', linewidth=2, marker='o')
-        ax1.fill_between(x, y, color='skyblue', alpha=0.3)
-        ax1.set_title("Gradient Area Chart - Daily Charges", fontsize=14, fontweight='bold')
-        ax1.set_xlabel("Date")
-        ax1.set_ylabel("Total Charge ($)")
-        ax1.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
-        plt.xticks(rotation=45)
-        plt.grid(alpha=0.3)
-        st.pyplot(fig1)
+# --- Chart Logic ---
+daily_sum = df_chart.groupby(df_chart["Date of Charge"].dt.date)["ChargeFloat"].sum().reset_index()
+agent_sum = df_chart.groupby("Agent Name")["ChargeFloat"].sum().reset_index()
 
-        # --- Circular Polar Chart ---
-        fig2 = plt.figure(figsize=(8,8))
-        ax2 = fig2.add_subplot(111, polar=True)
-        theta = np.linspace(0, 2 * np.pi, len(daily_sum))
-        r = daily_sum["ChargeFloat"].values
-        colors = plt.cm.viridis(r / max(r))
-        ax2.bar(theta, r, color=colors, alpha=0.8)
-        ax2.set_xticks(theta)
-        ax2.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], fontsize=8)
-        ax2.set_yticklabels([])
-        ax2.set_title("Circular Daily Charges Overview", fontsize=14, fontweight='bold', pad=20)
-        st.pyplot(fig2)
+if chart_type == "Gradient Area":
+    fig, ax = plt.subplots(figsize=(14,6))
+    ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], marker='o', color='navy')
+    ax.fill_between(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color='skyblue', alpha=0.3)
+    ax.set_title("Gradient Area Chart - Daily Charges", fontsize=16)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Total Charge ($)")
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
+    plt.xticks(rotation=45)
+    plt.grid(alpha=0.3)
+    st.pyplot(fig)
 
-        # --- Heatmap Sparkline ---
-        fig3, ax3 = plt.subplots(figsize=(14,2))
-        charge_values = daily_sum["ChargeFloat"].values
-        heatmap = ax3.imshow([charge_values], cmap='YlOrRd', aspect='auto')
-        ax3.set_xticks(range(len(daily_sum)))
-        ax3.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], rotation=45, fontsize=9)
-        ax3.set_yticks([])
-        ax3.set_title("Daily Charge Heatmap", fontsize=14, fontweight='bold', pad=10)
-        plt.colorbar(heatmap, orientation='vertical', label='Charge Amount')
-        st.pyplot(fig3)
+elif chart_type == "Circular Polar":
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111, polar=True)
+    theta = np.linspace(0, 2 * np.pi, len(daily_sum))
+    r = daily_sum["ChargeFloat"].values
+    colors = plt.cm.viridis(r / max(r))
+    ax.bar(theta, r, color=colors, alpha=0.8)
+    ax.set_xticks(theta)
+    ax.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], fontsize=10)
+    ax.set_yticklabels([])
+    ax.set_title("Circular Daily Charges Overview", fontsize=16)
+    st.pyplot(fig)
 
-        # --- Pie Chart by Agent ---
-        fig4, ax4 = plt.subplots(figsize=(6,6))
-        ax4.pie(agent_sum["ChargeFloat"], labels=agent_sum["Agent Name"], autopct="%1.1f%%", startangle=90, colors=plt.cm.tab20.colors)
-        ax4.set_title("Total Charges by Agent", fontsize=14, fontweight='bold')
-        st.pyplot(fig4)
+elif chart_type == "Heatmap":
+    fig, ax = plt.subplots(figsize=(14,3))
+    ax.imshow([daily_sum["ChargeFloat"].values], cmap='YlOrRd', aspect='auto')
+    ax.set_xticks(range(len(daily_sum)))
+    ax.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], rotation=45, fontsize=10)
+    ax.set_yticks([])
+    ax.set_title("Daily Charge Heatmap", fontsize=16)
+    st.pyplot(fig)
 
-        # --- Bar Chart Top Agents ---
-        fig5, ax5 = plt.subplots(figsize=(8,5))
-        sorted_agents = agent_sum.sort_values(by="ChargeFloat", ascending=False)
-        ax5.bar(sorted_agents["Agent Name"], sorted_agents["ChargeFloat"], color=plt.cm.Set2.colors)
-        ax5.set_title("Top Agents by Total Charges", fontsize=14, fontweight='bold')
-        ax5.set_ylabel("Total Charge ($)")
-        for i, v in enumerate(sorted_agents["ChargeFloat"]):
-            ax5.text(i, v + 5, f"${v:.2f}", ha='center', fontweight='bold')
-        st.pyplot(fig5)
+elif chart_type == "Pie by Agent":
+    fig, ax = plt.subplots(figsize=(8,8))
+    ax.pie(agent_sum["ChargeFloat"], labels=agent_sum["Agent Name"], autopct="%1.1f%%", startangle=90, colors=plt.cm.tab20.colors)
+    ax.set_title("Total Charges by Agent", fontsize=16)
+    st.pyplot(fig)
 
-    else:
-        st.info("No transaction data for selected filters and date range.")
-else:
-    st.info("No transaction data available.")
+elif chart_type == "Top Agents Bar":
+    sorted_agents = agent_sum.sort_values(by="ChargeFloat", ascending=False)
+    fig, ax = plt.subplots(figsize=(10,6))
+    ax.bar(sorted_agents["Agent Name"], sorted_agents["ChargeFloat"], color=plt.cm.Set2.colors)
+    ax.set_title("Top Agents by Total Charges", fontsize=16)
+    ax.set_ylabel("Total Charge ($)")
+    for i, v in enumerate(sorted_agents["ChargeFloat"]):
+        ax.text(i, v + 5, f"${v:.2f}", ha='center', fontweight='bold')
+    st.pyplot(fig)
