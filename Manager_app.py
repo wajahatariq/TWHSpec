@@ -324,9 +324,9 @@ def render_transaction_tabs(df, worksheet, label):
         else:
             st.dataframe(processed)
 
+st.title("Manager Portal")
 # --- AUTHENTICATION SYSTEM ---
 def login_signup_screen():
-    st.title("Manager Portal")
 
 option = st.radio("Select an option", ["Sign In", "Sign Up"])
 
