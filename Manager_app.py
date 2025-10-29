@@ -298,14 +298,14 @@ def process_dataframe(df):
             ((df["Status"].isin(["Charged", "Declined"])) & (df["Timestamp"] >= cutoff))
         ]
     pending = df[df["Status"] == "Pending"]
-    processed = df[df["Status"].isin(["Charged", "Declined"])]
-    return pending, processed
+    return pending, None
+
 
 # --- REUSABLE COMPONENT FUNCTION ---
 def render_transaction_tabs(df, worksheet, label):
     DELETE_AFTER_MINUTES = 5
     pending, processed = process_dataframe(df)
-    subtab1, subtab2 = st.tabs(["Awaiting Approval", "Processed Transactions"])
+    subtab1 = st.tabs("Awaiting Approval")
 
     # --- PENDING TAB ---
     with subtab1:
