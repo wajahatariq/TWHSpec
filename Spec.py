@@ -7,6 +7,24 @@ import json
 import uuid
 import requests
 
+def style_status_rows(df):
+    """
+    Apply conditional styling based on Status column:
+    Charged = green, Charge Back = red, Declined/Pending = default.
+    """
+    if "Status" not in df.columns or df.empty:
+        return df  # nothing to style
+
+    def highlight_row(row):
+        if row["Status"] == "Charged":
+            return ["background-color: darkgreen"] * len(row)
+        elif row["Status"] == "Charge Back":
+            return ["background-color: red"] * len(row)
+        else:  # Declined or Pending
+            return [""] * len(row)
+
+    return df.style.apply(highlight_row, axis=1)
+    
 # --- CONFIG ---
 st.set_page_config(page_title="Client Management System", layout="wide")
 
@@ -364,6 +382,8 @@ except Exception as e:
     df_all = pd.DataFrame()
 
 if not df_all.empty:
+    styled_df = style_status_rows(df_all)  # apply the styling
+    st.dataframe(styled_df, use_container_width=True)
     # --- RECENT DATA (last 5 minutes) ---
     now = datetime.now(tz).replace(tzinfo=None)
     cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
@@ -475,3 +495,4 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
