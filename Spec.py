@@ -382,8 +382,6 @@ except Exception as e:
     df_all = pd.DataFrame()
 
 if not df_all.empty:
-    styled_df = style_status_rows(df_all)  # apply the styling
-    st.dataframe(styled_df, use_container_width=True)
     # --- RECENT DATA (last 5 minutes) ---
     now = datetime.now(tz).replace(tzinfo=None)
     cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
@@ -394,7 +392,12 @@ if not df_all.empty:
         df_recent = pd.DataFrame()
 
     record = None  # Initialize
-
+        
+    if not df_recent.empty:
+        styled_df = style_status_rows(df_recent)
+        st.dataframe(styled_df, use_container_width=True)
+else:
+    st.info(f"No recent records in the last {DELETE_AFTER_MINUTES} minutes.")
     # --- SELECT MODE ---
     mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Select by Name", "Older - Enter Record ID"])
 
@@ -495,4 +498,5 @@ if not df_all.empty:
                 st.error(f"Error updating lead: {e}")
 else:
     st.info("No data available to edit.")
+
 
