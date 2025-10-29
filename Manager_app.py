@@ -542,8 +542,3 @@ Use this data sample (up to 25 rows):
             st.warning("Please enter a question before asking AI.")
 else:
     st.info("No Spectrum data available for AI analysis in the selected date range.")
-
-        except Exception as e:
-            st.error(f"AI query failed: {e}")
-    else:
-        st.warning("Please enter a question before asking AI.")
