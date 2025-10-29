@@ -330,45 +330,46 @@ def login_signup_screen():
 
 option = st.radio("Select an option", ["Sign In", "Sign Up"])
 
-    if option == "Sign In":
-        with st.form("signin_form"):
-            user_id = st.text_input("User ID", key="signin_id")
-            password = st.text_input("Password", type="password", key="signin_pw")
-            submitted = st.form_submit_button("Login")
-    
-            if submitted:
-                if validate_login(user_id, password):
-                    st.session_state["logged_in"] = True
-                    st.session_state["user_id"] = user_id
-                    st.success("✅ Login successful!")
-                    st.rerun()
+if option == "Sign In":
+    with st.form("signin_form"):
+        user_id = st.text_input("User ID", key="signin_id")
+        password = st.text_input("Password", type="password", key="signin_pw")
+        submitted = st.form_submit_button("Login")
+
+        if submitted:
+            if validate_login(user_id, password):
+                st.session_state["logged_in"] = True
+                st.session_state["user_id"] = user_id
+                st.success("✅ Login successful!")
+                st.rerun()
+            else:
+                st.error("❌ Invalid ID or password")
+
+elif option == "Sign Up":   # ✅ This should be OUTSIDE and aligned with the first `if`
+    with st.form("signup_form"):
+        new_id = st.text_input("Choose User ID", key="signup_id")
+        new_pw = st.text_input("Choose Password", type="password", key="signup_pw")
+        confirm_pw = st.text_input("Confirm Password", type="password", key="signup_confirm")
+        submitted = st.form_submit_button("Register")
+
+        if submitted:
+            if not new_id or not new_pw:
+                st.warning("Please fill in all fields.")
+            elif new_pw != confirm_pw:
+                st.warning("Passwords do not match.")
+            else:
+                users_df = load_users()
+                if not users_df.empty and new_id in users_df["ID"].values:
+                    st.error("User ID already exists. Try another.")
                 else:
-                    st.error("❌ Invalid ID or password")
-    
-        elif option == "Sign Up":
-            with st.form("signup_form"):
-                new_id = st.text_input("Choose User ID", key="signup_id")
-                new_pw = st.text_input("Choose Password", type="password", key="signup_pw")
-                confirm_pw = st.text_input("Confirm Password", type="password", key="signup_confirm")
-                submitted = st.form_submit_button("Register")
-        
-                if submitted:
-                    if not new_id or not new_pw:
-                        st.warning("Please fill in all fields.")
-                    elif new_pw != confirm_pw:
-                        st.warning("Passwords do not match.")
-                    else:
-                        users_df = load_users()
-                        if not users_df.empty and new_id in users_df["ID"].values:
-                            st.error("User ID already exists. Try another.")
-                        else:
-                            add_user(new_id, new_pw)
-                            st.success("🎉 Account created! You can now log in.")
-                            st.session_state["signup_id"] = ""
-                            st.session_state["signup_pw"] = ""
-                            st.session_state["signup_confirm"] = ""
-                            st.rerun()
-    
+                    add_user(new_id, new_pw)
+                    st.success("🎉 Account created! You can now log in.")
+                    st.session_state["signup_id"] = ""
+                    st.session_state["signup_pw"] = ""
+                    st.session_state["signup_confirm"] = ""
+                    st.rerun()
+
+
 
 # --- CHECK LOGIN STATE ---
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
