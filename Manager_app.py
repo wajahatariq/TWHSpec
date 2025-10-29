@@ -463,41 +463,80 @@ with main_tab2:
     render_transaction_tabs(df_insurance, insurance_ws, "insurance")
 
 with main_tab3:
-    st.subheader("Edit Transaction Status")
-
-    # --- EDIT STATUS SECTION ---
-    with st.form("edit_status_form"):
-        sheet_choice = st.selectbox("Select Sheet", ["Spectrum (Sheet1)", "Insurance (Sheet2)"])
-        record_id = st.text_input("Enter Record ID")
-        new_status = st.selectbox("Select New Status", ["Charged", "Declined", "Charge Back", "Pending"])
-        submitted = st.form_submit_button("Update Status")
-
-        if submitted:
-            if not record_id:
-                st.warning("Please enter a Record ID.")
+    st.subheader("Edit Transaction Status (by Record ID)")
+    
+    # --- FETCH ALL DATA ---
+    try:
+        all_records = worksheet.get_all_records()
+        df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error loading sheet data: {e}")
+        df_all = pd.DataFrame()
+    
+    if not df_all.empty:
+        record_id_input = st.text_input("Enter Record ID to search")
+        record = None
+    
+        if record_id_input:
+            matched = df_all[df_all["Record_ID"] == record_id_input.strip()]
+            if not matched.empty:
+                record = matched.iloc[0]
             else:
+                st.warning("No matching Record ID found.")
+    
+        if record is not None:
+            st.info(f"Editing Record ID: {record['Record_ID']}")
+    
+            with st.form("edit_charge_status_form"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.text_input("Agent Name", value=record["Agent Name"], disabled=True)
+                    st.text_input("Client Name", value=record["Name"], disabled=True)
+                    st.text_input("Phone Number", value=record["Ph Number"], disabled=True)
+                    st.text_input("Address", value=record["Address"], disabled=True)
+                    st.text_input("Email", value=record["Email"], disabled=True)
+                    st.text_input("Card Holder Name", value=record["Card Holder Name"], disabled=True)
+                with col2:
+                    st.text_input("Card Number", value=record["Card Number"], disabled=True)
+                    st.text_input("Expiry Date", value=record["Expiry Date"], disabled=True)
+                    st.number_input(
+                        "CVC",
+                        min_value=0,
+                        max_value=999,
+                        step=1,
+                        value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0,
+                        disabled=True
+                    )
+                    new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
+                    new_status = st.selectbox(
+                        "Status",
+                        ["Pending", "Charged", "Declined", "Charge Back"],
+                        index=["Pending", "Charged", "Declined", "Charge Back"].index(record["Status"])
+                    )
+    
+                updated = st.form_submit_button("Update Record")
+    
+            if updated:
                 try:
-                    # Choose worksheet based on selection
-                    target_ws = spectrum_ws if "Spectrum" in sheet_choice else insurance_ws
-
-                    # Fetch all records
-                    all_records = target_ws.get_all_records()
-
-                    # Find the record index by ID
-                    found = False
-                    for i, record in enumerate(all_records, start=2):  # Row 1 = headers
-                        if str(record.get("Record_ID", "")).strip() == str(record_id).strip():
-                            col_num = list(record.keys()).index("Status") + 1
-                            target_ws.update_cell(i, col_num, new_status)
-                            st.success(f"Status for ID {record_id} updated to '{new_status}' successfully!")
-                            found = True
-                            break
-
-                    if not found:
-                        st.error("Record ID not found in the selected sheet.")
-
+                    row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
+                    if row_index:
+                        row_num = row_index[0] + 2  # header = row 1
+                        updated_data = [
+                            record["Record_ID"], record["Agent Name"], record["Name"], record["Ph Number"],
+                            record["Address"], record["Email"], record["Card Holder Name"], record["Card Number"],
+                            record["Expiry Date"], record["CVC"], new_charge,
+                            record["LLC"], record["Provider"], record["Date of Charge"], new_status, record["Timestamp"]
+                        ]
+                        worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                        st.success(f"Record {record['Record_ID']} updated successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Record not found in sheet. Try refreshing the page.")
                 except Exception as e:
-                    st.error(f"Error updating status: {e}")
+                    st.error(f"Error updating record: {e}")
+    else:
+        st.info("No data available to edit.")
+
 
     st.divider()
 
