@@ -603,99 +603,97 @@ with main_tab3:
         st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import numpy as np
+import streamlit as st
 import pandas as pd
-# --- Filter Agents ---
-TARGET_AGENTS = ["Haziq", "Arham", "Ali Arham", "Kaleem"]
-df_chart = df_all[df_all["Agent Name"].isin(TARGET_AGENTS)].copy()
-df_chart["Date of Charge"] = pd.to_datetime(df_chart["Date of Charge"], errors="coerce")
-df_chart["ChargeFloat"] = pd.to_numeric(df_chart["Charge"].replace('[\$,]', '', regex=True), errors='coerce').fillna(0)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import datetime
 
-st.divider()
-st.subheader("Dynamic Transaction Charts")
+st.subheader("Dynamic Transaction Analytics")
 
-# --- Chart Selector ---
-chart_type = st.selectbox(
-    "Select Chart Type",
-    ["Gradient Area", "Circular Polar", "Heatmap", "Pie by Agent", "Top Agents Bar"]
-)
+# --- Sample DataFrame Setup ---
+# Replace df_chart with your filtered dataframe
+# For demo, let's assume df_chart has these columns: ["Agent Name", "Status", "Date of Charge", "Charge"]
+# Ensure "Date of Charge" is datetime.date
+df_chart["Date of Charge"] = pd.to_datetime(df_chart["Date of Charge"]).dt.date
+df_chart["ChargeFloat"] = pd.to_numeric(df_chart["Charge"], errors='coerce')
 
-# --- Common Filters ---
-min_date = df_chart["Date of Charge"].min().date()
-max_date = df_chart["Date of Charge"].max().date()
-date_range = st.date_input("Select Date Range", [min_date, max_date], min_value=min_date, max_value=max_date)
+# --- Filters ---
+agents = ["Haziq", "Arham", "Ali Arham", "Kaleem"]
+agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + agents)
+status_filter = st.selectbox("Filter by Status", ["All Status"] + df_chart["Status"].dropna().unique().tolist())
 
-agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + TARGET_AGENTS)
-charge_filter = st.selectbox("Filter by Charge Type", ["All Types"] + df_chart["Charge Type"].unique().tolist())
+min_date = df_chart["Date of Charge"].min() if not df_chart.empty else datetime.now().date()
+max_date = df_chart["Date of Charge"].max() if not df_chart.empty else datetime.now().date()
+date_range = st.date_input("Select Date Range", value=(min_date, max_date))
 
-# --- Apply Filters ---
+# Apply filters
+df_filtered = df_chart.copy()
 if agent_filter != "All Agents":
-    df_chart = df_chart[df_chart["Agent Name"] == agent_filter]
-if charge_filter != "All Types":
-    df_chart = df_chart[df_chart["Charge Type"] == charge_filter]
-
+    df_filtered = df_filtered[df_filtered["Agent Name"] == agent_filter]
+if status_filter != "All Status":
+    df_filtered = df_filtered[df_filtered["Status"] == status_filter]
 if len(date_range) == 2:
-    start_date, end_date = date_range
-    df_chart = df_chart[(df_chart["Date of Charge"].dt.date >= start_date) &
-                        (df_chart["Date of Charge"].dt.date <= end_date)]
+    df_filtered = df_filtered[
+        (df_filtered["Date of Charge"] >= date_range[0]) &
+        (df_filtered["Date of Charge"] <= date_range[1])
+    ]
 
-# --- If no data after filters ---
-if df_chart.empty:
-    st.info("No data available for selected filters and date range.")
+if df_filtered.empty:
+    st.info("No data available for selected filters.")
     st.stop()
 
-# --- Chart Logic ---
-daily_sum = df_chart.groupby(df_chart["Date of Charge"].dt.date)["ChargeFloat"].sum().reset_index()
-agent_sum = df_chart.groupby("Agent Name")["ChargeFloat"].sum().reset_index()
+# --- Chart Type Selection ---
+chart_type = st.selectbox("Select Chart Type", ["Bar Chart", "Line Chart", "Pie Chart", "Box Plot", "Area Chart"])
 
-if chart_type == "Gradient Area":
-    fig, ax = plt.subplots(figsize=(14,6))
-    ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], marker='o', color='navy')
-    ax.fill_between(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color='skyblue', alpha=0.3)
-    ax.set_title("Gradient Area Chart - Daily Charges", fontsize=16)
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Total Charge ($)")
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d-%b"))
-    plt.xticks(rotation=45)
-    plt.grid(alpha=0.3)
-    st.pyplot(fig)
+# --- Chart Options Panel ---
+st.sidebar.subheader("Chart Options")
+color_option = st.sidebar.color_picker("Select Chart Color", "#1f77b4")
+show_values = st.sidebar.checkbox("Show Values on Bars/Lines", value=True)
+figsize = st.sidebar.slider("Chart Size (width, height)", 5, 20, (12,6))
 
-elif chart_type == "Circular Polar":
-    fig = plt.figure(figsize=(10,10))
-    ax = fig.add_subplot(111, polar=True)
-    theta = np.linspace(0, 2 * np.pi, len(daily_sum))
-    r = daily_sum["ChargeFloat"].values
-    colors = plt.cm.viridis(r / max(r))
-    ax.bar(theta, r, color=colors, alpha=0.8)
-    ax.set_xticks(theta)
-    ax.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], fontsize=10)
-    ax.set_yticklabels([])
-    ax.set_title("Circular Daily Charges Overview", fontsize=16)
-    st.pyplot(fig)
+# --- Plotting ---
+fig, ax = plt.subplots(figsize=figsize)
 
-elif chart_type == "Heatmap":
-    fig, ax = plt.subplots(figsize=(14,3))
-    ax.imshow([daily_sum["ChargeFloat"].values], cmap='YlOrRd', aspect='auto')
-    ax.set_xticks(range(len(daily_sum)))
-    ax.set_xticklabels([d.strftime("%d-%b") for d in daily_sum["Date of Charge"]], rotation=45, fontsize=10)
-    ax.set_yticks([])
-    ax.set_title("Daily Charge Heatmap", fontsize=16)
-    st.pyplot(fig)
+if chart_type == "Bar Chart":
+    daily_sum = df_filtered.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
+    sns.barplot(data=daily_sum, x="Date of Charge", y="ChargeFloat", color=color_option, ax=ax)
+    if show_values:
+        for p in ax.patches:
+            ax.annotate(f'{p.get_height():.2f}', (p.get_x() + p.get_width()/2., p.get_height()),
+                        ha='center', va='bottom', fontsize=9)
+    ax.set_title("Daily Charge Summary")
 
-elif chart_type == "Pie by Agent":
-    fig, ax = plt.subplots(figsize=(8,8))
-    ax.pie(agent_sum["ChargeFloat"], labels=agent_sum["Agent Name"], autopct="%1.1f%%", startangle=90, colors=plt.cm.tab20.colors)
-    ax.set_title("Total Charges by Agent", fontsize=16)
-    st.pyplot(fig)
+elif chart_type == "Line Chart":
+    daily_sum = df_filtered.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
+    ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], marker='o', color=color_option)
+    if show_values:
+        for x, y in zip(daily_sum["Date of Charge"], daily_sum["ChargeFloat"]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom', fontsize=9)
+    ax.set_title("Daily Charge Trend")
+    ax.set_xticklabels(daily_sum["Date of Charge"], rotation=45)
 
-elif chart_type == "Top Agents Bar":
-    sorted_agents = agent_sum.sort_values(by="ChargeFloat", ascending=False)
-    fig, ax = plt.subplots(figsize=(10,6))
-    ax.bar(sorted_agents["Agent Name"], sorted_agents["ChargeFloat"], color=plt.cm.Set2.colors)
-    ax.set_title("Top Agents by Total Charges", fontsize=16)
-    ax.set_ylabel("Total Charge ($)")
-    for i, v in enumerate(sorted_agents["ChargeFloat"]):
-        ax.text(i, v + 5, f"${v:.2f}", ha='center', fontweight='bold')
-    st.pyplot(fig)
+elif chart_type == "Pie Chart":
+    agent_sum = df_filtered.groupby("Agent Name")["ChargeFloat"].sum().reset_index()
+    agent_sum = agent_sum[agent_sum["Agent Name"] != "Areeb"]  # remove Areeb
+    ax.pie(agent_sum["ChargeFloat"], labels=agent_sum["Agent Name"], autopct='%1.1f%%', colors=sns.color_palette("Set2"))
+    ax.set_title("Charge Distribution by Agent")
+
+elif chart_type == "Box Plot":
+    sns.boxplot(data=df_filtered, x="Agent Name", y="ChargeFloat", hue="Status", palette="Set3", ax=ax)
+    ax.set_title("Charge Distribution per Agent by Status")
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+
+elif chart_type == "Area Chart":
+    daily_sum = df_filtered.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
+    ax.fill_between(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color=color_option, alpha=0.4)
+    ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], color=color_option, marker='o')
+    ax.set_title("Daily Charge Area Chart")
+    if show_values:
+        for x, y in zip(daily_sum["Date of Charge"], daily_sum["ChargeFloat"]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom', fontsize=9)
+
+ax.set_ylabel("Charge Amount ($)")
+ax.set_xlabel("Date" if chart_type in ["Bar Chart","Line Chart","Area Chart"] else "")
+plt.tight_layout()
+st.pyplot(fig)
