@@ -478,54 +478,154 @@ with main_tab3:
     else:
         st.dataframe(df_insurance, use_container_width=True)
 
-import pandas as pd
-from litellm import completion
-
-st.markdown("### AI Data Insights")
-
 try:
-    # Clean and prepare both sheet data
-    df1_clean = sheet1.copy()
-    df2_clean = sheet2.copy()
+    from litellm import completion
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+    from tabulate import tabulate
+    import io
+    import base64
+except Exception as e:
+    st.error(f"Missing AI/pdf deps: {e}. Install litellm, reportlab, tabulate.")
+    raise
 
-    for df in [df1_clean, df2_clean]:
-        for col in df.columns:
-            if df[col].dtype == "object":
-                # Clean currency or numeric-looking text
-                df[col] = df[col].replace('[\$,]', '', regex=True)
+st.markdown("---")
+st.markdown("### 🤖 AI Insights (Groq via LiteLLM)")
+
+def clean_currency_columns(df):
+    """Remove $ and commas from any object columns that look like money, convert to numeric when possible."""
+    df = df.copy()
+    for col in df.columns:
+        if df[col].dtype == "object":
+            # Check if column has $ or commas in many rows
+            sample = df[col].dropna().astype(str).head(50).to_list()
+            looks_like_money = any('$' in s or ',' in s for s in sample)
+            if looks_like_money:
+                # remove $ and commas
+                df[col] = df[col].astype(str).str.replace(r'[\$,]', '', regex=True).str.strip()
+                # try convert to numeric; if all convertable make numeric, else keep as object
                 df[col] = pd.to_numeric(df[col], errors='ignore')
+    return df
 
-    # Combine both sheets into one text for AI
-    ai_input_text = f"""
-    Sheet1 Data Preview:
-    {df1_clean.head(15).to_markdown(index=False)}
+def df_head_markdown(df, rows=20):
+    return df.head(rows).to_markdown(index=False)
 
-    Sheet2 Data Preview:
-    {df2_clean.head(15).to_markdown(index=False)}
-    """
+def create_pdf_from_df(df, filename):
+    """Create a simple PDF table (ReportLab). Returns bytes."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    # prepare data
+    data = [list(df.columns)]
+    # Limit rows to 60 for PDF
+    for i, row in df.head(60).iterrows():
+        data.append([str(x) for x in row.tolist()])
+    table = Table(data, repeatRows=1)
+    style = TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f0f0f0")),
+        ('GRID', (0,0), (-1,-1), 0.25, colors.grey),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+    ])
+    table.setStyle(style)
+    doc.build([table])
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
 
-    if st.button("Analyze Data with AI", use_container_width=True):
-        with st.spinner("Analyzing your data using Groq AI..."):
-            response = completion(
-                model="groq/llama3-70b-8192",  # Groq-hosted LLaMA 3 model
+# Prepare dataframes (use your app df variables)
+df1 = df_spectrum.copy() if 'df_spectrum' in globals() else load_data(spectrum_ws)
+df2 = df_insurance.copy() if 'df_insurance' in globals() else load_data(insurance_ws)
+
+# Clean them
+df1_clean = clean_currency_columns(df1)
+df2_clean = clean_currency_columns(df2)
+
+st.markdown("**Preview — cleaned heads**")
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("**Sheet1 (Spectrum) — head**")
+    st.dataframe(df1_clean.head(10), use_container_width=True)
+with col2:
+    st.markdown("**Sheet2 (Insurance) — head**")
+    st.dataframe(df2_clean.head(10), use_container_width=True)
+
+# Create small diagnostic summary BEFORE sending to AI (so AI has the numbers too)
+def numeric_summary(df):
+    nums = df.select_dtypes(include=['number'])
+    if nums.shape[1] == 0:
+        return "No numeric columns detected."
+    out = []
+    for c in nums.columns:
+        out.append(f"{c}: count={nums[c].count()}, sum={nums[c].sum():,.2f}, mean={nums[c].mean():.2f}, min={nums[c].min()}, max={nums[c].max()}")
+    return "\n".join(out)
+
+summary_text = (
+    "Sheet1 summary:\n" + numeric_summary(df1_clean) +
+    "\n\nSheet2 summary:\n" + numeric_summary(df2_clean)
+)
+
+# Optional: create PDFs and provide download links (for manual review / archival)
+if st.button("Make PDFs for both sheets (for archival)"):
+    try:
+        pdf1 = create_pdf_from_df(df1_clean, "sheet1.pdf")
+        pdf2 = create_pdf_from_df(df2_clean, "sheet2.pdf")
+        b1 = base64.b64encode(pdf1).decode()
+        b2 = base64.b64encode(pdf2).decode()
+        href1 = f'<a href="data:application/pdf;base64,{b1}" download="sheet1.pdf">Download Sheet1 PDF</a>'
+        href2 = f'<a href="data:application/pdf;base64,{b2}" download="sheet2.pdf">Download Sheet2 PDF</a>'
+        st.markdown(href1, unsafe_allow_html=True)
+        st.markdown(href2, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"PDF creation failed: {e}")
+
+# Prepare AI input (keep it small — use heads and numeric summary)
+ai_input = f"""
+You are a helpful financial analyst.
+
+Provide:
+- A clean numeric summary.
+- Totals and averages for numeric columns.
+- Top 3 largest numeric values (by column).
+- Any obvious anomalies.
+
+Sheet1 (Spectrum) head:
+{df_head_markdown(df1_clean, rows=12)}
+
+Sheet2 (Insurance) head:
+{df_head_markdown(df2_clean, rows=12)}
+
+Numeric summaries:
+{summary_text}
+
+Only return a concise structured answer (bullet points / short paragraphs).
+"""
+
+if st.button("Analyze with AI"):
+    with st.spinner("Calling AI — this can take a few seconds..."):
+        try:
+            resp = completion(
+                model="groq/llama3-70b-8192",   # adjust if you use different Groq model
                 messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            "You are an AI financial analyst. "
-                            "Analyze the provided data to find key insights, "
-                            "summaries, trends, and potential anomalies. "
-                            "Be concise and numeric where possible."
-                        ),
-                    },
-                    {"role": "user", "content": ai_input_text},
+                    {"role": "system", "content": "You are a precise financial analyst. Be concise and numeric."},
+                    {"role": "user", "content": ai_input},
                 ],
                 api_key=st.secrets["GROQ_API_KEY"],
+                max_tokens=600,
+                temperature=0.0,
             )
+            # litellm/completion returns structure; adapt if your litellm version returns differently
+            ai_text = None
+            if isinstance(resp, dict):
+                # common shape: resp["choices"][0]["message"]["content"]
+                try:
+                    ai_text = resp["choices"][0]["message"]["content"]
+                except Exception:
+                    ai_text = str(resp)
+            else:
+                ai_text = str(resp)
 
-        st.success("AI Analysis Complete")
-        st.markdown("#### Insights:")
-        st.markdown(response["choices"][0]["message"]["content"])
-
-except Exception as e:
-    st.error(f"AI analysis failed: {e}")
+            st.success("Analysis Complete")
+            st.markdown("#### AI summary / insights")
+            st.markdown(ai_text)
+        except Exception as e:
+            st.error(f"AI call failed: {e}")
