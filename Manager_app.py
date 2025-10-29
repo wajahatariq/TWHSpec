@@ -478,13 +478,19 @@ with main_tab3:
     else:
         st.dataframe(df_insurance, use_container_width=True)
 
-import streamlit as st
+# --- AI ANALYTICS SECTION (Spectrum Only) ---
 import pandas as pd
 from datetime import datetime, timedelta
 from litellm import completion
 
-# --- Load Spectrum Data ---
-sheet1 = get_worksheet_data("company transactions", 0)  # Sheet1 = Spectrum
+# --- Load Spectrum Data directly from gspread worksheet ---
+def get_worksheet_data(worksheet):
+    """Fetch data from a gspread worksheet and convert to DataFrame"""
+    records = worksheet.get_all_records()
+    df = pd.DataFrame(records)
+    return df
+
+sheet1 = get_worksheet_data(spectrum_ws)  # Spectrum only
 
 # --- Clean Currency Columns ---
 def clean_currency_columns(df):
@@ -501,65 +507,67 @@ def clean_currency_columns(df):
 
 df = clean_currency_columns(sheet1)
 
-# --- Filter data since 15th of last month ---
+# --- Filter Data since 15th of last month ---
 today = datetime.today()
 first_of_this_month = datetime(today.year, today.month, 1)
-fifteenth_last_month = first_of_this_month - timedelta(days=15 + today.day)
-filtered_df = df[
-    df["Date"].apply(
-        lambda x: datetime.strptime(str(x), "%Y-%m-%d") >= fifteenth_last_month
-    )
-]
+fifteenth_last_month = first_of_this_month - timedelta(days=(today.day + 15))
 
-# --- AI prompt ---
-ai_input = f"""
-You are a financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
+if "Date" not in df.columns:
+    st.error("'Date' column not found in Spectrum sheet.")
+else:
+    # Convert to datetime safely
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    filtered_df = df[df["Date"] >= fifteenth_last_month]
 
-Return a concise and readable summary including:
-- Total transactions
-- Total and average amount
-- Any outliers or anomalies
-- Spending patterns or insights
-- Duplicate or missing entries
+    # --- AI Prompt ---
+    ai_input = f"""
+    You are a financial analyst. Analyze the Spectrum transaction data since {fifteenth_last_month.date()}.
 
-Data (sample of up to 25 rows):
-{filtered_df.head(25).to_markdown()}
-"""
+    Return a concise and readable summary including:
+    - Total transactions
+    - Total and average amount
+    - Any outliers or anomalies
+    - Spending patterns or insights
+    - Duplicate or missing entries
 
-st.subheader("💡 AI Insights for Spectrum (since 15th of last month)")
+    Data sample (up to 25 rows):
+    {filtered_df.head(25).to_markdown()}
+    """
 
-# --- AI Summary ---
-try:
-    with st.spinner("Analyzing with Groq AI..."):
-        ai_response = completion(
-            model="groq/llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": ai_input}],
-            api_key=st.secrets["GROQ_API_KEY"],
-        )
-        summary = ai_response["choices"][0]["message"]["content"]
-        st.markdown(summary)
-except Exception as e:
-    st.error(f"AI analysis failed: {e}")
+    st.subheader("AI Insights — Spectrum Summary (Since 15th of Last Month)")
 
-# --- Chatbot Section ---
-st.markdown("### 🤖 Ask AI about Spectrum Data")
-user_question = st.text_input("Enter your question:", placeholder="e.g. Which client had the largest transaction?")
-if st.button("Ask AI"):
     try:
-        chat_prompt = f"""
-        Based on Spectrum transaction data since {fifteenth_last_month.date()},
-        answer the following question accurately:
-        {user_question}
-
-        Here is a data sample (up to 25 rows):
-        {filtered_df.head(25).to_markdown()}
-        """
-
-        chat_response = completion(
-            model="groq/llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": chat_prompt}],
-            api_key=st.secrets["GROQ_API_KEY"],
-        )
-        st.success(chat_response["choices"][0]["message"]["content"])
+        with st.spinner("Analyzing with Groq AI..."):
+            ai_response = completion(
+                model="groq/llama-3.3-70b-versatile",  # ✅ correct supported model
+                messages=[{"role": "user", "content": ai_input}],
+                api_key=st.secrets["GROQ_API_KEY"],
+            )
+            summary = ai_response["choices"][0]["message"]["content"]
+            st.markdown(summary)
     except Exception as e:
-        st.error(f"AI query failed: {e}")
+        st.error(f"AI analysis failed: {e}")
+
+    # --- Chatbot Q&A ---
+    st.markdown("### Ask AI about Spectrum Data")
+    user_question = st.text_input("Enter your question:", placeholder="e.g. Which client made the biggest purchase?")
+    if st.button("Ask AI"):
+        try:
+            chat_prompt = f"""
+            Based on Spectrum transaction data since {fifteenth_last_month.date()},
+            answer this question accurately:
+
+            {user_question}
+
+            Data sample (up to 25 rows):
+            {filtered_df.head(25).to_markdown()}
+            """
+
+            chat_response = completion(
+                model="groq/llama-3.3-70b-versatile",  # ✅ Groq-supported model
+                messages=[{"role": "user", "content": chat_prompt}],
+                api_key=st.secrets["GROQ_API_KEY"],
+            )
+            st.success(chat_response["choices"][0]["message"]["content"])
+        except Exception as e:
+            st.error(f"AI query failed: {e}")
