@@ -267,9 +267,9 @@ def style_status_rows(df):
 
     def highlight_row(row):
         if row["Status"] == "Charged":
-            return ["background-color: lightgreen"] * len(row)
+            return ["background-color: darkgreen"] * len(row)
         elif row["Status"] == "Charge Back":
-            return ["background-color: lightcoral"] * len(row)
+            return ["background-color: red"] * len(row)
         else:  # Declined or Pending
             return [""] * len(row)
 
