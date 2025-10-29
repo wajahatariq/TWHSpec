@@ -552,7 +552,7 @@ Data sample (up to 25 rows):
 try:
     with st.spinner("Analyzing Spectrum data with Groq AI..."):
         ai_response = completion(
-            model="groq/llama-3.1-70b-versatile",  # ✅ Active Groq model
+            model="groq/llama3-8b-8192",  # ✅ Active Groq model
             messages=[{"role": "user", "content": ai_input}],
             api_key=st.secrets["GROQ_API_KEY"],
         )
@@ -579,7 +579,7 @@ if st.button("Ask AI"):
             """
 
             chat_response = completion(
-                model="groq/llama-3.1-70b-versatile",
+                model="groq/llama3-8b-8192",
                 messages=[{"role": "user", "content": chat_prompt}],
                 api_key=st.secrets["GROQ_API_KEY"],
             )
