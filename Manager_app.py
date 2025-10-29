@@ -533,12 +533,27 @@ with main_tab3:
                     row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
                     if row_index:
                         row_num = row_index[0] + 2  # header = row 1
+            
+                        # Convert all values to native Python types
                         updated_data = [
-                            record["Record_ID"], record["Agent Name"], record["Name"], record["Ph Number"],
-                            record["Address"], record["Email"], record["Card Holder Name"], record["Card Number"],
-                            record["Expiry Date"], record["CVC"], new_charge,
-                            record["LLC"], record["Provider"], record["Date of Charge"], new_status, record["Timestamp"]
+                            str(record["Record_ID"]),
+                            str(record["Agent Name"]),
+                            str(record["Name"]),
+                            str(record["Ph Number"]),
+                            str(record["Address"]),
+                            str(record["Email"]),
+                            str(record["Card Holder Name"]),
+                            str(record["Card Number"]),
+                            str(record["Expiry Date"]),
+                            int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
+                            str(new_charge),
+                            str(record["LLC"]),
+                            str(record["Provider"]),
+                            str(record["Date of Charge"]),
+                            str(new_status),
+                            str(record["Timestamp"])
                         ]
+            
                         worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                         st.success(f"Record {record['Record_ID']} updated successfully!")
                         st.experimental_rerun()
@@ -546,6 +561,7 @@ with main_tab3:
                         st.error("Record not found in sheet. Try refreshing the page.")
                 except Exception as e:
                     st.error(f"Error updating record: {e}")
+
     else:
         st.info("No data available to edit.")
 
