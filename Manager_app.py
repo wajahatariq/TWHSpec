@@ -6,6 +6,7 @@ import pytz
 import requests
 import time
 
+
 # --- CONFIG ---
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
 light_themes = {
@@ -255,6 +256,24 @@ def validate_login(user_id, password):
     hashed_pw = hash_password(password)
     match = users_df[(users_df["ID"] == user_id) & (users_df["Password"] == hashed_pw)]
     return not match.empty
+    
+def style_status_rows(df):
+    """
+    Apply conditional styling based on Status column:
+    Charged = green, Charge Back = red, Declined/Pending = default.
+    """
+    if "Status" not in df.columns or df.empty:
+        return df  # nothing to style
+
+    def highlight_row(row):
+        if row["Status"] == "Charged":
+            return ["background-color: lightgreen"] * len(row)
+        elif row["Status"] == "Charge Back":
+            return ["background-color: lightcoral"] * len(row)
+        else:  # Declined or Pending
+            return [""] * len(row)
+
+    return df.style.apply(highlight_row, axis=1)
 
 # Access the two worksheets
 spectrum_ws = gc.open(SHEET_NAME).worksheet("Sheet1")
@@ -573,7 +592,7 @@ with main_tab3:
     if df_spectrum.empty:
         st.info("No data available in Spectrum (Sheet1).")
     else:
-        st.dataframe(df_spectrum, use_container_width=True)
+        st.dataframe(style_status_rows(df_spectrum), use_container_width=True)
 
     st.divider()
 
@@ -581,4 +600,5 @@ with main_tab3:
     if df_insurance.empty:
         st.info("No data available in Insurance (Sheet2).")
     else:
-        st.dataframe(df_insurance, use_container_width=True)
+        st.dataframe(style_status_rows(df_insurance), use_container_width=True)
+
