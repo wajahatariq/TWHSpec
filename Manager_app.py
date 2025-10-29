@@ -481,42 +481,35 @@ with main_tab3:
 
 # --- AI ANALYTICS SECTION (Spectrum Only) ---
 import datetime
-import pandas as pd
-from litellm import completion
 
 st.subheader("💡 AI Insights — Spectrum Summary (15th → Today)")
 
-# --- Get Spectrum (Sheet1) Data ---
-try:
-    sheet1 = get_worksheet_data("company transactions", 0)  # Sheet1 = Spectrum
-except Exception as e:
-    st.error(f"Error loading Spectrum sheet: {e}")
-    st.stop()
+# --- Filter Charged Transactions from 15th of Current Month → Today ---
+today = datetime.date.today()
+start_date = datetime.date(today.year, today.month, 15)
 
-# --- Data Cleaning ---
-df = pd.DataFrame(sheet1)
-df.columns = df.columns.str.strip()
-if "Charge" not in df.columns or "Status" not in df.columns or "Date of Charge" not in df.columns:
+# Make sure the columns exist
+if "Charge" not in df_spectrum.columns or "Status" not in df_spectrum.columns or "Date of Charge" not in df_spectrum.columns:
     st.error("Required columns missing (Charge, Status, Date of Charge)")
     st.stop()
 
-# Clean Charge Column
+# Clean Charge column
 def clean_currency(val):
     try:
         return float(str(val).replace("$", "").replace(",", "").strip())
     except:
-        return None
+        return 0
 
-df["Charge"] = df["Charge"].apply(clean_currency)
+df_spectrum["Charge"] = df_spectrum["Charge"].apply(clean_currency)
 
-# --- Filter Dates (15th of current month → today) ---
-today = datetime.date.today()
-start_date = datetime.date(today.year, today.month, 15)
-df["Date of Charge"] = pd.to_datetime(df["Date of Charge"], errors="coerce").dt.date
-filtered_df = df[
-    (df["Date of Charge"] >= start_date)
-    & (df["Date of Charge"] <= today)
-    & (df["Status"].str.lower() == "charged")
+# Ensure Date of Charge is in datetime format
+df_spectrum["Date of Charge"] = pd.to_datetime(df_spectrum["Date of Charge"], errors="coerce").dt.date
+
+# Filter for charged transactions in the period
+filtered_df = df_spectrum[
+    (df_spectrum["Date of Charge"] >= start_date) &
+    (df_spectrum["Date of Charge"] <= today) &
+    (df_spectrum["Status"].str.lower() == "charged")
 ]
 
 # --- Quick Stats ---
@@ -526,7 +519,7 @@ avg_charge = round(filtered_df["Charge"].mean(), 2) if total_txns > 0 else 0
 
 # --- AI Summary ---
 summary_text = f"""
-You are a financial analyst. Write a short, clear summary (5–7 bullet points max) of these Spectrum transactions.
+You are a financial analyst. Write a short summary (5–7 bullet points max) of these Spectrum transactions.
 
 Stats:
 • Period: {start_date} to {today}
@@ -538,6 +531,7 @@ Only mention general trends, issues, or data quality insights — no detailed ro
 """
 
 try:
+    from litellm import completion
     ai_response = completion(
         model="llama-3.2-70b-versatile",
         messages=[{"role": "user", "content": summary_text}],
