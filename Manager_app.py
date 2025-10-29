@@ -620,9 +620,11 @@ if not df_all.empty:
     # --- Filters ---
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        agent_filter = st.selectbox("Filter by Agent", ["All Agents"] + AGENTS[1:])
+        AGENTS = ["All Agents"] + sorted(df_all["Agent Name"].dropna().unique().tolist())
+        agent_filter = st.selectbox("Filter by Agent", AGENTS)
     with col_f2:
-        status_filter = st.selectbox("Filter by Status", ["All Status"] + df_all["Status"].unique().tolist())
+        status_filter = st.selectbox("Filter by Status", ["All Status"] + df_all["Status"].dropna().unique().tolist())
+
 
     df_chart = df_all.copy()
     if agent_filter != "All Agents":
