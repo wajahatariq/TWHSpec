@@ -604,7 +604,7 @@ if st.button("Analyze with AI"):
     with st.spinner("Calling AI — this can take a few seconds..."):
         try:
             resp = completion(
-                model="llama-3.3-70b-versatile",   # adjust if you use different Groq model
+                model="groq/llama-3.3-70b-versatile",   # adjust if you use different Groq model
                 messages=[
                     {"role": "system", "content": "You are a precise financial analyst. Be concise and numeric."},
                     {"role": "user", "content": ai_input},
