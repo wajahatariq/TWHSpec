@@ -365,7 +365,6 @@ if submitted:
     except Exception as e:
         st.error(f"Error sending Pushbullet notification: {e}")
 
-# --- LIVE GOOGLE SHEET VIEW ---
 DELETE_AFTER_MINUTES = 5
 st.divider()
 st.subheader("Edit Lead")
@@ -373,14 +372,13 @@ st.subheader("Edit Lead")
 # --- FETCH ALL DATA ---
 try:
     all_records = worksheet.get_all_records()
-    if all_records:
-        df_all = pd.DataFrame(all_records)
-    else:
-        df_all = pd.DataFrame()
+    df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
 except Exception as e:
     st.error(f"Error loading sheet data: {e}")
     df_all = pd.DataFrame()
-    
+
+record = None  # default
+
 if not df_all.empty:
     # --- RECENT DATA (last 5 minutes) ---
     now = datetime.now(tz).replace(tzinfo=None)
@@ -390,107 +388,100 @@ if not df_all.empty:
         df_recent = df_all[df_all["Timestamp"] >= cutoff]
     else:
         df_recent = pd.DataFrame()
-
-    record = None  # Initialize
 else:
-    st.info(f"No recent records in the last {DELETE_AFTER_MINUTES} minutes.")
-    # --- SELECT MODE ---
-    mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Select by Name", "Older - Enter Record ID"])
+    df_recent = pd.DataFrame()
 
-    if mode.startswith("Recent") and not df_recent.empty:
+# --- SELECT MODE ---
+mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Name", "All-time - Record ID"])
+
+# --- MODE LOGIC ---
+if mode.startswith("Recent"):
+    if not df_recent.empty:
         client_names = df_recent["Name"].unique().tolist()
-        selected_client = st.selectbox("Select Client to Edit", ["Select Client"] + client_names)
+        selected_client = st.selectbox("Select Client", ["Select Client"] + client_names)
         if selected_client != "Select Client":
             record = df_recent[df_recent["Name"] == selected_client].iloc[0]
+    else:
+        st.info("No recent records in the last 5 minutes.")
 
-    elif mode.startswith("Older") and not df_all.empty:
-        record_id_input = st.text_input("Enter Record ID")
-        if record_id_input:
-            if record_id_input in df_all["Record_ID"].values:
-                record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
-            else:
-                st.warning("No matching Record ID found.")
+elif mode.startswith("All-time"):
+    record_id_input = st.text_input("Enter Record ID")
+    if record_id_input:
+        if record_id_input in df_all["Record_ID"].values:
+            record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
+        else:
+            st.warning("No matching Record ID found.")
 
-    # --- EDIT FORM ---
-    if record is not None:
-        st.info(f"Editing Record ID: {record['Record_ID']}")
+# --- EDIT FORM ---
+if record is not None:
+    st.info(f"Editing Record ID: {record['Record_ID']}")
 
-        with st.form("edit_lead_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                new_agent_name = st.selectbox(
-                    "Agent Name", AGENTS,
-                    index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0
-                )
-                new_name = st.text_input("Client Name", value=record["Name"])
-                new_phone = st.text_input("Phone Number", value=record["Ph Number"])
-                new_address = st.text_input("Address", value=record["Address"])
-                new_email = st.text_input("Email", value=record["Email"])
-                new_card_holder = st.text_input("Card Holder Name", value=record["Card Holder Name"])
-            with col2:
-                new_card_number = st.text_input("Card Number", value=record["Card Number"])
-                new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
-                new_cvc = st.number_input(
-                    "CVC",
-                    min_value=0,
-                    max_value=999,
-                    step=1,
-                    value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0
-                )
-                new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
-                new_llc = st.selectbox(
-                    "LLC",
-                    LLC_OPTIONS,
-                    index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0
-                )
-                new_provider = st.selectbox(
-                    "Provider",
-                    PROVIDERS,
-                    index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0
-                )
-                new_date_of_charge = st.date_input(
-                    "Date of Charge",
-                    value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date()
-                )
-
-            # --- DYNAMIC STATUS LOGIC ---
-            current_status = record["Status"]
-            if current_status == "Charged":
-                status_options = ["Charged", "Pending Charge Back"]
-                status_disabled = False
-            elif current_status == "Declined":
-                status_options = ["Declined", "Pending", "Charge Back"]
-                status_disabled = False
-            else:  # Pending or Charge Back
-                status_options = [current_status]
-                status_disabled = True
-
-            new_status = st.selectbox(
-                "Status",
-                status_options,
-                index=0,
-                disabled=status_disabled
+    with st.form("edit_lead_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            new_agent_name = st.selectbox(
+                "Agent Name", AGENTS,
+                index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0
+            )
+            new_name = st.text_input("Client Name", value=record["Name"])
+            new_phone = st.text_input("Phone Number", value=record["Ph Number"])
+            new_address = st.text_input("Address", value=record["Address"])
+            new_email = st.text_input("Email", value=record["Email"])
+            new_card_holder = st.text_input("Card Holder Name", value=record["Card Holder Name"])
+        with col2:
+            new_card_number = st.text_input("Card Number", value=record["Card Number"])
+            new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
+            new_cvc = st.number_input(
+                "CVC", min_value=0, max_value=999, step=1,
+                value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0
+            )
+            new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
+            new_llc = st.selectbox(
+                "LLC", LLC_OPTIONS,
+                index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0
+            )
+            new_provider = st.selectbox(
+                "Provider", PROVIDERS,
+                index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0
+            )
+            new_date_of_charge = st.date_input(
+                "Date of Charge",
+                value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date()
             )
 
-            updated = st.form_submit_button("Update Lead")
+        # --- STATUS LOGIC ---
+        current_status = record["Status"]
+        if current_status == "Charged":
+            status_options = ["Charged", "Pending Charge Back"]
+            status_disabled = False
+        elif current_status == "Declined":
+            status_options = ["Declined", "Pending", "Charge Back"]
+            status_disabled = False
+        else:  # Pending or Charge Back
+            status_options = [current_status]
+            status_disabled = True
 
-        if updated:
-            try:
-                row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                if row_index:
-                    row_num = row_index[0] + 2
-                    updated_data = [
-                        record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
-                        new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
-                        new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                        new_status, str(record["Timestamp"])
-                    ]
-                    worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
-                    st.success(f"Lead for {new_name} updated successfully!")
-                    st.rerun()
-                else:
-                    st.error("Record not found in sheet. Try refreshing the page.")
-            except Exception as e:
-                st.error(f"Error updating lead: {e}")
-        else:
-            st.info("No data available to edit.")
+        new_status = st.selectbox("Status", status_options, index=0, disabled=status_disabled)
+
+        updated = st.form_submit_button("Update Lead")
+
+    if updated:
+        try:
+            row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
+            if row_index:
+                row_num = row_index[0] + 2
+                updated_data = [
+                    record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
+                    new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
+                    new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
+                    new_status, str(record["Timestamp"])
+                ]
+                worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                st.success(f"Lead for {new_name} updated successfully!")
+                st.rerun()
+            else:
+                st.error("Record not found in sheet. Try refreshing the page.")
+        except Exception as e:
+            st.error(f"Error updating lead: {e}")
+
+
