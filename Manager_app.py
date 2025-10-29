@@ -608,7 +608,7 @@ import matplotlib.dates as mdates
 import seaborn as sns
 
 st.divider()
-st.subheader("Transaction Analysis Chart (15th to Today)")
+st.subheader("Transaction Analysis Chart")
 
 if not df_all.empty:
     # --- Preprocess dates and charges ---
@@ -628,6 +628,13 @@ if not df_all.empty:
     with col_f3:
         chart_type = st.selectbox("Chart Type", ["Bar", "Line", "Stacked Bar"])
 
+    # --- Custom date range ---
+    col_d1, col_d2 = st.columns(2)
+    with col_d1:
+        start_date = st.date_input("From", value=datetime.now(tz).replace(day=15).date())
+    with col_d2:
+        end_date = st.date_input("To", value=datetime.now(tz).date())
+
     # --- Filter data based on selection ---
     df_chart = df_all.copy()
     if agent_filter != "All Agents":
@@ -635,13 +642,11 @@ if not df_all.empty:
     if status_filter != "All Status":
         df_chart = df_chart[df_chart["Status"] == status_filter]
 
-    # --- Focus on 15th to today ---
-    today = datetime.now(tz).date()
-    fifteenth = datetime(today.year, today.month, 15).date()
-    df_chart = df_chart[df_chart["Date of Charge"] >= fifteenth]
+    # --- Apply custom date range ---
+    df_chart = df_chart[(df_chart["Date of Charge"] >= start_date) & (df_chart["Date of Charge"] <= end_date)]
 
     if df_chart.empty:
-        st.info("No data available for selected filters from 15th to today.")
+        st.info("No data available for selected filters and date range.")
     else:
         # --- Aggregate daily sums ---
         daily_sum = df_chart.groupby("Date of Charge")["ChargeFloat"].sum().reset_index()
@@ -656,7 +661,6 @@ if not df_all.empty:
         elif chart_type == "Line":
             ax.plot(daily_sum["Date of Charge"], daily_sum["ChargeFloat"], marker='o', linestyle='-', color='tab:blue')
         elif chart_type == "Stacked Bar":
-            # Example of stacked bar by Status
             df_stack = df_chart.pivot_table(index="Date of Charge", columns="Status", values="ChargeFloat", aggfunc="sum", fill_value=0)
             df_stack.plot(kind="bar", stacked=True, ax=ax, colormap="tab20")
 
@@ -666,7 +670,7 @@ if not df_all.empty:
         plt.xticks(rotation=45)
 
         # --- Labels & Grid ---
-        ax.set_title(f"Total Charges from {fifteenth} to {today}", fontsize=16, fontweight='bold')
+        ax.set_title(f"Total Charges from {start_date} to {end_date}", fontsize=16, fontweight='bold')
         ax.set_xlabel("Date")
         ax.set_ylabel("Total Charge ($)")
         ax.grid(alpha=0.3)
@@ -684,7 +688,7 @@ if not df_all.empty:
         with col_u3:
             st.metric("Peak Charge Day", str(daily_sum.loc[daily_sum['ChargeFloat'].idxmax(), "Date of Charge"]))
 
-        # Additional optional insights for data analyst
+        # Additional insights for data analyst
         st.markdown("#### Top Agents by Total Charge")
         top_agents = df_chart.groupby("Agent Name")["ChargeFloat"].sum().sort_values(ascending=False).head(5)
         st.bar_chart(top_agents)
