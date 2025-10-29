@@ -13,6 +13,12 @@ light_themes = {
     "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
     "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
     "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+    "Blush Quartz":     {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},  # rose pink / quartz
+    "Azure Frost":      {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},  # cold tech blue
+    "Citrus Bloom":     {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},  # yellow citrus tone
+    "Pearl Sage":       {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},  # gentle green calm
+    "Creamy Mocha":     {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},  # warm beige aesthetic
+
 }
 
 dark_themes = {
@@ -21,6 +27,12 @@ dark_themes = {
     "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
     "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
     "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+    "Midnight Gold":    {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},  # gold luxury
+    "Cyber Pink":       {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},  # neon magenta vibe
+    "Steel Indigo":     {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},  # futuristic cool tone
+    "Velvet Crimson":   {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},  # deep red drama
+    "Arctic Noir":      {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},  # icy clean contrast
+
 }
 
 # --- SESSION STATE ---
