@@ -326,16 +326,15 @@ def render_transaction_tabs(df, worksheet, label):
 
 # --- AUTHENTICATION SYSTEM ---
 def login_signup_screen():
-    st.title("🔐 Manager Portal")
+    st.title("Manager Portal")
 
     option = st.radio("Select an option", ["Sign In", "Sign Up"])
 
-    if option == "Sign In":
-        st.subheader("Login to Continue")
-        user_id = st.text_input("User ID")
-        password = st.text_input("Password", type="password")
-
-        if st.button("Login"):
+    if mode == "Sign In":
+        user_id = st.text_input("User ID", key="signin_id")
+        password = st.text_input("Password", type="password", key="signin_pw")
+    
+        if st.button("Login", key="login_btn"):
             if validate_login(user_id, password):
                 st.session_state["logged_in"] = True
                 st.session_state["user_id"] = user_id
@@ -344,24 +343,31 @@ def login_signup_screen():
             else:
                 st.error("❌ Invalid ID or password")
 
-    elif option == "Sign Up":
-        st.subheader("Create a New Account")
-        new_id = st.text_input("Choose User ID")
-        new_password = st.text_input("Choose Password", type="password")
-        confirm_password = st.text_input("Confirm Password", type="password")
 
-        if st.button("Register"):
-            if not new_id or not new_password:
+    elif mode == "Sign Up":
+        st.subheader("Create a New Account")
+    
+        # Persistent inputs using session_state
+        new_id = st.text_input("Choose User ID", key="signup_id")
+        new_pw = st.text_input("Choose Password", type="password", key="signup_pw")
+        confirm_pw = st.text_input("Confirm Password", type="password", key="signup_confirm")
+    
+        if st.button("Register", key="register_btn"):
+            if not new_id or not new_pw:
                 st.warning("Please fill in all fields.")
-            elif new_password != confirm_password:
+            elif new_pw != confirm_pw:
                 st.warning("Passwords do not match.")
             else:
                 users_df = load_users()
                 if not users_df.empty and new_id in users_df["ID"].values:
-                    st.error("User ID already exists. Try a different one.")
+                    st.error("User ID already exists. Try another.")
                 else:
-                    add_user(new_id, new_password)
+                    add_user(new_id, new_pw)
                     st.success("🎉 Account created! You can now log in.")
+                    # clear fields after successful signup
+                    st.session_state.signup_id = ""
+                    st.session_state.signup_pw = ""
+                    st.session_state.signup_confirm = ""
                     st.rerun()
 
 # --- CHECK LOGIN STATE ---
