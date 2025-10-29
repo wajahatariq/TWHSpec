@@ -330,10 +330,10 @@ def login_signup_screen():
 
     option = st.radio("Select an option", ["Sign In", "Sign Up"])
 
-    if mode == "Sign In":
+    if option == "Sign In":
         user_id = st.text_input("User ID", key="signin_id")
         password = st.text_input("Password", type="password", key="signin_pw")
-    
+
         if st.button("Login", key="login_btn"):
             if validate_login(user_id, password):
                 st.session_state["logged_in"] = True
@@ -343,15 +343,13 @@ def login_signup_screen():
             else:
                 st.error("❌ Invalid ID or password")
 
-
-    elif mode == "Sign Up":
+    elif option == "Sign Up":
         st.subheader("Create a New Account")
-    
-        # Persistent inputs using session_state
+
         new_id = st.text_input("Choose User ID", key="signup_id")
         new_pw = st.text_input("Choose Password", type="password", key="signup_pw")
         confirm_pw = st.text_input("Confirm Password", type="password", key="signup_confirm")
-    
+
         if st.button("Register", key="register_btn"):
             if not new_id or not new_pw:
                 st.warning("Please fill in all fields.")
@@ -368,7 +366,6 @@ def login_signup_screen():
                     st.session_state.signup_id = ""
                     st.session_state.signup_pw = ""
                     st.session_state.signup_confirm = ""
-                    st.rerun()
 
 # --- CHECK LOGIN STATE ---
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
