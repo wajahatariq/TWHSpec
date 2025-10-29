@@ -366,6 +366,14 @@ def render_transaction_tabs(df, worksheet, label):
         else:
             st.dataframe(processed)
 
+# --- CLEAR SIGNUP FIELDS AFTER SUCCESS ---
+if st.session_state.get("clear_signup_fields"):
+    for k in ["signup_id", "signup_pw", "signup_confirm"]:
+        if k in st.session_state:
+            del st.session_state[k]
+    del st.session_state["clear_signup_fields"]
+
+
 def login_signup_screen():
     st.title("Manager Portal")
 
@@ -405,9 +413,7 @@ def login_signup_screen():
                     else:
                         add_user(new_id, new_pw)
                         st.success("🎉 Account created! You can now log in.")
-                        st.session_state["signup_id"] = ""
-                        st.session_state["signup_pw"] = ""
-                        st.session_state["signup_confirm"] = ""
+                        st.session_state["clear_signup_fields"] = True    
                         st.rerun()
 
 
