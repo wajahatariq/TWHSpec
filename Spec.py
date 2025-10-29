@@ -492,8 +492,5 @@ else:
                     st.error("Record not found in sheet. Try refreshing the page.")
             except Exception as e:
                 st.error(f"Error updating lead: {e}")
-else:
-    st.info("No data available to edit.")
-
-
-
+        else:
+            st.info("No data available to edit.")
