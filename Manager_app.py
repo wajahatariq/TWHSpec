@@ -603,7 +603,7 @@ Only return a concise structured answer (bullet points / short paragraphs).
 if st.button("Analyze with AI"):
     with st.spinner("Analyzing data with AI..."):
         ai_response = completion(
-            model="llama-3.3-70b-versatile",
+            model="groq/llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": ai_input}],
             api_key=st.secrets["GROQ_API_KEY"],
         )
