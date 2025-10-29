@@ -396,13 +396,21 @@ mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Name", "All-time - Record I
 
 # --- MODE LOGIC ---
 if mode.startswith("Recent"):
+    # Filter recent records first
+    df_recent = df_all[df_all["Timestamp"] >= cutoff]
+
     if not df_recent.empty:
         client_names = df_recent["Name"].unique().tolist()
         selected_client = st.selectbox("Select Client", ["Select Client"] + client_names)
         if selected_client != "Select Client":
             record = df_recent[df_recent["Name"] == selected_client].iloc[0]
+        
+        # Optional: show the recent dataframe
+        st.subheader("Recent Records (Last 5 minutes)")
+        st.dataframe(df_recent)
     else:
         st.info("No recent records in the last 5 minutes.")
+
 
 elif mode.startswith("All-time"):
     record_id_input = st.text_input("Enter Record ID")
@@ -483,5 +491,6 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
