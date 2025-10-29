@@ -379,12 +379,21 @@ except Exception as e:
 
 record = None  # default
 
-# --- SAFELY CONVERT TIMESTAMP ---
+# --- SAFELY PROCESS TIMESTAMP ---
 if not df_all.empty and "Timestamp" in df_all.columns:
+    # Convert to datetime and coerce invalid entries
     df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
-    df_all = df_all.dropna(subset=["Timestamp"])  # remove invalid timestamps
-    now = datetime.now(tz)
+
+    # Remove rows with invalid timestamps
+    df_all = df_all.dropna(subset=["Timestamp"])
+
+    # Ensure datetime64 dtype (naive)
+    df_all["Timestamp"] = df_all["Timestamp"].astype("datetime64[ns]")
+
+    now = datetime.now(tz).replace(tzinfo=None)  # naive datetime for comparison
     cutoff = now - timedelta(minutes=DELETE_AFTER_MINUTES)
+
+    # Filter recent records safely
     df_recent = df_all[df_all["Timestamp"] >= cutoff]
 else:
     df_recent = pd.DataFrame()
@@ -396,7 +405,7 @@ mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Name", "All-time - Record I
 if mode.startswith("Recent"):
     if not df_recent.empty:
         st.subheader("Recent Records (Last 5 minutes)")
-        st.dataframe(df_recent)
+        st.dataframe(df_recent)  # Show recent records
         
         client_names = df_recent["Name"].unique().tolist()
         selected_client = st.selectbox("Select Client", ["Select Client"] + client_names)
@@ -405,9 +414,9 @@ if mode.startswith("Recent"):
     else:
         st.info("No recent records in the last 5 minutes.")
 
-elif mode.startswith("All-time") and not df_all.empty:
+elif mode.startswith("All-time"):
     record_id_input = st.text_input("Enter Record ID")
-    if record_id_input:
+    if record_id_input and not df_all.empty:
         if record_id_input in df_all["Record_ID"].values:
             record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
         else:
@@ -420,48 +429,35 @@ if record is not None:
     with st.form("edit_lead_form"):
         col1, col2 = st.columns(2)
         with col1:
-            new_agent_name = st.selectbox(
-                "Agent Name", AGENTS,
-                index=AGENTS.index(record.get("Agent Name", "Select Agent")) 
-                      if record.get("Agent Name") in AGENTS else 0
-            )
-            new_name = st.text_input("Client Name", value=record.get("Name", ""))
-            phone_col = "Ph Number" if "Ph Number" in record else "Phone"  # fallback
-            new_phone = st.text_input("Phone Number", value=record.get(phone_col, ""))
-            new_address = st.text_input("Address", value=record.get("Address", ""))
-            new_email = st.text_input("Email", value=record.get("Email", ""))
-            new_card_holder = st.text_input("Card Holder Name", value=record.get("Card Holder Name", ""))
+            new_agent_name = st.selectbox("Agent Name", AGENTS,
+                                          index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0)
+            new_name = st.text_input("Client Name", value=record["Name"])
+            new_phone = st.text_input("Phone Number", value=record["Ph Number"])
+            new_address = st.text_input("Address", value=record["Address"])
+            new_email = st.text_input("Email", value=record["Email"])
+            new_card_holder = st.text_input("Card Holder Name", value=record["Card Holder Name"])
         with col2:
-            new_card_number = st.text_input("Card Number", value=record.get("Card Number", ""))
-            new_expiry = st.text_input("Expiry Date (MM/YY)", value=record.get("Expiry Date", ""))
-            new_cvc = st.number_input(
-                "CVC", min_value=0, max_value=999, step=1,
-                value=int(record.get("CVC", 0)) if str(record.get("CVC", 0)).isdigit() else 0
-            )
-            new_charge = st.text_input("Charge Amount", value=str(record.get("Charge", "")))
-            new_llc = st.selectbox(
-                "LLC", LLC_OPTIONS,
-                index=LLC_OPTIONS.index(record.get("LLC", "Select LLC")) if record.get("LLC") in LLC_OPTIONS else 0
-            )
-            new_provider = st.selectbox(
-                "Provider", PROVIDERS,
-                index=PROVIDERS.index(record.get("Provider", "Select Provider")) 
-                      if record.get("Provider") in PROVIDERS else 0
-            )
-            new_date_of_charge = st.date_input(
-                "Date of Charge",
-                value=pd.to_datetime(record.get("Date of Charge", datetime.now().date())).date()
-            )
+            new_card_number = st.text_input("Card Number", value=record["Card Number"])
+            new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
+            new_cvc = st.number_input("CVC", min_value=0, max_value=999, step=1,
+                                      value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0)
+            new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
+            new_llc = st.selectbox("LLC", LLC_OPTIONS,
+                                   index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0)
+            new_provider = st.selectbox("Provider", PROVIDERS,
+                                        index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0)
+            new_date_of_charge = st.date_input("Date of Charge",
+                                               value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date())
 
         # --- STATUS LOGIC ---
-        current_status = record.get("Status", "Pending")
+        current_status = record["Status"]
         if current_status == "Charged":
             status_options = ["Charged", "Pending Charge Back"]
             status_disabled = False
         elif current_status == "Declined":
             status_options = ["Declined", "Pending", "Charge Back"]
             status_disabled = False
-        else:
+        else:  # Pending or Charge Back
             status_options = [current_status]
             status_disabled = True
 
@@ -472,12 +468,12 @@ if record is not None:
         try:
             row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
             if row_index:
-                row_num = row_index[0] + 2  # +2 because sheet has header
+                row_num = row_index[0] + 2
                 updated_data = [
                     record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
                     new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
                     new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                    new_status, str(record.get("Timestamp", ""))
+                    new_status, str(record["Timestamp"])
                 ]
                 worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                 st.success(f"Lead for {new_name} updated successfully!")
