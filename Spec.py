@@ -404,7 +404,7 @@ mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Name", "All-time - Record I
 # --- MODE LOGIC ---
 if mode.startswith("Recent"):
     if not df_recent.empty:
-        st.subheader("Recent Records (Last 5 minutes)")
+        st.subheader(f"Recent Records {DELETE_AFTER_MINUTES}")
         st.dataframe(df_recent)  # Show recent records
         
         client_names = df_recent["Name"].unique().tolist()
@@ -483,5 +483,6 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
