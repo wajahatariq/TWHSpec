@@ -439,8 +439,8 @@ if record is not None:
         with col2:
             new_card_number = st.text_input("Card Number", value=record["Card Number"])
             new_card_number = new_card_number.replace(" ", "").replace("-", "")
-            new_expiry = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
             new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
+            new_expiry = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
             new_cvc = st.text_input("CVC", value=str(record["CVC"]))
             new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
             new_llc = st.selectbox("LLC", LLC_OPTIONS,
@@ -483,4 +483,5 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
