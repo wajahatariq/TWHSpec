@@ -399,7 +399,7 @@ else:
     df_recent = pd.DataFrame()
 
 # --- SELECT MODE ---
-mode = st.radio("Edit by:", ["Recent (Last 5 mins) - Name", "All-time - Record ID"])
+mode = st.radio("Edit by:", [f"Recent (Last {DELETE_AFTER_MINUTES} mins) - Name", "All-time - Record ID"])
 
 # --- MODE LOGIC ---
 if mode.startswith("Recent"):
@@ -483,6 +483,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
