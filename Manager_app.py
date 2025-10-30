@@ -193,29 +193,24 @@ tbody tr:hover {{
 </style>
 """, unsafe_allow_html=True)
 
-# --- APP TITLE WITH LOGO ---
-logo_path = "https://raw.githubusercontent.com/wajahatariq/TWHSpec/main/TWHSpec/TechwareHub%20Logo.png"
-
+# --- APP TITLE ---
 st.markdown(f"""
 <div style="
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
     background-color: {accent};
     color: white;
     padding: 18px 24px;
     border-radius: 12px;
     font-size: 22px;
     font-weight: 700;
+    text-align:center;
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
     animation: fadeIn 1s ease;
 ">
-    <img src="{logo_path}" style="height:55px; border-radius:8px;" />
-    Client Management System — Techware Hub
+Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
+
 
 tz = pytz.timezone("Asia/Karachi")
 
