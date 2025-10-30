@@ -365,7 +365,7 @@ if submitted:
     except Exception as e:
         st.error(f"Error sending Pushbullet notification: {e}")
 
-DELETE_AFTER_MINUTES = 5
+DELETE_AFTER_MINUTES = 20
 st.divider()
 st.subheader("Edit Lead")
 
@@ -438,9 +438,10 @@ if record is not None:
             new_card_holder = st.text_input("Card Holder Name", value=record["Card Holder Name"])
         with col2:
             new_card_number = st.text_input("Card Number", value=record["Card Number"])
+            new_card_number = new_card_number.replace(" ", "").replace("-", "")
+            new_expiry = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
             new_expiry = st.text_input("Expiry Date (MM/YY)", value=record["Expiry Date"])
-            new_cvc = st.number_input("CVC", min_value=0, max_value=999, step=1,
-                                      value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0)
+            new_cvc = st.text_input("CVC", value=str(record["CVC"]))
             new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
             new_llc = st.selectbox("LLC", LLC_OPTIONS,
                                    index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0)
@@ -482,3 +483,4 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
