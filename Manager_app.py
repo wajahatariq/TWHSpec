@@ -194,7 +194,7 @@ tbody tr:hover {{
 """, unsafe_allow_html=True)
 
 # --- APP TITLE WITH LOGO ---
-logo_path = "TWHSpec/TechwareHub Logo.png"
+logo_path = "TechwareHub Logo.png"
 
 st.markdown(f"""
 <div style="
