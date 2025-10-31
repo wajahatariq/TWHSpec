@@ -13,29 +13,50 @@ st.set_page_config(page_title="Client Management System", layout="wide")
 
 # --- LIGHT THEMES ---
 light_themes = {
-    "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
-    "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
-    "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
-    "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
-    "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
-    "Blush Quartz":    {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
-    "Azure Frost":     {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
-    "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
-    "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
-    "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
+    "Sunlit Coral": {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
+    "Skyline Blue": {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
+    "Golden Sand": {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
+    "Lilac Mist": {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
+    "Mint Breeze": {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+    "Blush Quartz": {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
+    "Azure Frost": {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
+    "Citrus Bloom": {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
+    "Pearl Sage": {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
+    "Creamy Mocha": {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
+    "Rosewater": {"bg1": "#fff0f3", "bg2": "#ffd6e0", "accent": "#f43f5e"},
+    "Sky Morning": {"bg1": "#e6f7ff", "bg2": "#ccefff", "accent": "#2563eb"},
+    "Peach Delight": {"bg1": "#fff5eb", "bg2": "#ffe0cc", "accent": "#f97316"},
+    "Lavender Glow": {"bg1": "#f9f5ff", "bg2": "#ede0ff", "accent": "#8b5cf6"},
+    "Seafoam": {"bg1": "#f0fff9", "bg2": "#d4fff2", "accent": "#0d9488"},
+    "Soft Pink": {"bg1": "#fff5f7", "bg2": "#ffe4ed", "accent": "#db2777"},
+    "Morning Haze": {"bg1": "#fefce8", "bg2": "#fef3c7", "accent": "#eab308"},
+    "Vanilla Sky": {"bg1": "#fffaf0", "bg2": "#fff0d6", "accent": "#f59e0b"},
+    "Crystal Blue": {"bg1": "#f0f9ff", "bg2": "#e0f2fe", "accent": "#0ea5e9"},
+    "Green Whisper": {"bg1": "#f0fff4", "bg2": "#dcfce7", "accent": "#22c55e"},
 }
 
+# --- 20 DARK THEMES ---
 dark_themes = {
-    "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
-    "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
-    "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
-    "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
-    "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
-    "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
-    "Cyber Pink":      {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
-    "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
-    "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
-    "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
+    "Midnight Gold": {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
+    "Obsidian Night": {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
+    "Deep Ocean": {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
+    "Neon Violet": {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
+    "Emerald Abyss": {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+    "Cyber Pink": {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
+    "Steel Indigo": {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
+    "Velvet Crimson": {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
+    "Arctic Noir": {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
+    "Graphite Blue": {"bg1": "#0a0f1a", "bg2": "#1f2a3a", "accent": "#3b82f6"},
+    "Cosmic Purple": {"bg1": "#1b001e", "bg2": "#2a0033", "accent": "#a855f7"},
+    "Forest Shadow": {"bg1": "#001100", "bg2": "#002200", "accent": "#22c55e"},
+    "Iron Night": {"bg1": "#101010", "bg2": "#202020", "accent": "#94a3b8"},
+    "Lunar Blue": {"bg1": "#001022", "bg2": "#002244", "accent": "#0ea5e9"},
+    "Solar Flare": {"bg1": "#2b0000", "bg2": "#5c0000", "accent": "#f59e0b"},
+    "Twilight Teal": {"bg1": "#001818", "bg2": "#003333", "accent": "#14b8a6"},
+    "Ruby Night": {"bg1": "#1a0000", "bg2": "#330000", "accent": "#ef4444"},
+    "Midnight Purple": {"bg1": "#0b001a", "bg2": "#1c0033", "accent": "#a21caf"},
+    "Ocean Abyss": {"bg1": "#001223", "bg2": "#002244", "accent": "#3b82f6"},
+    "Neon Cyan": {"bg1": "#001111", "bg2": "#002222", "accent": "#00ffff"},
 }
 
 # ------------------ THEME RANDOMIZATION ------------------
@@ -474,6 +495,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
