@@ -780,12 +780,31 @@ st.markdown(f"""
     transition: all 0.3s ease;
     backdrop-filter: blur(6px);
 ">
+    <!-- Label -->
     <div style='font-size:14px; opacity:0.85;'>🌙 Night Charged Total</div>
-    <div style='font-size:26px; margin-top:4px; font-weight:800;'>{total_night_charge_str}</div>
+
+    <!-- Amount with theme gradient like portal header -->
+    <div style='
+        font-size:26px;
+        font-weight:800;
+        background: linear-gradient(90deg, #ffffff, {accent}, #ffffff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: shimmerText 3s linear infinite;
+        margin-top:4px;
+    '>
+        {total_night_charge_str}
+    </div>
 </div>
 
 <style>
-/* Smooth pulse glow animation */
+@keyframes shimmerText {{
+  0% {{ background-position: -200% 0; }}
+  100% {{ background-position: 200% 0; }}
+}}
+
+/* Pulse glow behind entire card */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
