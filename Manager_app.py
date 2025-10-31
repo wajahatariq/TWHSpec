@@ -34,14 +34,12 @@ tz = pytz.timezone("Asia/Karachi")
 now = datetime.now(tz)
 
 # Define the custom time window: 7 PM – 6 AM
-if now.time() < time(6, 0):
-    # Before 6 AM → window is yesterday 7 PM → today 6 AM
-    start_time = (now - timedelta(days=1)).replace(hour=19, minute=0, second=0, microsecond=0)
+if now.time() < datetime.time(6, 0):
+    start_time = (now - datetime.timedelta(days=1)).replace(hour=19, minute=0, second=0, microsecond=0)
     end_time = now.replace(hour=6, minute=0, second=0, microsecond=0)
 else:
-    # After 6 AM → window is today 7 PM → tomorrow 6 AM
     start_time = now.replace(hour=19, minute=0, second=0, microsecond=0)
-    end_time = (now + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+    end_time = (now + datetime.timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
 
 # Load data
 df_spectrum = load_data(spectrum_ws)
