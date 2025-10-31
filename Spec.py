@@ -9,221 +9,221 @@ import requests
 import random
 
 
-# --- LIGHT THEMES ---
-light_themes = {
-    "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
-    "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
-    "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
-    "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
-    "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
-    "Blush Quartz":    {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
-    "Azure Frost":     {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
-    "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
-    "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
-    "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
-}
+# # --- LIGHT THEMES ---
+# light_themes = {
+#     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
+#     "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
+#     "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
+#     "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
+#     "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+#     "Blush Quartz":    {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
+#     "Azure Frost":     {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
+#     "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
+#     "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
+#     "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
+# }
 
-dark_themes = {
-    "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
-    "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
-    "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
-    "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
-    "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
-    "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
-    "Cyber Pink":      {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
-    "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
-    "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
-    "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
-}
+# dark_themes = {
+#     "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
+#     "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
+#     "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
+#     "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
+#     "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
+#     "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+#     "Cyber Pink":      {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
+#     "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
+#     "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
+#     "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
+# }
 
-# ------------------ THEME RANDOMIZATION ------------------
-if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "Dark"  # default mode
+# # ------------------ THEME RANDOMIZATION ------------------
+# if "theme_mode" not in st.session_state:
+#     st.session_state.theme_mode = "Dark"  # default mode
 
-theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-random_theme_name = random.choice(list(theme_set.keys()))
-st.session_state.selected_theme = random_theme_name
-st.session_state.theme_colors = theme_set[random_theme_name]
+# theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
+# random_theme_name = random.choice(list(theme_set.keys()))
+# st.session_state.selected_theme = random_theme_name
+# st.session_state.theme_colors = theme_set[random_theme_name]
 
-# ------------------ MODE TOGGLE ------------------
-col1, col2, _ = st.columns([1,1,6])
-with col1:
-    if st.button("🌞 Light Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Light":
-            st.session_state.theme_mode = "Light"
-            st.session_state.selected_theme = list(light_themes.keys())[0]
-            st.session_state["show_toast"] = "Switched to Light Mode 🌞"
-            st.rerun()
-with col2:
-    if st.button("🌙 Dark Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Dark":
-            st.session_state.theme_mode = "Dark"
-            st.session_state.selected_theme = list(dark_themes.keys())[0]
-            st.session_state["show_toast"] = "Switched to Dark Mode 🌙"
-            st.rerun()
+# # ------------------ MODE TOGGLE ------------------
+# col1, col2, _ = st.columns([1,1,6])
+# with col1:
+#     if st.button("🌞 Light Mode", use_container_width=True):
+#         if st.session_state.theme_mode != "Light":
+#             st.session_state.theme_mode = "Light"
+#             st.session_state.selected_theme = list(light_themes.keys())[0]
+#             st.session_state["show_toast"] = "Switched to Light Mode 🌞"
+#             st.rerun()
+# with col2:
+#     if st.button("🌙 Dark Mode", use_container_width=True):
+#         if st.session_state.theme_mode != "Dark":
+#             st.session_state.theme_mode = "Dark"
+#             st.session_state.selected_theme = list(dark_themes.keys())[0]
+#             st.session_state["show_toast"] = "Switched to Dark Mode 🌙"
+#             st.rerun()
 
-# ------------------ SELECT THEME SET ------------------
-themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-if st.session_state.selected_theme not in themes:
-    st.session_state.selected_theme = list(themes.keys())[0]
+# # ------------------ SELECT THEME SET ------------------
+# themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+# if st.session_state.selected_theme not in themes:
+#     st.session_state.selected_theme = list(themes.keys())[0]
 
-# ------------------ THEME BUTTONS (LEFT-ALIGNED, SINGLE LINE) ------------------
-themes_list = list(themes.items())
-buttons_per_row = 5
+# # ------------------ THEME BUTTONS (LEFT-ALIGNED, SINGLE LINE) ------------------
+# themes_list = list(themes.items())
+# buttons_per_row = 5
 
-for i in range(0, len(themes_list), buttons_per_row):
-    cols = st.columns(buttons_per_row, gap="small")
-    for j, (theme_name, data) in enumerate(themes_list[i:i+buttons_per_row]):
-        accent = data["accent"]
-        if cols[j].button(theme_name, key=f"theme_{theme_name}"):
-            if st.session_state.selected_theme != theme_name:
-                st.session_state.selected_theme = theme_name
-                st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
-                st.rerun()
+# for i in range(0, len(themes_list), buttons_per_row):
+#     cols = st.columns(buttons_per_row, gap="small")
+#     for j, (theme_name, data) in enumerate(themes_list[i:i+buttons_per_row]):
+#         accent = data["accent"]
+#         if cols[j].button(theme_name, key=f"theme_{theme_name}"):
+#             if st.session_state.selected_theme != theme_name:
+#                 st.session_state.selected_theme = theme_name
+#                 st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+#                 st.rerun()
 
-# ------------------ SELECTED THEME ------------------
-selected = themes[st.session_state.selected_theme]
-bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
-text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
+# # ------------------ SELECTED THEME ------------------
+# selected = themes[st.session_state.selected_theme]
+# bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
+# text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
-# ------------------ TOAST MESSAGE ------------------
-if "show_toast" in st.session_state:
-    toast_message = st.session_state["show_toast"]
-    st.markdown(f"""
-    <div style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: {accent};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        box-shadow: 0 4px 12px {accent}77;
-        z-index: 9999;
-        animation: fadeIn 0.3s ease, fadeOut 0.6s ease 2.5s forwards;
-    ">{toast_message}</div>
-    <style>
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(-10px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
-    @keyframes fadeOut {{
-        from {{ opacity: 1; }}
-        to {{ opacity: 0; transform: translateY(-10px); }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-    time.sleep(2.5)
-    del st.session_state["show_toast"]
+# # ------------------ TOAST MESSAGE ------------------
+# if "show_toast" in st.session_state:
+#     toast_message = st.session_state["show_toast"]
+#     st.markdown(f"""
+#     <div style="
+#         position: fixed;
+#         top: 20px;
+#         right: 20px;
+#         background: {accent};
+#         color: white;
+#         padding: 12px 20px;
+#         border-radius: 10px;
+#         font-weight: 600;
+#         box-shadow: 0 4px 12px {accent}77;
+#         z-index: 9999;
+#         animation: fadeIn 0.3s ease, fadeOut 0.6s ease 2.5s forwards;
+#     ">{toast_message}</div>
+#     <style>
+#     @keyframes fadeIn {{
+#         from {{ opacity: 0; transform: translateY(-10px); }}
+#         to {{ opacity: 1; transform: translateY(0); }}
+#     }}
+#     @keyframes fadeOut {{
+#         from {{ opacity: 1; }}
+#         to {{ opacity: 0; transform: translateY(-10px); }}
+#     }}
+#     </style>
+#     """, unsafe_allow_html=True)
+#     time.sleep(2.5)
+#     del st.session_state["show_toast"]
 
-# ------------------ HEADER & STYLING ------------------
-st.markdown(f"""
-<style>
-@keyframes pulseGlow {{
-  0% {{ box-shadow: 0 0 0px {accent}44; }}
-  50% {{ box-shadow: 0 0 20px {accent}aa; }}
-  100% {{ box-shadow: 0 0 0px {accent}44; }}
-}}
-@keyframes bounce {{
-  0%, 100% {{ transform: translateY(0); }}
-  50% {{ transform: translateY(-3px); }}
-}}
-@keyframes fadeIn {{
-  0% {{ opacity: 0; transform: translateY(8px); }}
-  100% {{ opacity: 1; transform: translateY(0); }}
-}}
-@keyframes shimmerText {{
-  0% {{ background-position: -200% 0; }}
-  100% {{ background-position: 200% 0; }}
-}}
-@keyframes bgShift {{
-  0% {{ background-position: 0% 0%; }}
-  50% {{ background-position: 50% 50%; }}
-  100% {{ background-position: 0% 0%; }}
-}}
-[data-testid="stAppViewContainer"] {{
-    background: radial-gradient(circle at top left, {bg2}, {bg1});
-    font-family: "Inter", sans-serif;
-    background-size: 400% 400%;
-    animation: bgShift 60s ease infinite;
-    transition: all 0.3s ease-in-out;
-}}
-.stApp, .stForm {{
-    text-align: left !important;
-}}
-div[style*="Client Management System"] {{
-    background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-    color: transparent;
-    padding: 18px 24px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 700;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
-}}
-div.stButton > button {{
-    border-radius: 999px !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: 0 0 6px {accent}33;
-    background-color: transparent !important;
-    color: {accent} !important;
-    border: 1px solid {accent}55 !important;
-    margin: 0 4px 8px 0 !important;
-}}
-div.stButton > button:hover {{
-    background: {accent}22 !important;
-    color: white !important;
-    box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
-    transform: scale(1.07);
-    animation: bounce 0.4s ease;
-}}
-tbody tr:hover {{
-    background-color: {accent}11 !important;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
-    box-shadow: 0 0 8px {accent}55;
-}}
-::-webkit-scrollbar {{
-    width: 10px;
-}}
-::-webkit-scrollbar-thumb {{
-    background: linear-gradient({accent}, {accent}cc);
-    border-radius: 10px;
-}}
-</style>
-""", unsafe_allow_html=True)
+# # ------------------ HEADER & STYLING ------------------
+# st.markdown(f"""
+# <style>
+# @keyframes pulseGlow {{
+#   0% {{ box-shadow: 0 0 0px {accent}44; }}
+#   50% {{ box-shadow: 0 0 20px {accent}aa; }}
+#   100% {{ box-shadow: 0 0 0px {accent}44; }}
+# }}
+# @keyframes bounce {{
+#   0%, 100% {{ transform: translateY(0); }}
+#   50% {{ transform: translateY(-3px); }}
+# }}
+# @keyframes fadeIn {{
+#   0% {{ opacity: 0; transform: translateY(8px); }}
+#   100% {{ opacity: 1; transform: translateY(0); }}
+# }}
+# @keyframes shimmerText {{
+#   0% {{ background-position: -200% 0; }}
+#   100% {{ background-position: 200% 0; }}
+# }}
+# @keyframes bgShift {{
+#   0% {{ background-position: 0% 0%; }}
+#   50% {{ background-position: 50% 50%; }}
+#   100% {{ background-position: 0% 0%; }}
+# }}
+# [data-testid="stAppViewContainer"] {{
+#     background: radial-gradient(circle at top left, {bg2}, {bg1});
+#     font-family: "Inter", sans-serif;
+#     background-size: 400% 400%;
+#     animation: bgShift 60s ease infinite;
+#     transition: all 0.3s ease-in-out;
+# }}
+# .stApp, .stForm {{
+#     text-align: left !important;
+# }}
+# div[style*="Client Management System"] {{
+#     background: linear-gradient(90deg, {accent}, #ffffff, {accent});
+#     color: transparent;
+#     padding: 18px 24px;
+#     border-radius: 12px;
+#     font-size: 22px;
+#     font-weight: 700;
+#     box-shadow: 0 4px 18px {accent}55;
+#     margin-bottom: 28px;
+#     background-clip: text;
+#     -webkit-background-clip: text;
+#     animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+# }}
+# div.stButton > button {{
+#     border-radius: 999px !important;
+#     font-weight: 600 !important;
+#     transition: all 0.3s ease !important;
+#     padding: 0.45rem 1rem !important;
+#     box-shadow: 0 0 6px {accent}33;
+#     background-color: transparent !important;
+#     color: {accent} !important;
+#     border: 1px solid {accent}55 !important;
+#     margin: 0 4px 8px 0 !important;
+# }}
+# div.stButton > button:hover {{
+#     background: {accent}22 !important;
+#     color: white !important;
+#     box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
+#     transform: scale(1.07);
+#     animation: bounce 0.4s ease;
+# }}
+# tbody tr:hover {{
+#     background-color: {accent}11 !important;
+#     transform: scale(1.01);
+#     transition: all 0.2s ease;
+#     box-shadow: 0 0 8px {accent}55;
+# }}
+# ::-webkit-scrollbar {{
+#     width: 10px;
+# }}
+# ::-webkit-scrollbar-thumb {{
+#     background: linear-gradient({accent}, {accent}cc);
+#     border-radius: 10px;
+# }}
+# </style>
+# """, unsafe_allow_html=True)
 
-# ------------------ APP TITLE ------------------
-def get_contrast_color(hex_color):
-    hex_color = hex_color.lstrip('#')
-    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    brightness = (r * 299 + g * 587 + b * 114) / 1000
-    return "#000000" if brightness > 155 else "#ffffff"
+# # ------------------ APP TITLE ------------------
+# def get_contrast_color(hex_color):
+#     hex_color = hex_color.lstrip('#')
+#     r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+#     brightness = (r * 299 + g * 587 + b * 114) / 1000
+#     return "#000000" if brightness > 155 else "#ffffff"
 
-current_theme = st.session_state.theme_colors
-accent = current_theme.get("accent", "#0284c7")
-title_text_color = get_contrast_color(accent)
+# current_theme = st.session_state.theme_colors
+# accent = current_theme.get("accent", "#0284c7")
+# title_text_color = get_contrast_color(accent)
 
-    # padding: 18px 24px;
-st.markdown(f"""
-<div style="
-    background-color: {accent};
-    color: {title_text_color};
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 700;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-">
-Client Management System — Techware Hub
-</div>
-""", unsafe_allow_html=True)
+# st.markdown(f"""
+# <div style="
+#     background-color: {accent};
+#     color: {title_text_color};
+#     border-radius: 12px;
+#     font-size: 22px;
+#     padding: 18px 24px;
+#     font-weight: 700;
+#     box-shadow: 0 4px 18px {accent}55;
+#     margin-bottom: 28px;
+# ">
+# Client Management System — Techware Hub
+# </div>
+# """, unsafe_allow_html=True)
 
 tz = pytz.timezone("Asia/Karachi")
 
@@ -475,6 +475,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
