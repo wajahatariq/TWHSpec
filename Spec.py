@@ -28,293 +28,215 @@ def style_status_rows(df):
 
 # --- LIGHT THEMES ---
 light_themes = {
-    "Sunlit Coral":       {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
-    "Skyline Blue":       {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
-    "Golden Sand":        {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
-    "Lilac Mist":         {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
-    "Mint Breeze":        {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
-    "Peachy Glow":        {"bg1": "#fff4f0", "bg2": "#ffe4d9", "accent": "#ff7e5f"},
-    "Icy Lavender":       {"bg1": "#f7f5ff", "bg2": "#e7e0ff", "accent": "#b57dfb"},
-    "Sky Dusk":           {"bg1": "#f0f4ff", "bg2": "#d9e3ff", "accent": "#5f7fff"},
-    "Creamy Amber":       {"bg1": "#fff9f2", "bg2": "#fff1d6", "accent": "#ffb347"},
-    "Aqua Pearl":         {"bg1": "#f2fffe", "bg2": "#d9fff9", "accent": "#34d399"},
-    "Rose Petal":         {"bg1": "#fff0f0", "bg2": "#ffe0e0", "accent": "#ff4d6d"},
-    "Lemon Chiffon":      {"bg1": "#fffde7", "bg2": "#fff7c7", "accent": "#facc15"},
-    "Frosted Mint":       {"bg1": "#f0fff4", "bg2": "#d0ffe0", "accent": "#12b886"},
-    "Powder Blue":        {"bg1": "#f0f7ff", "bg2": "#dceaff", "accent": "#5dade2"},
-    "Lavender Lace":      {"bg1": "#faf6ff", "bg2": "#eae0ff", "accent": "#9f7aea"},
-    "Coral Cream":        {"bg1": "#fff6f0", "bg2": "#ffe5d5", "accent": "#ff7f50"},
-    "Sky Morning":        {"bg1": "#f4f9ff", "bg2": "#dceeff", "accent": "#4dabf7"},
-    "Vanilla Glow":       {"bg1": "#fffaf0", "bg2": "#fff2d8", "accent": "#fbbf24"},
-    "Seaside Mist":       {"bg1": "#f0fdfa", "bg2": "#d4f7f0", "accent": "#22d3ee"},
-    "Blush Petal":        {"bg1": "#fff5f7", "bg2": "#ffe4ec", "accent": "#f43f5e"},
+    "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
+    "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
+    "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
+    "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
+    "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
+    "Blush Quartz":    {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
+    "Azure Frost":     {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
+    "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
+    "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
+    "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
 }
 
-
-# --- DARK THEMES (10 upgraded) ---
 dark_themes = {
-    "Obsidian Night":     {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
-    "Crimson Shadow":     {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
-    "Deep Ocean":         {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
-    "Neon Violet":        {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
-    "Emerald Abyss":      {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
-    "Cyber Red":          {"bg1": "#100000", "bg2": "#300000", "accent": "#ff1e56"},
-    "Royal Teal":         {"bg1": "#001f1f", "bg2": "#003333", "accent": "#00d4d4"},
-    "Midnight Purple":    {"bg1": "#0d001d", "bg2": "#1b0035", "accent": "#9b59b6"},
-    "Steel Grey":         {"bg1": "#121212", "bg2": "#1f1f1f", "accent": "#7f8c8d"},
-    "Aurora Pulse":       {"bg1": "#080808", "bg2": "#151515", "accent": "#f72585"},
-    "Lava Core":          {"bg1": "#1a0000", "bg2": "#330000", "accent": "#ff5733"},
-    "Galactic Blue":      {"bg1": "#000a1a", "bg2": "#001f33", "accent": "#4da8da"},
-    "Neon Green":         {"bg1": "#001000", "bg2": "#002200", "accent": "#00ff66"},
-    "Golden Chrome":      {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
-    "Midnight Cyan":      {"bg1": "#001f1f", "bg2": "#003737", "accent": "#00ffff"},
-    "Red Ember":          {"bg1": "#140000", "bg2": "#2a0000", "accent": "#ff4b4b"},
-    "Electric Indigo":    {"bg1": "#0a001a", "bg2": "#1a0033", "accent": "#8c00ff"},
-    "Cosmic Teal":        {"bg1": "#001f1a", "bg2": "#003333", "accent": "#00e5ff"},
-    "Steel Violet":       {"bg1": "#0f0d1a", "bg2": "#1b1833", "accent": "#9b59b6"},
-    "Aurora Green":       {"bg1": "#001a0d", "bg2": "#00331a", "accent": "#00ff99"},
+    "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
+    "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
+    "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
+    "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
+    "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
+    "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
+    "Cyber Pink":      {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
+    "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
+    "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
+    "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
 }
 
-# --- Session Defaults ---
+# ------------------ THEME RANDOMIZATION ------------------
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
-if "selected_theme" not in st.session_state:
-    st.session_state.selected_theme = None
 
-# --- SELECT THEME ---
-themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
+random_theme_name = random.choice(list(theme_set.keys()))
+st.session_state.selected_theme = random_theme_name
+st.session_state.theme_colors = theme_set[random_theme_name]
 
-# Only set default if selected_theme is None or not in current themes
-if st.session_state.selected_theme is None or st.session_state.selected_theme not in themes:
-    st.session_state.selected_theme = list(themes.keys())[0]
-
-# --- Mode Toggle ---
+# ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
-    if st.button("Light Mode", use_container_width=True):
-        st.session_state.theme_mode = "Light"
-with col2:
-    if st.button("Dark Mode", use_container_width=True):
-        st.session_state.theme_mode = "Dark"
+    if st.button("🌞 Light Mode", use_container_width=True):
+        if st.session_state.theme_mode != "Light":
+            st.session_state.theme_mode = "Light"
+            st.session_state.selected_theme = list(light_themes.keys())[0]
+            st.session_state["show_toast"] = "Switched to Light Mode 🌞"
+            st.rerun()
 
+with col2:
+    if st.button("🌙 Dark Mode", use_container_width=True):
+        if st.session_state.theme_mode != "Dark":
+            st.session_state.theme_mode = "Dark"
+            st.session_state.selected_theme = list(dark_themes.keys())[0]
+            st.session_state["show_toast"] = "Switched to Dark Mode 🌙"
+            st.rerun()
+
+# ------------------ SELECT THEME SET ------------------
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
-            
-# --- Extract Selected Theme ---
+
+# ------------------ THEME BUTTONS ------------------
+cols = st.columns(len(themes))
+for i, (theme_name, data) in enumerate(themes.items()):
+    accent = data["accent"]
+    display_name = theme_name.replace(" ", "\n")  # show theme name in 2 lines
+    if cols[i].button(display_name, key=f"theme_{theme_name}"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+            st.rerun()
+
+# ------------------ SELECTED THEME ------------------
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
-# --- CSS (must be before .theme-scroll div is rendered) ---
-st.markdown(f"""
-<style>
-/* --- SCROLLABLE SINGLE-LINE THEMES ROW --- */
-.theme-scroll {{
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 8px 0;
-    gap: 10px;
-}}
-.theme-scroll::-webkit-scrollbar {{
-    height: 6px;
-}}
-.theme-scroll::-webkit-scrollbar-thumb {{
-    background: {accent};
-    border-radius: 10px;
-}}
-.theme-scroll > div {{
-    flex: 0 0 auto;
-}}
-</style>
-""", unsafe_allow_html=True)
+# ------------------ TOAST MESSAGE ------------------
+if "show_toast" in st.session_state:
+    toast_message = st.session_state["show_toast"]
+    st.markdown(f"""
+    <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: {accent};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px {accent}77;
+        z-index: 9999;
+        animation: fadeIn 0.3s ease, fadeOut 0.6s ease 2.5s forwards;
+    ">
+        {toast_message}
+    </div>
+    <style>
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(-10px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    @keyframes fadeOut {{
+        from {{ opacity: 1; }}
+        to {{ opacity: 0; transform: translateY(-10px); }}
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    time.sleep(2.5)
+    del st.session_state["show_toast"]
 
-# --- Capsule Buttons (after CSS defined) ---
-theme_names = list(themes.keys())
+# ------------------ HEADER & APP STYLING ------------------
+def get_contrast_color(hex_color):
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return "#000000" if brightness > 155 else "#ffffff"
 
-# Start horizontal scroll container
-st.markdown('<div class="theme-scroll">', unsafe_allow_html=True)
-
-# Render all buttons inline via HTML and JS events
-for theme_name in theme_names:
-    data = themes[theme_name]
-    accent = data["accent"]
-
-    # Make each button an inline-block element
-    st.markdown(
-        f"""
-        <div style="display:inline-block; margin-right:8px;">
-            <form action="" method="get">
-                <button name="theme" value="{theme_name}" 
-                    style="
-                        background-color: transparent;
-                        border: 1px solid {accent};
-                        color: {accent};
-                        border-radius: 999px;
-                        font-weight: 600;
-                        padding: 6px 14px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                    "
-                    onmouseover="this.style.backgroundColor='{accent}22';this.style.color='white';"
-                    onmouseout="this.style.backgroundColor='transparent';this.style.color='{accent}';"
-                >
-                    {theme_name}
-                </button>
-            </form>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Apply selection manually
-params = st.experimental_get_query_params()
-if "theme" in params:
-    selected_theme = params["theme"][0]
-    if selected_theme in themes:
-        st.session_state.selected_theme = selected_theme
-        st.experimental_set_query_params()  # clear param after change
-        st.rerun()
+title_text_color = get_contrast_color(accent)
 
 st.markdown(f"""
 <style>
-/* ---------------- KEYFRAMES ---------------- */
 @keyframes pulseGlow {{
   0% {{ box-shadow: 0 0 0px {accent}44; }}
   50% {{ box-shadow: 0 0 20px {accent}aa; }}
   100% {{ box-shadow: 0 0 0px {accent}44; }}
 }}
-
 @keyframes bounce {{
   0%, 100% {{ transform: translateY(0); }}
   50% {{ transform: translateY(-3px); }}
 }}
-
 @keyframes fadeIn {{
   0% {{ opacity: 0; transform: translateY(8px); }}
   100% {{ opacity: 1; transform: translateY(0); }}
 }}
-
 @keyframes shimmerText {{
   0% {{ background-position: -200% 0; }}
   100% {{ background-position: 200% 0; }}
 }}
-
 @keyframes bgShift {{
   0% {{ background-position: 0% 0%; }}
   50% {{ background-position: 50% 50%; }}
   100% {{ background-position: 0% 0%; }}
 }}
-
-/* ---------------- APP BACKGROUND ---------------- */
 [data-testid="stAppViewContainer"] {{
-  background: radial-gradient(circle at top left, {bg2}, {bg1});
-  font-family: "Inter", sans-serif;
-  background-size: 400% 400%;
-  animation: bgShift 60s ease infinite;
-  transition: all 0.3s ease-in-out;
-  color: {text_color};
+    background: radial-gradient(circle at top left, {bg2}, {bg1});
+    font-family: "Inter", sans-serif;
+    background-size: 400% 400%;
+    animation: bgShift 60s ease infinite;
+    transition: all 0.3s ease-in-out;
 }}
-
-/* ---------------- HEADER ---------------- */
 div[style*="Client Management System"] {{
-  background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
-  font-size: 24px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 28px;
-  animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+    background: linear-gradient(90deg, {accent}, #ffffff, {accent});
+    color: transparent;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
 }}
-
-/* ---------------- SCROLLABLE THEME BAR ---------------- */
-.theme-scroll {{
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding: 8px 0;
-  gap: 10px;
-}}
-.theme-scroll::-webkit-scrollbar {{
-  height: 6px;
-}}
-.theme-scroll::-webkit-scrollbar-thumb {{
-  background: {accent};
-  border-radius: 10px;
-}}
-.theme-scroll > div {{
-  flex: 0 0 auto;
-}}
-
-/* ---------------- CAPSULE THEME BUTTONS ---------------- */
 div.stButton > button {{
-  border-radius: 999px !important;
-  font-weight: 600 !important;
-  transition: all 0.3s ease !important;
-  padding: 0.45rem 1rem !important;
-  box-shadow: 0 0 6px {accent}33;
-  background-color: transparent !important;
-  color: {accent} !important;
-  border: 1px solid {accent}55 !important;
+    border-radius: 999px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    padding: 0.45rem 1rem !important;
+    box-shadow: 0 0 6px {accent}33;
+    background-color: transparent !important;
+    color: {accent} !important;
+    border: 1px solid {accent}55 !important;
 }}
 div.stButton > button:hover {{
-  background: {accent}22 !important;
-  color: white !important;
-  box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
-  transform: scale(1.07);
-  animation: bounce 0.4s ease;
+    background: {accent}22 !important;
+    color: white !important;
+    box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
+    transform: scale(1.07);
+    animation: bounce 0.4s ease;
 }}
-
-/* ---------------- INPUTS, SELECTBOXES, DATE PICKERS ---------------- */
-input, select, textarea, .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid {accent}44 !important;
-  border-radius: 8px !important;
-  color: {text_color} !important;
-  transition: all 0.3s ease;
-}}
-input:focus, select:focus, textarea:focus {{
-  border-color: {accent}aa !important;
-  box-shadow: 0 0 8px {accent}88 !important;
-  outline: none !important;
-}}
-
-/* ---------------- SUBMIT & UPDATE BUTTONS ---------------- */
-button[kind="primary"], button[kind="secondary"] {{
-  background: {accent} !important;
-  color: white !important;
-  border-radius: 10px !important;
-  font-weight: 700 !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 0 10px {accent}55;
-}}
-button[kind="primary"]:hover, button[kind="secondary"]:hover {{
-  transform: scale(1.05);
-  box-shadow: 0 0 25px {accent}aa, inset 0 0 10px {accent}66 !important;
-}}
-
-/* ---------------- TABLE ROW HOVER ---------------- */
 tbody tr:hover {{
-  background-color: {accent}11 !important;
-  transform: scale(1.01);
-  transition: all 0.2s ease;
-  box-shadow: 0 0 8px {accent}55;
+    background-color: {accent}11 !important;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 8px {accent}55;
 }}
-
-/* ---------------- SCROLLBAR ---------------- */
 ::-webkit-scrollbar {{
-  width: 10px;
+    width: 10px;
 }}
 ::-webkit-scrollbar-thumb {{
-  background: linear-gradient({accent}, {accent}cc);
-  border-radius: 10px;
+    background: linear-gradient({accent}, {accent}cc);
+    border-radius: 10px;
 }}
 </style>
+""", unsafe_allow_html=True)
+
+# ------------------ APP TITLE ------------------
+st.markdown(f"""
+<div style="
+    background-color: {accent};
+    color: {title_text_color};
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+    animation: fadeIn 1s ease;
+">
+Client Management System — Techware Hub
+</div>
 """, unsafe_allow_html=True)
 
 tz = pytz.timezone("Asia/Karachi")
@@ -567,6 +489,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
