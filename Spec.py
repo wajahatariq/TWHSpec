@@ -210,11 +210,11 @@ current_theme = st.session_state.theme_colors
 accent = current_theme.get("accent", "#0284c7")
 title_text_color = get_contrast_color(accent)
 
+    # padding: 18px 24px;
 st.markdown(f"""
 <div style="
     background-color: {accent};
     color: {title_text_color};
-    padding: 18px 24px;
     border-radius: 12px;
     font-size: 22px;
     font-weight: 700;
@@ -475,6 +475,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
