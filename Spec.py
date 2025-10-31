@@ -559,3 +559,47 @@ if not df_all.empty:
     total_night_charge_str = f"${total_night_charge:,.2f}"
 else:
     total_night_charge_str = "$0.00"
+
+amount_text_color = get_contrast_color(accent)
+label_text_color = get_contrast_color(accent)
+
+st.markdown(f"""
+<div style="
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: {accent};
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px {accent}77;
+    z-index: 9999;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+">
+    <!-- Label -->
+    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+        🌙 Night Charged Total
+    </div>
+    <!-- Sub-label -->
+    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+        Today's Total
+    </div>
+    <!-- Amount -->
+    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+        {total_night_charge_str}
+    </div>
+</div>
+
+<style>
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0px {accent}44; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+div[style*="{total_night_charge_str}"] {{
+    animation: pulseGlow 2s infinite;
+}}
+</style>
