@@ -769,24 +769,46 @@ st.markdown(f"""
     position: fixed;
     top: 20px;
     right: 30px;
-    background: {accent};
-    color: white;
+    background: {bg2};
     padding: 16px 24px;
     border-radius: 16px;
-    font-size: 18px;
-    font-weight: 700;
     box-shadow: 0 8px 24px {accent}77;
     z-index: 9999;
     text-align: center;
     transition: all 0.3s ease;
     backdrop-filter: blur(6px);
 ">
-    <div style='font-size:14px; opacity:0.85;'>Today's Total</div>
-    <div style='font-size:26px; margin-top:4px; font-weight:800;'>{total_night_charge_str}</div>
+    <!-- Label with theme gradient -->
+    <div style='
+        background: linear-gradient(90deg, {accent}, #ffffff, {accent});
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        animation: shimmerText 3s linear infinite;
+    '>
+        Today's Total
+    </div>
+
+    <!-- Amount -->
+    <div style='
+        font-size:26px;
+        font-weight:800;
+        color: {accent};
+    '>
+        {total_night_charge_str}
+    </div>
 </div>
 
 <style>
-/* Smooth pulse glow animation */
+@keyframes shimmerText {{
+  0% {{ background-position: -200% 0; }}
+  100% {{ background-position: 200% 0; }}
+}}
+
+/* Smooth pulse glow for amount */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
