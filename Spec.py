@@ -69,16 +69,18 @@ if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
 
 # ------------------ THEME BUTTONS (SINGLE-LINE NAMES) ------------------
-cols = st.columns(len(themes))
-for i, (theme_name, data) in enumerate(themes.items()):
-    accent = data["accent"]
-    display_name = theme_name  # full name, single line
-    if cols[i].button(display_name, key=f"theme_{theme_name}"):
-        if st.session_state.selected_theme != theme_name:
-            st.session_state.selected_theme = theme_name
-            st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
-            st.rerun()
+themes_list = list(themes.items())
+buttons_per_row = 5  # adjust based on screen width
 
+for i in range(0, len(themes_list), buttons_per_row):
+    cols = st.columns(buttons_per_row)
+    for j, (theme_name, data) in enumerate(themes_list[i:i+buttons_per_row]):
+        accent = data["accent"]
+        if cols[j].button(theme_name, key=f"theme_{theme_name}"):
+            if st.session_state.selected_theme != theme_name:
+                st.session_state.selected_theme = theme_name
+                st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+                st.rerun()
 # ------------------ SELECTED THEME ------------------
 selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
@@ -474,6 +476,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
