@@ -771,16 +771,30 @@ st.markdown(f"""
     right: 30px;
     background: {accent};
     color: white;
-    padding: 18px 28px;
-    border-radius: 12px;
-    font-size: 20px;
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-size: 18px;
     font-weight: 700;
-    box-shadow: 0 6px 18px {accent}77;
+    box-shadow: 0 8px 24px {accent}77;
     z-index: 9999;
     text-align: center;
     transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
 ">
-    🌙 Night Charged Total<br><span style='font-size:24px;'>{total_night_charge_str}</span>
+    <div style='font-size:14px; opacity:0.85;'>Today's Total</div>
+    <div style='font-size:26px; margin-top:4px; font-weight:800;'>{total_night_charge_str}</div>
 </div>
-""", unsafe_allow_html=True)
 
+<style>
+/* Smooth pulse glow animation */
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0px {accent}44; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+
+div[style*="{total_night_charge_str}"] {{
+    animation: pulseGlow 2s infinite;
+}}
+</style>
+""", unsafe_allow_html=True)
