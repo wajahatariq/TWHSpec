@@ -764,13 +764,15 @@ total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_
 total_night_charge_str = f"${total_night_charge:,.2f}"
 amount_text_color = get_contrast_color(accent)
 
+amount_text_color = get_contrast_color(accent)
+label_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <div style="
     position: fixed;
     top: 20px;
     right: 30px;
     background: {accent};
-    color: white;
     padding: 16px 24px;
     border-radius: 16px;
     font-size: 18px;
@@ -781,14 +783,21 @@ st.markdown(f"""
     transition: all 0.3s ease;
     backdrop-filter: blur(6px);
 ">
-    <div style='font-size:14px; opacity:0.85;'>🌙 Night Charged Total</div>
-    <div style='font-size:26px; margin-top:4px; font-weight:800; color:{amount_text_color};'>
+    <!-- Label -->
+    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+        🌙 Night Charged Total
+    </div>
+    <!-- Sub-label for clarity -->
+    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+        Today's Total
+    </div>
+    <!-- Amount -->
+    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
         {total_night_charge_str}
     </div>
 </div>
 
 <style>
-/* Pulse glow animation */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
