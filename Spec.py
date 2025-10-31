@@ -169,6 +169,8 @@ Client Management System — Techware Hub
 </div>
 """, unsafe_allow_html=True)
 
+st.markdown(f"""
+<style>
 /* ---------------- keyframes ---------------- */
 @keyframes pulseGlow {{
   0% {{ box-shadow: 0 0 0px {accent}44; }}
@@ -511,6 +513,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
