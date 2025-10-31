@@ -764,21 +764,23 @@ total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_
 total_night_charge_str = f"${total_night_charge:,.2f}"
 
 # --- CSS-STYLED TOP-RIGHT BLOCK ---
+total_night_charge_str = f"${total_night_charge:,.2f}"
+
 st.markdown(f"""
 <div style="
     position: fixed;
     top: 20px;
     right: 30px;
     background: {bg2};
-    padding: 16px 24px;
     border-radius: 16px;
+    padding: 16px 24px;
     box-shadow: 0 8px 24px {accent}77;
-    z-index: 9999;
     text-align: center;
-    transition: all 0.3s ease;
+    z-index: 9999;
     backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
 ">
-    <!-- Label with theme gradient -->
+    <!-- Label with shimmer gradient -->
     <div style='
         background: linear-gradient(90deg, {accent}, #ffffff, {accent});
         -webkit-background-clip: text;
@@ -789,14 +791,15 @@ st.markdown(f"""
         margin-bottom: 4px;
         animation: shimmerText 3s linear infinite;
     '>
-        Today's Total
+        🌙 Night Charged Total
     </div>
 
-    <!-- Amount -->
+    <!-- Amount styled like portal top bar -->
     <div style='
         font-size:26px;
         font-weight:800;
         color: {accent};
+        animation: pulseGlow 2s infinite;
     '>
         {total_night_charge_str}
     </div>
@@ -807,16 +810,10 @@ st.markdown(f"""
   0% {{ background-position: -200% 0; }}
   100% {{ background-position: 200% 0; }}
 }}
-
-/* Smooth pulse glow for amount */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
     100% {{ box-shadow: 0 0 0px {accent}44; }}
-}}
-
-div[style*="{total_night_charge_str}"] {{
-    animation: pulseGlow 2s infinite;
 }}
 </style>
 """, unsafe_allow_html=True)
