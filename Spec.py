@@ -56,7 +56,7 @@ dark_themes = {
 
 # ------------------ THEME RANDOMIZATION ------------------
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "Dark"
+    st.session_state.theme_mode = "Dark"  # default mode
 
 theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
 random_theme_name = random.choice(list(theme_set.keys()))
@@ -86,11 +86,11 @@ themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
 
-# ------------------ THEME BUTTONS ------------------
+# ------------------ THEME BUTTONS (SINGLE-LINE NAMES) ------------------
 cols = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
     accent = data["accent"]
-    display_name = theme_name.replace(" ", "\n")  # show theme name in 2 lines
+    display_name = theme_name  # full name, single line
     if cols[i].button(display_name, key=f"theme_{theme_name}"):
         if st.session_state.selected_theme != theme_name:
             st.session_state.selected_theme = theme_name
@@ -135,15 +135,7 @@ if "show_toast" in st.session_state:
     time.sleep(2.5)
     del st.session_state["show_toast"]
 
-# ------------------ HEADER & APP STYLING ------------------
-def get_contrast_color(hex_color):
-    hex_color = hex_color.lstrip('#')
-    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    brightness = (r * 299 + g * 587 + b * 114) / 1000
-    return "#000000" if brightness > 155 else "#ffffff"
-
-title_text_color = get_contrast_color(accent)
-
+# ------------------ HEADER & STYLING ------------------
 st.markdown(f"""
 <style>
 @keyframes pulseGlow {{
@@ -223,6 +215,16 @@ tbody tr:hover {{
 """, unsafe_allow_html=True)
 
 # ------------------ APP TITLE ------------------
+def get_contrast_color(hex_color):
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return "#000000" if brightness > 155 else "#ffffff"
+
+current_theme = st.session_state.theme_colors
+accent = current_theme.get("accent", "#0284c7")
+title_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <div style="
     background-color: {accent};
@@ -490,6 +492,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
