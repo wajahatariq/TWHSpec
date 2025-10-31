@@ -694,6 +694,7 @@ with main_tab3:
             ax.grid(alpha=0.3)
     
             # --- Show chart ---
+            ax.set_ylim(0, 1200)
             st.pyplot(fig)
     
             # --- Ultra Analysis Options ---
