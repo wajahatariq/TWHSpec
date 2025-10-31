@@ -724,7 +724,18 @@ with main_tab3:
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Charges", f"${total_amount:,.2f}")
         col2.metric("Average Transaction", f"${avg_transaction:,.2f}")
-        col3.metric(f"Peak {aggregation_period}", str(peak_period if peak_period == 'N/A' else peak_period.date()))
+        
+        # Safely handle peak_period formatting
+        if isinstance(peak_period, pd.Timestamp):
+            peak_label = peak_period.strftime("%Y-%m-%d")
+        elif hasattr(peak_period, "to_timestamp"):
+            peak_label = peak_period.to_timestamp().strftime("%Y-%m-%d")
+        elif isinstance(peak_period, (str, int, float)):
+            peak_label = str(peak_period)
+        else:
+            peak_label = "N/A"
+        
+        col3.metric(f"Peak {aggregation_period}", peak_label)
     
         # --- Top Agents ---
         st.subheader("Top Agents")
