@@ -511,83 +511,51 @@ if record is not None:
         except Exception as e:
             st.error(f"Error updating lead: {e}")
 
-from datetime import datetime, timedelta, time
+from datetime import datetime, time, timedelta
 import pytz
-tz = pytz.timezone("Asia/Karachi")
+import pandas as pd
 
-if not df_all.empty and "Timestamp" in df_all.columns:
-    # Ensure Timestamp is datetime and naive for comparison
-    df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce').dt.tz_localize(None)
-    
-    now = datetime.now(tz)
-    
-    # Determine night window (7 PM → 6 AM)
-    if now.time() >= time(7, 0) and now.time() < time(19, 0):
-        # Daytime: previous night
+tz = pytz.timezone("Asia/Karachi")
+now = datetime.now(tz)
+
+# Determine night window (7 PM → 6 AM)
+if now.time() >= time(7, 0) and now.time() < time(19, 0):
+    # Daytime: night window was yesterday 19:00 → today 06:00
+    window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+    window_end = datetime.combine(now.date(), time(6, 0))
+else:
+    # Nighttime
+    if now.time() >= time(19, 0):
+        window_start = datetime.combine(now.date(), time(19, 0))
+        window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+    else:  # 00:00 → 06:00
         window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
         window_end = datetime.combine(now.date(), time(6, 0))
+
+# --- Ensure Timestamp is datetime and Charge is numeric ---
+if not df_all.empty:
+    # Convert Timestamp to datetime safely
+    if 'Timestamp' in df_all.columns:
+        df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
+        df_all = df_all.dropna(subset=['Timestamp'])
+    
+    # Convert Charge to float safely
+    if 'Charge' in df_all.columns:
+        df_all['ChargeFloat'] = pd.to_numeric(
+            df_all['Charge'].replace('[\$,]', '', regex=True),
+            errors='coerce'
+        ).fillna(0.0)
     else:
-        # Nighttime: today 7 PM → tomorrow 6 AM
-        if now.time() >= time(19, 0):
-            window_start = datetime.combine(now.date(), time(19, 0))
-            window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
-        else:  # 00:00 → 06:00
-            window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-            window_end = datetime.combine(now.date(), time(6, 0))
+        df_all['ChargeFloat'] = 0.0
 
-    # Convert Charge to float
-    df_all['ChargeFloat'] = df_all['Charge'].replace('[\$,]', '', regex=True).astype(float)
-
-    # Filter night charged transactions
+    # Filter Charged transactions in night window
     night_charged_df = df_all[
         (df_all['Status'] == "Charged") &
         (df_all['Timestamp'] >= window_start) &
         (df_all['Timestamp'] <= window_end)
     ]
 
-    total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+    total_night_charge = night_charged_df['ChargeFloat'].sum()
     total_night_charge_str = f"${total_night_charge:,.2f}"
-
-    amount_text_color = "#000000" if sum(int(accent.lstrip('#')[i:i+2], 16) for i in (0,2,4)) > 300 else "#ffffff"
-    label_text_color = amount_text_color
-
-    # Display floating panel
-    st.markdown(f"""
-    <div style="
-        position: fixed;
-        top: 20px;
-        right: 30px;
-        background: {accent};
-        padding: 16px 24px;
-        border-radius: 16px;
-        font-size: 18px;
-        font-weight: 700;
-        box-shadow: 0 8px 24px {accent}77;
-        z-index: 9999;
-        text-align: center;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(6px);
-    ">
-        <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
-            🌙 Night Charged Total
-        </div>
-        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
-            Today's Total
-        </div>
-        <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
-            {total_night_charge_str}
-        </div>
-    </div>
-
-    <style>
-    @keyframes pulseGlow {{
-        0% {{ box-shadow: 0 0 0px {accent}44; }}
-        50% {{ box-shadow: 0 0 20px {accent}aa; }}
-        100% {{ box-shadow: 0 0 0px {accent}44; }}
-    }}
-    div[style*="{total_night_charge_str}"] {{
-        animation: pulseGlow 2s infinite;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
+else:
+    total_night_charge_str = "$0.00"
