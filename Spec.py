@@ -40,7 +40,7 @@ dark_themes = {
 
 # ------------------ THEME RANDOMIZATION ------------------
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "Dark"  # default mode
+    st.session_state.theme_mode = "Dark"
 
 theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
 random_theme_name = random.choice(list(theme_set.keys()))
@@ -48,7 +48,7 @@ st.session_state.selected_theme = random_theme_name
 st.session_state.theme_colors = theme_set[random_theme_name]
 
 # ------------------ MODE TOGGLE ------------------
-col1, col2, _ = st.columns([1,1,6])
+col1, col2, _ = st.columns([1, 1, 6])
 with col1:
     if st.button("🌞 Light Mode", use_container_width=True):
         if st.session_state.theme_mode != "Light":
@@ -56,6 +56,7 @@ with col1:
             st.session_state.selected_theme = list(light_themes.keys())[0]
             st.session_state["show_toast"] = "Switched to Light Mode 🌞"
             st.rerun()
+
 with col2:
     if st.button("🌙 Dark Mode", use_container_width=True):
         if st.session_state.theme_mode != "Dark":
@@ -69,19 +70,16 @@ themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
 
-# ------------------ THEME BUTTONS (LEFT-ALIGNED, SINGLE LINE) ------------------
-themes_list = list(themes.items())
-buttons_per_row = 5
-
-for i in range(0, len(themes_list), buttons_per_row):
-    cols = st.columns(buttons_per_row, gap="small")
-    for j, (theme_name, data) in enumerate(themes_list[i:i+buttons_per_row]):
-        accent = data["accent"]
-        if cols[j].button(theme_name, key=f"theme_{theme_name}"):
-            if st.session_state.selected_theme != theme_name:
-                st.session_state.selected_theme = theme_name
-                st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
-                st.rerun()
+# ------------------ THEME BUTTONS ------------------
+cols = st.columns(len(themes))
+for i, (theme_name, data) in enumerate(themes.items()):
+    accent = data["accent"]
+    display_name = theme_name.replace(" ", "\n")  # show theme name in 2 lines
+    if cols[i].button(display_name, key=f"theme_{theme_name}"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+            st.rerun()
 
 # ------------------ SELECTED THEME ------------------
 selected = themes[st.session_state.selected_theme]
@@ -104,7 +102,9 @@ if "show_toast" in st.session_state:
         box-shadow: 0 4px 12px {accent}77;
         z-index: 9999;
         animation: fadeIn 0.3s ease, fadeOut 0.6s ease 2.5s forwards;
-    ">{toast_message}</div>
+    ">
+        {toast_message}
+    </div>
     <style>
     @keyframes fadeIn {{
         from {{ opacity: 0; transform: translateY(-10px); }}
@@ -119,7 +119,15 @@ if "show_toast" in st.session_state:
     time.sleep(2.5)
     del st.session_state["show_toast"]
 
-# ------------------ HEADER & STYLING ------------------
+# ------------------ HEADER & APP STYLING ------------------
+def get_contrast_color(hex_color):
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return "#000000" if brightness > 155 else "#ffffff"
+
+title_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <style>
 @keyframes pulseGlow {{
@@ -151,9 +159,6 @@ st.markdown(f"""
     animation: bgShift 60s ease infinite;
     transition: all 0.3s ease-in-out;
 }}
-.stApp, .stForm {{
-    text-align: left !important;
-}}
 div[style*="Client Management System"] {{
     background: linear-gradient(90deg, {accent}, #ffffff, {accent});
     color: transparent;
@@ -161,6 +166,7 @@ div[style*="Client Management System"] {{
     border-radius: 12px;
     font-size: 22px;
     font-weight: 700;
+    text-align:center;
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
     background-clip: text;
@@ -176,7 +182,6 @@ div.stButton > button {{
     background-color: transparent !important;
     color: {accent} !important;
     border: 1px solid {accent}55 !important;
-    margin: 0 4px 8px 0 !important;
 }}
 div.stButton > button:hover {{
     background: {accent}22 !important;
@@ -202,26 +207,18 @@ tbody tr:hover {{
 """, unsafe_allow_html=True)
 
 # ------------------ APP TITLE ------------------
-def get_contrast_color(hex_color):
-    hex_color = hex_color.lstrip('#')
-    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    brightness = (r * 299 + g * 587 + b * 114) / 1000
-    return "#000000" if brightness > 155 else "#ffffff"
-
-current_theme = st.session_state.theme_colors
-accent = current_theme.get("accent", "#0284c7")
-title_text_color = get_contrast_color(accent)
-
 st.markdown(f"""
 <div style="
     background-color: {accent};
     color: {title_text_color};
+    padding: 18px 24px;
     border-radius: 12px;
     font-size: 22px;
-    padding: 18px 24px;
     font-weight: 700;
+    text-align:center;
     box-shadow: 0 4px 18px {accent}55;
     margin-bottom: 28px;
+    animation: fadeIn 1s ease;
 ">
 Client Management System — Techware Hub
 </div>
@@ -477,6 +474,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
