@@ -480,20 +480,3 @@ if record is not None:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
