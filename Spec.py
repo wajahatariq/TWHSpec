@@ -6,6 +6,7 @@ import pytz
 import json
 import uuid
 import requests
+import random
 
 def style_status_rows(df):
     """
@@ -489,6 +490,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
