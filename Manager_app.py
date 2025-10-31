@@ -35,17 +35,14 @@ dark_themes = {
 }
 
 # ------------------ THEME RANDOMIZATION ------------------
-# Initialize theme mode if not set
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "Dark"  # default mode
+    st.session_state.theme_mode = "Dark"
 
-# Pick theme set based on mode
 theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-
-# Randomize theme each time app loads or refreshes
 random_theme_name = random.choice(list(theme_set.keys()))
 st.session_state.selected_theme = random_theme_name
 st.session_state.theme_colors = theme_set[random_theme_name]
+
 # ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
@@ -73,7 +70,8 @@ if st.session_state.selected_theme not in themes:
 cols = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
     accent = data["accent"]
-    if cols[i].button(theme_name, key=f"theme_{theme_name}"):
+    display_name = theme_name.replace(" ", "\n")  # show theme name in 2 lines
+    if cols[i].button(display_name, key=f"theme_{theme_name}"):
         if st.session_state.selected_theme != theme_name:
             st.session_state.selected_theme = theme_name
             st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
@@ -117,7 +115,15 @@ if "show_toast" in st.session_state:
     time.sleep(2.5)
     del st.session_state["show_toast"]
 
-# ------------------ HEADER ------------------
+# ------------------ HEADER & APP STYLING ------------------
+def get_contrast_color(hex_color):
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return "#000000" if brightness > 155 else "#ffffff"
+
+title_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <style>
 @keyframes pulseGlow {{
@@ -196,25 +202,7 @@ tbody tr:hover {{
 </style>
 """, unsafe_allow_html=True)
 
-# --- APP TITLE ---
-# --- AUTO ADJUST TEXT COLOR BASED ON THEME ACCENT ---
-if "theme_colors" not in st.session_state:
-    # fallback to a default theme if not set yet
-    st.session_state.theme_colors = {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"}
-
-# helper (reusable) contrast function
-def get_contrast_color(hex_color):
-    """Return '#000000' or '#ffffff' depending on brightness of hex color."""
-    hex_color = hex_color.lstrip('#')
-    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    brightness = (r * 299 + g * 587 + b * 114) / 1000
-    return "#000000" if brightness > 155 else "#ffffff"
-
-# use the theme already stored in session_state
-current_theme = st.session_state.theme_colors
-accent = current_theme.get("accent", "#0284c7")
-title_text_color = get_contrast_color(accent)
-
+# ------------------ APP TITLE ------------------
 st.markdown(f"""
 <div style="
     background-color: {accent};
