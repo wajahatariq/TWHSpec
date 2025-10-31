@@ -122,6 +122,8 @@ selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
+title_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <style>
 /* Form container */
@@ -555,6 +557,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
