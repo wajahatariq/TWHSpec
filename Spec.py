@@ -538,14 +538,20 @@ else:
         window_end = datetime.combine(now.date(), time(6, 0))
 
 # Filter Charged transactions in this window
+if not df_all.empty:
+    # Remove $ sign and commas, convert to float
+    df_all['ChargeFloat'] = df_all['Charge'].replace('[\$,]', '', regex=True).astype(float)
+
+# Then filter night charged transactions
 night_charged_df = df_all[
     (df_all['Status'] == "Charged") &
     (df_all['Timestamp'] >= window_start) &
     (df_all['Timestamp'] <= window_end)
 ]
 
-# Calculate total charged amount
+# Sum
 total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+
 total_night_charge_str = f"${total_night_charge:,.2f}"
 amount_text_color = get_contrast_color(accent)
 
@@ -594,3 +600,4 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
