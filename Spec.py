@@ -24,11 +24,6 @@ def style_status_rows(df):
             return [""] * len(row)
 
     return df.style.apply(highlight_row, axis=1)
-    
-st.markdown(
-    f"<h1 style='text-align:center; color:{text_color};'>Client Management System - TechwareHub</h1>",
-    unsafe_allow_html=True
-)
 
 
 # --- LIGHT THEMES ---
@@ -486,6 +481,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
