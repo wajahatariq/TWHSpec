@@ -23,7 +23,78 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+theme = st.session_state.theme_colors
+bg_color = theme["bg1"]
+accent_color = theme["accent"]
+text_color = get_contrast_color(bg_color)
 
+
+# --- TIME RANGE AND TOTAL CHARGED CALCULATION ---
+tz = pytz.timezone("Asia/Karachi")
+now = datetime.now(tz)
+
+# Define the custom time window: 7 PM – 6 AM
+if now.time() < time(6, 0):
+    # Before 6 AM → window is yesterday 7 PM → today 6 AM
+    start_time = (now - timedelta(days=1)).replace(hour=19, minute=0, second=0, microsecond=0)
+    end_time = now.replace(hour=6, minute=0, second=0, microsecond=0)
+else:
+    # After 6 AM → window is today 7 PM → tomorrow 6 AM
+    start_time = now.replace(hour=19, minute=0, second=0, microsecond=0)
+    end_time = (now + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+
+# Load data
+df_spectrum = load_data(spectrum_ws)
+df_insurance = load_data(insurance_ws)
+
+# Combine both datasets
+df_all = pd.concat([df_spectrum, df_insurance], ignore_index=True)
+
+# Clean and filter
+df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce").dt.tz_localize("Asia/Karachi", nonexistent='NaT', ambiguous='NaT')
+df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce')
+
+# Filter records within the time window and with status 'Charged'
+df_filtered = df_all[(df_all["Timestamp"] >= start_time) & (df_all["Timestamp"] <= end_time) & (df_all["Status"] == "Charged")]
+
+# Calculate total charge
+today_total_charged = df_filtered["ChargeFloat"].sum()
+
+st.markdown(
+    f"""
+    <style>
+    .top-right-box {{
+        position: absolute;
+        top: 20px;
+        right: 40px;
+        background: linear-gradient(135deg, {accent_color}, {theme["bg2"]});
+        color: {text_color};
+        padding: 12px 24px;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        font-weight: 600;
+        font-size: 18px;
+        border: 1px solid rgba(255,255,255,0.15);
+        transition: 0.3s ease-in-out;
+        animation: fadeIn 0.6s ease-in-out;
+    }}
+    .top-right-box:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }}
+    @keyframes fadeIn {{
+        from {{ opacity: 0; transform: translateY(-10px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
+    }}
+    </style>
+
+    <div class="top-right-box">
+        💰 Total Charged (7 PM – 6 AM): 
+        <span style="font-weight:700;">{today_total_charged:,.0f}</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 # --- THEMES ---
 light_themes = {
     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
@@ -739,4 +810,24 @@ with main_tab3:
     else:
         st.info("No transaction data available to generate chart.")
 
+tz = pytz.timezone("Asia/Karachi")
+now = datetime.now(tz)
+
+# --- SMART WINDOW HANDLING ---
+# If current time < 6 AM → use yesterday 7 PM → today 6 AM
+# Else → use today 7 PM → tomorrow 6 AM
+if now.time() < time(6, 0):
+    start_date = now.date() - timedelta(days=1)
+else:
+    start_date = now.date()
+
+start_time = tz.localize(datetime.combine(start_date, time(19, 0)))  # 7 PM
+end_time = start_time + timedelta(hours=11)  # 6 AM next day
+
+# --- FILTER & CALCULATE TOTAL CHARGED ---
+df["Timestamp"] = pd.to_datetime(df["Timestamp"]).dt.tz_localize("UTC").dt.tz_convert("Asia/Karachi")
+mask = (df["Timestamp"] >= start_time) & (df["Timestamp"] <= end_time)
+filtered_df = df.loc[mask]
+
+today_total_charged = filtered_df["Charge"].sum()
 
