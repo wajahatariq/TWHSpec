@@ -8,3 +8,4 @@ reportlab
 tabulate
 matplotlib
 seaborn 
+plotly
