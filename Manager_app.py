@@ -727,4 +727,60 @@ with main_tab3:
     
     else:
         st.info("No transaction data available to generate chart.")
+# --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
+from datetime import datetime, time, timedelta
+import pytz
+
+tz = pytz.timezone("Asia/Karachi")
+
+# Convert Timestamp to datetime
+df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp']).dt.tz_localize(None)
+
+now = datetime.now(tz)
+
+# Determine current night window (7 PM → 6 AM)
+if now.time() >= time(7, 0) and now.time() < time(19, 0):
+    # Daytime: window was yesterday 19:00 → today 06:00
+    window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+    window_end = datetime.combine(now.date(), time(6, 0))
+else:
+    # Nighttime
+    if now.time() >= time(19, 0):
+        window_start = datetime.combine(now.date(), time(19, 0))
+        window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+    else:  # 00:00 → 06:00
+        window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+        window_end = datetime.combine(now.date(), time(6, 0))
+
+# Filter Charged transactions in this window
+night_charged_df = df_all[
+    (df_all['Status'] == "Charged") &
+    (df_all['Timestamp'] >= window_start) &
+    (df_all['Timestamp'] <= window_end)
+]
+
+# Calculate total charged amount
+total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+total_night_charge_str = f"${total_night_charge:,.2f}"
+
+# --- CSS-STYLED TOP-RIGHT BLOCK ---
+st.markdown(f"""
+<div style="
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: {accent};
+    color: white;
+    padding: 18px 28px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px {accent}77;
+    z-index: 9999;
+    text-align: center;
+    transition: all 0.3s ease;
+">
+    🌙 Night Charged Total<br><span style='font-size:24px;'>{total_night_charge_str}</span>
+</div>
+""", unsafe_allow_html=True)
 
