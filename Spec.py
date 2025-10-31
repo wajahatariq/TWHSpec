@@ -8,24 +8,6 @@ import uuid
 import requests
 import random
 
-def style_status_rows(df):
-    """
-    Apply conditional styling based on Status column:
-    Charged = green, Charge Back = red, Declined/Pending = default.
-    """
-    if "Status" not in df.columns or df.empty:
-        return df  # nothing to style
-
-    def highlight_row(row):
-        if row["Status"] == "Charged":
-            return ["background-color: darkgreen"] * len(row)
-        elif row["Status"] == "Charge Back":
-            return ["background-color: red"] * len(row)
-        else:  # Declined or Pending
-            return [""] * len(row)
-
-    return df.style.apply(highlight_row, axis=1)
-
 
 # --- LIGHT THEMES ---
 light_themes = {
@@ -492,6 +474,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
