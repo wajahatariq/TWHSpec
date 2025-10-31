@@ -132,32 +132,52 @@ st.markdown(f"""
 
 # --- Capsule Buttons (after CSS defined) ---
 theme_names = list(themes.keys())
+
+# Start horizontal scroll container
 st.markdown('<div class="theme-scroll">', unsafe_allow_html=True)
+
+# Render all buttons inline via HTML and JS events
 for theme_name in theme_names:
     data = themes[theme_name]
     accent = data["accent"]
-    if st.button(theme_name, key=f"theme_{theme_name}"):
 
-        st.session_state.selected_theme = theme_name
+    # Make each button an inline-block element
+    st.markdown(
+        f"""
+        <div style="display:inline-block; margin-right:8px;">
+            <form action="" method="get">
+                <button name="theme" value="{theme_name}" 
+                    style="
+                        background-color: transparent;
+                        border: 1px solid {accent};
+                        color: {accent};
+                        border-radius: 999px;
+                        font-weight: 600;
+                        padding: 6px 14px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    "
+                    onmouseover="this.style.backgroundColor='{accent}22';this.style.color='white';"
+                    onmouseout="this.style.backgroundColor='transparent';this.style.color='{accent}';"
+                >
+                    {theme_name}
+                </button>
+            </form>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Header ---
-st.markdown(f"""
-<div style="
-    background-color: {accent};
-    color: white;
-    padding: 18px 24px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 700;
-    text-align:center;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-    animation: fadeIn 1s ease;
-">
-Client Management System — Techware Hub
-</div>
-""", unsafe_allow_html=True)
+# Apply selection manually
+params = st.experimental_get_query_params()
+if "theme" in params:
+    selected_theme = params["theme"][0]
+    if selected_theme in themes:
+        st.session_state.selected_theme = selected_theme
+        st.experimental_set_query_params()  # clear param after change
+        st.rerun()
 
 st.markdown(f"""
 <style>
@@ -547,6 +567,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
