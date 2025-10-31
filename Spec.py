@@ -161,7 +161,7 @@ Client Management System — Techware Hub
 
 st.markdown(f"""
 <style>
-/* ---------------- keyframes ---------------- */
+/* ---------------- KEYFRAMES ---------------- */
 @keyframes pulseGlow {{
   0% {{ box-shadow: 0 0 0px {accent}44; }}
   50% {{ box-shadow: 0 0 20px {accent}aa; }}
@@ -189,66 +189,110 @@ st.markdown(f"""
   100% {{ background-position: 0% 0%; }}
 }}
 
-/* ---------------- BODY & BACKGROUND ---------------- */
+/* ---------------- APP BACKGROUND ---------------- */
 [data-testid="stAppViewContainer"] {{
-    background: radial-gradient(circle at top left, {bg2}, {bg1});
-    font-family: "Inter", sans-serif;
-    background-size: 400% 400%;
-    animation: bgShift 60s ease infinite;
-    transition: all 0.3s ease-in-out;
+  background: radial-gradient(circle at top left, {bg2}, {bg1});
+  font-family: "Inter", sans-serif;
+  background-size: 400% 400%;
+  animation: bgShift 60s ease infinite;
+  transition: all 0.3s ease-in-out;
+  color: {text_color};
 }}
 
 /* ---------------- HEADER ---------------- */
 div[style*="Client Management System"] {{
-    background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-    color: transparent;
-    padding: 18px 24px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 700;
-    text-align:center;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+  background: linear-gradient(90deg, {accent}, #ffffff, {accent});
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 28px;
+  animation: shimmerText 3s linear infinite, fadeIn 1s ease;
+}}
+
+/* ---------------- SCROLLABLE THEME BAR ---------------- */
+.theme-scroll {{
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 8px 0;
+  gap: 10px;
+}}
+.theme-scroll::-webkit-scrollbar {{
+  height: 6px;
+}}
+.theme-scroll::-webkit-scrollbar-thumb {{
+  background: {accent};
+  border-radius: 10px;
+}}
+.theme-scroll > div {{
+  flex: 0 0 auto;
 }}
 
 /* ---------------- CAPSULE THEME BUTTONS ---------------- */
 div.stButton > button {{
-    border-radius: 999px !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-    padding: 0.45rem 1rem !important;
-    box-shadow: 0 0 6px {accent}33;
-    background-color: transparent !important;
-    color: {accent} !important;
-    border: 1px solid {accent}55 !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  padding: 0.45rem 1rem !important;
+  box-shadow: 0 0 6px {accent}33;
+  background-color: transparent !important;
+  color: {accent} !important;
+  border: 1px solid {accent}55 !important;
 }}
-
 div.stButton > button:hover {{
-    background: {accent}22 !important;
-    color: white !important;
-    box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
-    transform: scale(1.07);
-    animation: bounce 0.4s ease;
+  background: {accent}22 !important;
+  color: white !important;
+  box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
+  transform: scale(1.07);
+  animation: bounce 0.4s ease;
 }}
 
-/* ---------------- TABLE ROWS ---------------- */
+/* ---------------- INPUTS, SELECTBOXES, DATE PICKERS ---------------- */
+input, select, textarea, .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid {accent}44 !important;
+  border-radius: 8px !important;
+  color: {text_color} !important;
+  transition: all 0.3s ease;
+}}
+input:focus, select:focus, textarea:focus {{
+  border-color: {accent}aa !important;
+  box-shadow: 0 0 8px {accent}88 !important;
+  outline: none !important;
+}}
+
+/* ---------------- SUBMIT & UPDATE BUTTONS ---------------- */
+button[kind="primary"], button[kind="secondary"] {{
+  background: {accent} !important;
+  color: white !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 0 10px {accent}55;
+}}
+button[kind="primary"]:hover, button[kind="secondary"]:hover {{
+  transform: scale(1.05);
+  box-shadow: 0 0 25px {accent}aa, inset 0 0 10px {accent}66 !important;
+}}
+
+/* ---------------- TABLE ROW HOVER ---------------- */
 tbody tr:hover {{
-    background-color: {accent}11 !important;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
-    box-shadow: 0 0 8px {accent}55;
+  background-color: {accent}11 !important;
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px {accent}55;
 }}
 
 /* ---------------- SCROLLBAR ---------------- */
 ::-webkit-scrollbar {{
-    width: 10px;
+  width: 10px;
 }}
 ::-webkit-scrollbar-thumb {{
-    background: linear-gradient({accent}, {accent}cc);
-    border-radius: 10px;
+  background: linear-gradient({accent}, {accent}cc);
+  border-radius: 10px;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -503,6 +547,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
