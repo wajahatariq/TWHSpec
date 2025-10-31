@@ -762,6 +762,7 @@ night_charged_df = df_all[
 # Calculate total charged amount
 total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
 total_night_charge_str = f"${total_night_charge:,.2f}"
+amount_text_color = get_contrast_color(accent)
 
 st.markdown(f"""
 <div style="
@@ -780,31 +781,14 @@ st.markdown(f"""
     transition: all 0.3s ease;
     backdrop-filter: blur(6px);
 ">
-    <!-- Label -->
     <div style='font-size:14px; opacity:0.85;'>🌙 Night Charged Total</div>
-
-    <!-- Amount with theme gradient like portal header -->
-    <div style='
-        font-size:26px;
-        font-weight:800;
-        background: linear-gradient(90deg, #ffffff, {accent}, #ffffff);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        animation: shimmerText 3s linear infinite;
-        margin-top:4px;
-    '>
+    <div style='font-size:26px; margin-top:4px; font-weight:800; color:{amount_text_color};'>
         {total_night_charge_str}
     </div>
 </div>
 
 <style>
-@keyframes shimmerText {{
-  0% {{ background-position: -200% 0; }}
-  100% {{ background-position: 200% 0; }}
-}}
-
-/* Pulse glow behind entire card */
+/* Pulse glow animation */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
