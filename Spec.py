@@ -563,6 +563,10 @@ else:
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
+# --- NIGHT WINDOW TOTAL WIDGET ---
+amount_text_color = get_contrast_color(accent)
+label_text_color = get_contrast_color(accent)
+
 st.markdown(f"""
 <div style="
     position: fixed;
@@ -603,3 +607,4 @@ div[style*="{total_night_charge_str}"] {{
     animation: pulseGlow 2s infinite;
 }}
 </style>
+""", unsafe_allow_html=True)
