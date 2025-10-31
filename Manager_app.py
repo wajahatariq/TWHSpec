@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 import time
-
+import random
 
 # --- CONFIG ---
 st.set_page_config(page_title="Manager Dashboard", layout="wide")
+
+# --- THEMES ---
 light_themes = {
     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
     "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
@@ -35,28 +37,18 @@ dark_themes = {
     "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
 }
 
-import random
-
-# --- RANDOMIZE THEME ON FIRST LOAD OR REFRESH ---
-all_themes = {**light_themes, **dark_themes}  # merge both sets
-
-if "selected_theme" not in st.session_state:
-    random_theme_name = random.choice(list(all_themes.keys()))
-    st.session_state.selected_theme = random_theme_name
-    # Detect which mode it belongs to (light/dark)
-    if random_theme_name in dark_themes:
-        st.session_state.theme_mode = "Dark"
-    else:
-        st.session_state.theme_mode = "Light"
-
-# ------------------ SESSION STATE ------------------
+# ------------------ THEME RANDOMIZATION ------------------
+# Initialize theme mode if not set
 if "theme_mode" not in st.session_state:
-    st.session_state.theme_mode = "Dark"
+    st.session_state.theme_mode = "Dark"  # default mode
 
-if "selected_theme" not in st.session_state:
-    default_themes = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-    st.session_state.selected_theme = list(default_themes.keys())[0]
+# Pick theme set based on mode
+theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
 
+# Randomize theme each time app loads or refreshes
+random_theme_name = random.choice(list(theme_set.keys()))
+st.session_state.selected_theme = random_theme_name
+st.session_state.theme_colors = theme_set[random_theme_name]
 # ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
