@@ -7,6 +7,7 @@ import json
 import uuid
 import requests
 import random
+import time
 
 st.set_page_config(page_title="Client Management System", layout="wide")
 
@@ -476,6 +477,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
