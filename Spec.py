@@ -100,16 +100,6 @@ with col2:
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 if st.session_state.selected_theme not in themes:
     st.session_state.selected_theme = list(themes.keys())[0]
-
-# --- Capsule Buttons ---
-theme_names = list(themes.keys())
-st.markdown('<div class="theme-scroll">', unsafe_allow_html=True)
-for theme_name in theme_names:
-    data = themes[theme_name]
-    accent = data["accent"]
-    if st.button(theme_name, key=f"theme_{theme_name}"):
-        st.session_state.selected_theme = theme_name
-st.markdown('</div>', unsafe_allow_html=True)
             
 # --- Extract Selected Theme ---
 selected = themes[st.session_state.selected_theme]
@@ -513,6 +503,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
