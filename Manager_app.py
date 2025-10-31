@@ -797,4 +797,3 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
-""", unsafe_allow_html=True)
