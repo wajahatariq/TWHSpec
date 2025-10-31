@@ -639,59 +639,75 @@ with main_tab3:
     st.divider()
     st.subheader("Advanced Analytics Dashboard")
     
-    # --- Data Selection ---
-    dataset_choice = st.radio(
-        "Select Dataset:",
-        ("Spectrum", "Insurance"),
-        horizontal=True
-    )
+    # --- Helper functions ---
+    def safe_prepare(df):
+        """Ensure numeric and date columns exist and are clean."""
+        if df is None or df.empty:
+            return pd.DataFrame()
+        df = df.copy()
+        df["ChargeFloat"] = pd.to_numeric(df.get("Charge", 0), errors="coerce").fillna(0)
+        df["Transaction Date"] = pd.to_datetime(df.get("Timestamp", pd.NaT), errors="coerce")
+        return df.dropna(subset=["Transaction Date"])
     
-    # Dynamically select dataset
+    def safe_sum(df, col):
+        """Safely sum a numeric column."""
+        if df is None or df.empty or col not in df.columns:
+            return 0
+        return pd.to_numeric(df[col], errors="coerce").fillna(0).sum()
+    
+    def safe_mean(df, col):
+        """Safely average a numeric column."""
+        if df is None or df.empty or col not in df.columns:
+            return 0
+        return pd.to_numeric(df[col], errors="coerce").fillna(0).mean()
+    
+    # --- Dataset selection ---
+    dataset_choice = st.radio("Select Dataset:", ("Spectrum", "Insurance"), horizontal=True)
+    
     if dataset_choice == "Spectrum":
-        df = df_spectrum.copy()
+        df = safe_prepare(df_spectrum)
     elif dataset_choice == "Insurance":
-        df = df_insurance.copy()
+        df = safe_prepare(df_insurance)
     else:
         df = pd.DataFrame()
     
+    # --- Main logic ---
     if not df.empty:
-        # --- Data Preparation ---
-        df["ChargeFloat"] = pd.to_numeric(df.get("Charge", 0), errors="coerce").fillna(0)
-        df["Transaction Date"] = pd.to_datetime(df.get("Timestamp", pd.NaT), errors="coerce")
-    
-        # --- Date Range Selection ---
+        # --- Date Range Filter ---
         min_date = df["Transaction Date"].min()
         max_date = df["Transaction Date"].max()
     
         col1, col2 = st.columns(2)
         with col1:
-            start_date = st.date_input("From Date", value=(max_date - timedelta(days=15)).date() if pd.notna(max_date) else datetime.now().date(), min_value=min_date.date() if pd.notna(min_date) else datetime.now().date())
+            start_date = st.date_input(
+                "From Date",
+                value=(max_date - timedelta(days=15)).date() if pd.notna(max_date) else datetime.now().date(),
+                min_value=min_date.date() if pd.notna(min_date) else datetime.now().date()
+            )
         with col2:
-            end_date = st.date_input("To Date", value=max_date.date() if pd.notna(max_date) else datetime.now().date(), min_value=start_date)
+            end_date = st.date_input(
+                "To Date",
+                value=max_date.date() if pd.notna(max_date) else datetime.now().date(),
+                min_value=start_date
+            )
     
-        # Filter data by date range
-        df = df[(df["Transaction Date"].dt.date >= start_date) & (df["Transaction Date"].dt.date <= end_date)]
+        # Filter by date range
+        df = df[
+            (df["Transaction Date"].dt.date >= start_date)
+            & (df["Transaction Date"].dt.date <= end_date)
+        ]
     
         if df.empty:
             st.warning("No transactions found for the selected date range.")
         else:
             # --- Filters ---
             col_filters = st.columns(3)
-    
             with col_filters[0]:
-                if "Agent Name" in df.columns:
-                    agent_options = sorted(df["Agent Name"].dropna().unique().tolist())
-                    selected_agents = st.multiselect("Select Agent(s):", options=agent_options, default=agent_options[:1])
-                else:
-                    selected_agents = []
-    
+                agent_options = sorted(df["Agent Name"].dropna().unique().tolist()) if "Agent Name" in df.columns else []
+                selected_agents = st.multiselect("Select Agent(s):", options=agent_options, default=agent_options[:1])
             with col_filters[1]:
-                if "Status" in df.columns:
-                    status_options = ["All Statuses"] + sorted(df["Status"].dropna().unique().tolist())
-                    selected_status = st.selectbox("Filter by Status:", status_options)
-                else:
-                    selected_status = "All Statuses"
-    
+                status_options = ["All Statuses"] + sorted(df["Status"].dropna().unique().tolist()) if "Status" in df.columns else ["All Statuses"]
+                selected_status = st.selectbox("Filter by Status:", status_options)
             with col_filters[2]:
                 chart_type = st.selectbox("Chart Type:", ["Line", "Bar", "Area", "Pie"])
     
@@ -704,7 +720,7 @@ with main_tab3:
             if df.empty:
                 st.info("No data matches your selected filters.")
             else:
-                # --- Aggregation ---
+                # --- Aggregation Period ---
                 aggregation_period = st.radio(
                     "Select Time Grouping:",
                     ("Daily", "Weekly", "Monthly"),
@@ -718,51 +734,61 @@ with main_tab3:
                 elif aggregation_period == "Monthly":
                     df["Period"] = df["Transaction Date"].dt.to_period("M").apply(lambda r: r.start_time)
     
-                # --- Aggregation logic ---
+                # --- Grouping ---
                 if selected_agents and len(selected_agents) > 1:
                     df_summary = df.groupby(["Period", "Agent Name"])["ChargeFloat"].sum().reset_index()
                 else:
                     df_summary = df.groupby("Period")["ChargeFloat"].sum().reset_index()
     
-                # --- Visualization ---
+                # --- Plot ---
                 if not df_summary.empty:
                     if chart_type == "Line":
-                        if len(selected_agents) > 1:
-                            fig = px.line(df_summary, x="Period", y="ChargeFloat", color="Agent Name",
-                                          title=f"Total Charges by {aggregation_period} (Comparison)",
-                                          markers=True, template="plotly_white")
-                        else:
-                            fig = px.line(df_summary, x="Period", y="ChargeFloat",
-                                          title=f"Total Charges by {aggregation_period}",
-                                          markers=True, template="plotly_white")
+                        fig = px.line(
+                            df_summary,
+                            x="Period",
+                            y="ChargeFloat",
+                            color="Agent Name" if "Agent Name" in df_summary.columns else None,
+                            title=f"Total Charges by {aggregation_period}",
+                            markers=True,
+                            template="plotly_white"
+                        )
                     elif chart_type == "Bar":
-                        if len(selected_agents) > 1:
-                            fig = px.bar(df_summary, x="Period", y="ChargeFloat", color="Agent Name",
-                                         title=f"Total Charges by {aggregation_period} (Comparison)",
-                                         text_auto=".2f", template="plotly_white")
-                        else:
-                            fig = px.bar(df_summary, x="Period", y="ChargeFloat",
-                                         title=f"Total Charges by {aggregation_period}",
-                                         text_auto=".2f", template="plotly_white")
+                        fig = px.bar(
+                            df_summary,
+                            x="Period",
+                            y="ChargeFloat",
+                            color="Agent Name" if "Agent Name" in df_summary.columns else None,
+                            title=f"Total Charges by {aggregation_period}",
+                            text_auto=".2f",
+                            template="plotly_white"
+                        )
                     elif chart_type == "Area":
-                        if len(selected_agents) > 1:
-                            fig = px.area(df_summary, x="Period", y="ChargeFloat", color="Agent Name",
-                                          title=f"Total Charges by {aggregation_period} (Comparison)",
-                                          template="plotly_white")
-                        else:
-                            fig = px.area(df_summary, x="Period", y="ChargeFloat",
-                                          title=f"Total Charges by {aggregation_period}",
-                                          template="plotly_white")
+                        fig = px.area(
+                            df_summary,
+                            x="Period",
+                            y="ChargeFloat",
+                            color="Agent Name" if "Agent Name" in df_summary.columns else None,
+                            title=f"Total Charges by {aggregation_period}",
+                            template="plotly_white"
+                        )
                     elif chart_type == "Pie":
-                        if len(selected_agents) > 1:
+                        if "Agent Name" in df_summary.columns:
                             pie_data = df.groupby("Agent Name")["ChargeFloat"].sum().reset_index()
-                            fig = px.pie(pie_data, values="ChargeFloat", names="Agent Name",
-                                         title=f"Total Charges Distribution ({aggregation_period})",
-                                         color_discrete_sequence=px.colors.qualitative.Pastel)
+                            fig = px.pie(
+                                pie_data,
+                                values="ChargeFloat",
+                                names="Agent Name",
+                                title=f"Total Charges Distribution ({aggregation_period})",
+                                color_discrete_sequence=px.colors.qualitative.Pastel
+                            )
                         else:
-                            fig = px.pie(df_summary, values="ChargeFloat", names="Period",
-                                         title=f"Total Charges Distribution ({aggregation_period})",
-                                         color_discrete_sequence=px.colors.qualitative.Pastel)
+                            fig = px.pie(
+                                df_summary,
+                                values="ChargeFloat",
+                                names="Period",
+                                title=f"Total Charges Distribution ({aggregation_period})",
+                                color_discrete_sequence=px.colors.qualitative.Pastel
+                            )
                         fig.update_traces(textposition="inside", textinfo="percent+label")
     
                     fig.update_layout(
@@ -774,11 +800,10 @@ with main_tab3:
                     st.plotly_chart(fig, use_container_width=True)
     
                 # --- Metrics ---
-                total_amount = df["ChargeFloat"].sum()
-                avg_transaction = df["ChargeFloat"].mean()
+                total_amount = safe_sum(df, "ChargeFloat")
+                avg_transaction = safe_mean(df, "ChargeFloat")
                 peak_period = df_summary.loc[df_summary["ChargeFloat"].idxmax(), "Period"] if not df_summary.empty else "N/A"
     
-                # Safe formatting
                 if isinstance(peak_period, pd.Timestamp):
                     peak_label = peak_period.strftime("%Y-%m-%d")
                 elif hasattr(peak_period, "to_timestamp"):
