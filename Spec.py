@@ -25,21 +25,11 @@ def style_status_rows(df):
 
     return df.style.apply(highlight_row, axis=1)
     
-# --- CONFIG ---
-def get_contrast_color(hex_color):
-    """Return black or white depending on background brightness."""
-    hex_color = hex_color.lstrip('#')
-    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-    brightness = (r * 299 + g * 587 + b * 114) / 1000
-    return '#000000' if brightness > 150 else '#ffffff'
-
-bg_color = st.session_state.theme_colors["bg1"]
-text_color = get_contrast_color(bg_color)
-
 st.markdown(
     f"<h1 style='text-align:center; color:{text_color};'>Client Management System - TechwareHub</h1>",
     unsafe_allow_html=True
 )
+
 
 # --- LIGHT THEMES ---
 light_themes = {
@@ -496,6 +486,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
