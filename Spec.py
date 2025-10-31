@@ -116,25 +116,7 @@ selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
-# --- Header ---
-st.markdown(f"""
-<div style="
-    background-color: {accent};
-    color: white;
-    padding: 18px 24px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 700;
-    text-align:center;
-    box-shadow: 0 4px 18px {accent}55;
-    margin-bottom: 28px;
-    animation: fadeIn 1s ease;
-">
-Client Management System — Techware Hub
-</div>
-""", unsafe_allow_html=True)
-
-# --- HEADER ---
+# --- CSS (must be before .theme-scroll div is rendered) ---
 st.markdown(f"""
 <style>
 /* --- SCROLLABLE SINGLE-LINE THEMES ROW --- */
@@ -157,6 +139,36 @@ st.markdown(f"""
 }}
 </style>
 """, unsafe_allow_html=True)
+
+# --- Capsule Buttons (after CSS defined) ---
+theme_names = list(themes.keys())
+st.markdown('<div class="theme-scroll">', unsafe_allow_html=True)
+for theme_name in theme_names:
+    data = themes[theme_name]
+    accent = data["accent"]
+    if st.button(theme_name, key=f"theme_{theme_name}"):
+
+        st.session_state.selected_theme = theme_name
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Header ---
+st.markdown(f"""
+<div style="
+    background-color: {accent};
+    color: white;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 700;
+    text-align:center;
+    box-shadow: 0 4px 18px {accent}55;
+    margin-bottom: 28px;
+    animation: fadeIn 1s ease;
+">
+Client Management System — Techware Hub
+</div>
+""", unsafe_allow_html=True)
+
 /* ---------------- keyframes ---------------- */
 @keyframes pulseGlow {{
   0% {{ box-shadow: 0 0 0px {accent}44; }}
@@ -499,6 +511,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
