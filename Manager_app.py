@@ -763,57 +763,38 @@ night_charged_df = df_all[
 total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
 total_night_charge_str = f"${total_night_charge:,.2f}"
 
-# --- CSS-STYLED TOP-RIGHT BLOCK ---
-total_night_charge_str = f"${total_night_charge:,.2f}"
-
 st.markdown(f"""
 <div style="
     position: fixed;
     top: 20px;
     right: 30px;
-    background: {bg2};
-    border-radius: 16px;
+    background: {accent};
+    color: white;
     padding: 16px 24px;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
     box-shadow: 0 8px 24px {accent}77;
-    text-align: center;
     z-index: 9999;
-    backdrop-filter: blur(6px);
+    text-align: center;
     transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
 ">
-    <!-- Label with shimmer gradient -->
-    <div style='
-        background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        font-size: 14px;
-        font-weight: 700;
-        margin-bottom: 4px;
-        animation: shimmerText 3s linear infinite;
-    '>
-        🌙 Night Charged Total
-    </div>
-
-    <!-- Amount styled like portal top bar -->
-    <div style='
-        font-size:26px;
-        font-weight:800;
-        color: {accent};
-        animation: pulseGlow 2s infinite;
-    '>
-        {total_night_charge_str}
-    </div>
+    <div style='font-size:14px; opacity:0.85;'>🌙 Night Charged Total</div>
+    <div style='font-size:26px; margin-top:4px; font-weight:800;'>{total_night_charge_str}</div>
 </div>
 
 <style>
-@keyframes shimmerText {{
-  0% {{ background-position: -200% 0; }}
-  100% {{ background-position: 200% 0; }}
-}}
+/* Smooth pulse glow animation */
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
     100% {{ box-shadow: 0 0 0px {accent}44; }}
 }}
+
+div[style*="{total_night_charge_str}"] {{
+    animation: pulseGlow 2s infinite;
+}}
 </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
