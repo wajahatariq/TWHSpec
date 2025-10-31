@@ -808,24 +808,3 @@ with main_tab3:
     else:
         st.info("No transaction data available to generate chart.")
 
-tz = pytz.timezone("Asia/Karachi")
-now = datetime.now(tz)
-
-# --- SMART WINDOW HANDLING ---
-# If current time < 6 AM → use yesterday 7 PM → today 6 AM
-# Else → use today 7 PM → tomorrow 6 AM
-if now.time() < time(6, 0):
-    start_date = now.date() - timedelta(days=1)
-else:
-    start_date = now.date()
-
-start_time = tz.localize(datetime.combine(start_date, time(19, 0)))  # 7 PM
-end_time = start_time + timedelta(hours=11)  # 6 AM next day
-
-# --- FILTER & CALCULATE TOTAL CHARGED ---
-df["Timestamp"] = pd.to_datetime(df["Timestamp"]).dt.tz_localize("UTC").dt.tz_convert("Asia/Karachi")
-mask = (df["Timestamp"] >= start_time) & (df["Timestamp"] <= end_time)
-filtered_df = df.loc[mask]
-
-today_total_charged = filtered_df["Charge"].sum()
-
