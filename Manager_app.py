@@ -7,6 +7,8 @@ import requests
 import time
 import random
 
+st.set_page_config(page_title="Client Management System", layout="wide")
+
 # --- THEMES ---
 light_themes = {
     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
