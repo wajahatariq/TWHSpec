@@ -632,13 +632,9 @@ with main_tab3:
         st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
 
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import seaborn as sns
-    
-    st.divider()
-# --- ANALYTICS SECTION (Plotly + Agent & Status Filters) ---
     import plotly.express as px
+    import pandas as pd
+    from datetime import datetime, timedelta
     
     st.divider()
     st.subheader("Analytics Overview")
@@ -647,132 +643,150 @@ with main_tab3:
     df = pd.concat([df_spectrum, df_insurance], ignore_index=True)
     
     if not df.empty:
-        # Ensure Charge column is numeric
+        # Ensure numeric column exists before filtering
         df["ChargeFloat"] = pd.to_numeric(df["Charge"], errors="coerce").fillna(0)
         df["Transaction Date"] = pd.to_datetime(df.get("Timestamp", pd.NaT), errors="coerce")
     
-        # --- Filter Controls ---
-        col_filters = st.columns(2)
+        # Keep only last 15 days of data
+        cutoff_date = datetime.now() - timedelta(days=15)
+        df = df[df["Transaction Date"] >= cutoff_date]
     
-        # Agent filter
-        with col_filters[0]:
-            if "Agent Name" in df.columns:
-                agents = ["All Agents"] + sorted(df["Agent Name"].dropna().unique().tolist())
-                selected_agent = st.selectbox("Filter by Agent:", agents)
-            else:
-                selected_agent = "All Agents"
-    
-        # Status filter
-        with col_filters[1]:
-            if "Status" in df.columns:
-                statuses = ["All Statuses"] + sorted(df["Status"].dropna().unique().tolist())
-                selected_status = st.selectbox("Filter by Status:", statuses)
-            else:
-                selected_status = "All Statuses"
-    
-        # Apply filters
-        if selected_agent != "All Agents":
-            df = df[df["Agent Name"] == selected_agent]
-        if selected_status != "All Statuses":
-            df = df[df["Status"] == selected_status]
-    
-        # Time aggregation selector
-        aggregation_period = st.radio(
-            "Select time grouping:",
-            ("Daily", "Weekly", "Monthly"),
-            horizontal=True
-        )
-    
-        # Define aggregation logic
-        if aggregation_period == "Daily":
-            df["Period"] = df["Transaction Date"].dt.date
-        elif aggregation_period == "Weekly":
-            df["Period"] = df["Transaction Date"].dt.to_period("W").apply(lambda r: r.start_time)
-        elif aggregation_period == "Monthly":
-            df["Period"] = df["Transaction Date"].dt.to_period("M").apply(lambda r: r.start_time)
-    
-        # Group data
-        df_summary = df.groupby("Period")["ChargeFloat"].sum().reset_index()
-    
-        # --- Line Chart ---
-        line_fig = px.line(
-            df_summary,
-            x="Period",
-            y="ChargeFloat",
-            title=f"Total Charges by {aggregation_period}",
-            markers=True,
-            template="plotly_white"
-        )
-        line_fig.update_traces(line=dict(width=3, color="#2E86C1"))
-        line_fig.update_layout(
-            title_x=0.3,
-            xaxis_title="Date",
-            yaxis_title="Total Charges",
-            hovermode="x unified",
-            margin=dict(l=20, r=20, t=60, b=20)
-        )
-        st.plotly_chart(line_fig, use_container_width=True)
-    
-        # --- Metrics ---
-        total_amount = df["ChargeFloat"].sum()
-        avg_transaction = df["ChargeFloat"].mean()
-        if not df_summary.empty:
-            peak_period = df_summary.loc[df_summary["ChargeFloat"].idxmax(), "Period"]
+        if df.empty:
+            st.warning("No data available for the last 15 days.")
         else:
-            peak_period = "N/A"
+            # --- Filter Controls ---
+            col_filters = st.columns(3)
     
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Total Charges", f"${total_amount:,.2f}")
-        col2.metric("Average Transaction", f"${avg_transaction:,.2f}")
-        
-        # Safely handle peak_period formatting
-        if isinstance(peak_period, pd.Timestamp):
-            peak_label = peak_period.strftime("%Y-%m-%d")
-        elif hasattr(peak_period, "to_timestamp"):
-            peak_label = peak_period.to_timestamp().strftime("%Y-%m-%d")
-        elif isinstance(peak_period, (str, int, float)):
-            peak_label = str(peak_period)
-        else:
-            peak_label = "N/A"
-        
-        col3.metric(f"Peak {aggregation_period}", peak_label)
+            # Agent filter
+            with col_filters[0]:
+                if "Agent Name" in df.columns:
+                    agents = ["All Agents"] + sorted(df["Agent Name"].dropna().unique().tolist())
+                    selected_agent = st.selectbox("Filter by Agent:", agents)
+                else:
+                    selected_agent = "All Agents"
     
-        # --- Top Agents ---
-        st.subheader("Top Agents")
-        if "Agent Name" in df.columns and not df.empty:
-            top_agents = (
-                df.groupby("Agent Name")["ChargeFloat"]
-                .sum()
-                .reset_index()
-                .sort_values(by="ChargeFloat", ascending=False)
-            )
-            bar_fig = px.bar(
-                top_agents,
-                x="Agent Name",
-                y="ChargeFloat",
-                text="ChargeFloat",
-                title="Top Agents by Total Charges",
-                color="ChargeFloat",
-                color_continuous_scale="Blues",
-                template="plotly_white"
-            )
-            bar_fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
-            bar_fig.update_layout(xaxis_title="Agent", yaxis_title="Total Charges")
-            st.plotly_chart(bar_fig, use_container_width=True)
+            # Status filter
+            with col_filters[1]:
+                if "Status" in df.columns:
+                    statuses = ["All Statuses"] + sorted(df["Status"].dropna().unique().tolist())
+                    selected_status = st.selectbox("Filter by Status:", statuses)
+                else:
+                    selected_status = "All Statuses"
     
-        # --- Status Breakdown ---
-        st.subheader("Status Breakdown")
-        if "Status" in df.columns and not df.empty:
-            status_summary = df.groupby("Status")["ChargeFloat"].sum().reset_index()
-            pie_fig = px.pie(
-                status_summary,
-                values="ChargeFloat",
-                names="Status",
-                title="Total Charges by Status",
-                color_discrete_sequence=px.colors.qualitative.Pastel
+            # Chart type selector
+            with col_filters[2]:
+                chart_type = st.selectbox("Chart Type:", ["Line", "Bar", "Area", "Pie"])
+    
+            # Apply filters
+            if selected_agent != "All Agents":
+                df = df[df["Agent Name"] == selected_agent]
+            if selected_status != "All Statuses":
+                df = df[df["Status"] == selected_status]
+    
+            # --- Time Aggregation ---
+            aggregation_period = st.radio(
+                "Select time grouping:",
+                ("Daily", "Weekly", "Monthly"),
+                horizontal=True
             )
-            pie_fig.update_traces(textposition="inside", textinfo="percent+label")
-            st.plotly_chart(pie_fig, use_container_width=True)
+    
+            # Define aggregation logic
+            if aggregation_period == "Daily":
+                df["Period"] = df["Transaction Date"].dt.date
+            elif aggregation_period == "Weekly":
+                df["Period"] = df["Transaction Date"].dt.to_period("W").apply(lambda r: r.start_time)
+            elif aggregation_period == "Monthly":
+                df["Period"] = df["Transaction Date"].dt.to_period("M").apply(lambda r: r.start_time)
+    
+            # Group data
+            df_summary = df.groupby("Period")["ChargeFloat"].sum().reset_index()
+    
+            # --- Choose and render chart type ---
+            if not df_summary.empty:
+                if chart_type == "Line":
+                    fig = px.line(df_summary, x="Period", y="ChargeFloat",
+                                  title=f"Total Charges by {aggregation_period}",
+                                  markers=True, template="plotly_white")
+                    fig.update_traces(line=dict(width=3, color="#2E86C1"))
+                elif chart_type == "Bar":
+                    fig = px.bar(df_summary, x="Period", y="ChargeFloat",
+                                 title=f"Total Charges by {aggregation_period}",
+                                 text_auto=".2f", template="plotly_white",
+                                 color="ChargeFloat", color_continuous_scale="Blues")
+                elif chart_type == "Area":
+                    fig = px.area(df_summary, x="Period", y="ChargeFloat",
+                                  title=f"Total Charges by {aggregation_period}",
+                                  template="plotly_white")
+                    fig.update_traces(line=dict(width=2, color="#2E86C1"), fillcolor="rgba(46,134,193,0.3)")
+                elif chart_type == "Pie":
+                    fig = px.pie(df_summary, values="ChargeFloat", names="Period",
+                                 title=f"Total Charges Distribution ({aggregation_period})",
+                                 color_discrete_sequence=px.colors.qualitative.Pastel)
+                    fig.update_traces(textposition="inside", textinfo="percent+label")
+    
+                fig.update_layout(
+                    xaxis_title="Date",
+                    yaxis_title="Total Charges",
+                    hovermode="x unified",
+                    margin=dict(l=20, r=20, t=60, b=20)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("No data available for the selected filters.")
+    
+            # --- Metrics ---
+            total_amount = df["ChargeFloat"].sum()
+            avg_transaction = df["ChargeFloat"].mean()
+            peak_period = df_summary.loc[df_summary["ChargeFloat"].idxmax(), "Period"] if not df_summary.empty else "N/A"
+    
+            # Safely format peak period
+            if isinstance(peak_period, pd.Timestamp):
+                peak_label = peak_period.strftime("%Y-%m-%d")
+            elif hasattr(peak_period, "to_timestamp"):
+                peak_label = peak_period.to_timestamp().strftime("%Y-%m-%d")
+            else:
+                peak_label = str(peak_period)
+    
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Charges", f"${total_amount:,.2f}")
+            col2.metric("Average Transaction", f"${avg_transaction:,.2f}")
+            col3.metric(f"Peak {aggregation_period}", peak_label)
+    
+            # --- Top Agents ---
+            st.subheader("Top Agents")
+            if "Agent Name" in df.columns and not df.empty:
+                top_agents = (
+                    df.groupby("Agent Name")["ChargeFloat"]
+                    .sum()
+                    .reset_index()
+                    .sort_values(by="ChargeFloat", ascending=False)
+                )
+                bar_fig = px.bar(
+                    top_agents,
+                    x="Agent Name",
+                    y="ChargeFloat",
+                    text="ChargeFloat",
+                    title="Top Agents by Total Charges",
+                    color="ChargeFloat",
+                    color_continuous_scale="Blues",
+                    template="plotly_white"
+                )
+                bar_fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+                st.plotly_chart(bar_fig, use_container_width=True)
+    
+            # --- Status Breakdown ---
+            st.subheader("Status Breakdown")
+            if "Status" in df.columns and not df.empty:
+                status_summary = df.groupby("Status")["ChargeFloat"].sum().reset_index()
+                pie_fig = px.pie(
+                    status_summary,
+                    values="ChargeFloat",
+                    names="Status",
+                    title="Total Charges by Status",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                pie_fig.update_traces(textposition="inside", textinfo="percent+label")
+                st.plotly_chart(pie_fig, use_container_width=True)
     
     else:
         st.info("No data available for analytics.")
