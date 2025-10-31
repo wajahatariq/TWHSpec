@@ -512,92 +512,80 @@ if record is not None:
             st.error(f"Error updating lead: {e}")
 
 
-# --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
-from datetime import datetime, time, timedelta
-import pytz
-
 tz = pytz.timezone("Asia/Karachi")
 
-# Convert Timestamp to datetime
-df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp']).dt.tz_localize(None)
-
-now = datetime.now(tz)
-
-# Determine current night window (7 PM → 6 AM)
-if now.time() >= time(7, 0) and now.time() < time(19, 0):
-    # Daytime: window was yesterday 19:00 → today 06:00
-    window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-    window_end = datetime.combine(now.date(), time(6, 0))
-else:
-    # Nighttime
-    if now.time() >= time(19, 0):
-        window_start = datetime.combine(now.date(), time(19, 0))
-        window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
-    else:  # 00:00 → 06:00
+if not df_all.empty and "Timestamp" in df_all.columns:
+    # Ensure Timestamp is datetime and naive for comparison
+    df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce').dt.tz_localize(None)
+    
+    now = datetime.now(tz)
+    
+    # Determine night window (7 PM → 6 AM)
+    if now.time() >= time(7, 0) and now.time() < time(19, 0):
+        # Daytime: previous night
         window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
         window_end = datetime.combine(now.date(), time(6, 0))
+    else:
+        # Nighttime: today 7 PM → tomorrow 6 AM
+        if now.time() >= time(19, 0):
+            window_start = datetime.combine(now.date(), time(19, 0))
+            window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+        else:  # 00:00 → 06:00
+            window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+            window_end = datetime.combine(now.date(), time(6, 0))
 
-# Filter Charged transactions in this window
-if not df_all.empty:
-    # Remove $ sign and commas, convert to float
+    # Convert Charge to float
     df_all['ChargeFloat'] = df_all['Charge'].replace('[\$,]', '', regex=True).astype(float)
 
-# Then filter night charged transactions
-night_charged_df = df_all[
-    (df_all['Status'] == "Charged") &
-    (df_all['Timestamp'] >= window_start) &
-    (df_all['Timestamp'] <= window_end)
-]
+    # Filter night charged transactions
+    night_charged_df = df_all[
+        (df_all['Status'] == "Charged") &
+        (df_all['Timestamp'] >= window_start) &
+        (df_all['Timestamp'] <= window_end)
+    ]
 
-# Sum
-total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+    total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+    total_night_charge_str = f"${total_night_charge:,.2f}"
 
-total_night_charge_str = f"${total_night_charge:,.2f}"
-amount_text_color = get_contrast_color(accent)
+    amount_text_color = "#000000" if sum(int(accent.lstrip('#')[i:i+2], 16) for i in (0,2,4)) > 300 else "#ffffff"
+    label_text_color = amount_text_color
 
-amount_text_color = get_contrast_color(accent)
-label_text_color = get_contrast_color(accent)
-
-st.markdown(f"""
-<div style="
-    position: fixed;
-    top: 20px;
-    right: 30px;
-    background: {accent};
-    padding: 16px 24px;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    box-shadow: 0 8px 24px {accent}77;
-    z-index: 9999;
-    text-align: center;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(6px);
-">
-    <!-- Label -->
-    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
-        🌙 Night Charged Total
+    # Display floating panel
+    st.markdown(f"""
+    <div style="
+        position: fixed;
+        top: 20px;
+        right: 30px;
+        background: {accent};
+        padding: 16px 24px;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px {accent}77;
+        z-index: 9999;
+        text-align: center;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(6px);
+    ">
+        <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+            🌙 Night Charged Total
+        </div>
+        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+            Today's Total
+        </div>
+        <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+            {total_night_charge_str}
+        </div>
     </div>
-    <!-- Sub-label for clarity -->
-    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
-        Today's Total
-    </div>
-    <!-- Amount -->
-    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
-        {total_night_charge_str}
-    </div>
-</div>
 
-<style>
-@keyframes pulseGlow {{
-    0% {{ box-shadow: 0 0 0px {accent}44; }}
-    50% {{ box-shadow: 0 0 20px {accent}aa; }}
-    100% {{ box-shadow: 0 0 0px {accent}44; }}
-}}
-
-div[style*="{total_night_charge_str}"] {{
-    animation: pulseGlow 2s infinite;
-}}
-</style>
-""", unsafe_allow_html=True)
-
+    <style>
+    @keyframes pulseGlow {{
+        0% {{ box-shadow: 0 0 0px {accent}44; }}
+        50% {{ box-shadow: 0 0 20px {accent}aa; }}
+        100% {{ box-shadow: 0 0 0px {accent}44; }}
+    }}
+    div[style*="{total_night_charge_str}"] {{
+        animation: pulseGlow 2s infinite;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
