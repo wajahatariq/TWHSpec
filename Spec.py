@@ -122,53 +122,6 @@ selected = themes[st.session_state.selected_theme]
 bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
 text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
 
-title_text_color = get_contrast_color(accent)
-
-st.markdown(f"""
-<style>
-/* Form container */
-div.stForm {{
-    border: 2px solid {accent};
-    border-radius: 12px;
-    padding: 16px;
-    background-color: {bg2}33; /* semi-transparent lighter background */
-}}
-
-/* Input boxes */
-div.stTextInput > div > input,
-div.stNumberInput > div > input,
-div.stSelectbox > div > div > select {{
-    border: 2px solid {accent};
-    border-radius: 8px;
-    padding: 6px;
-    color: {text_color};
-    background-color: {bg1};
-}}
-
-/* Input hover/focus */
-div.stTextInput > div > input:focus,
-div.stNumberInput > div > input:focus,
-div.stSelectbox > div > div > select:focus {{
-    border-color: {accent};
-    box-shadow: 0 0 6px {accent}55;
-    outline: none;
-}}
-
-/* Buttons inside forms */
-div.stButton > button {{
-    background-color: {accent};
-    color: {title_text_color};
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 600;
-}}
-div.stButton > button:hover {{
-    background-color: {accent}cc;
-    transform: scale(1.03);
-}}
-</style>
-""", unsafe_allow_html=True)
-
 # ------------------ TOAST MESSAGE ------------------
 if "show_toast" in st.session_state:
     toast_message = st.session_state["show_toast"]
@@ -557,6 +510,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
