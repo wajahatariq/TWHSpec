@@ -103,15 +103,13 @@ if st.session_state.selected_theme not in themes:
 
 # --- Capsule Buttons ---
 theme_names = list(themes.keys())
-num_per_row = 10  # Number of buttons per row
-
-for i in range(0, len(theme_names), num_per_row):
-    cols = st.columns(num_per_row)
-    for j, theme_name in enumerate(theme_names[i:i+num_per_row]):
-        data = themes[theme_name]
-        accent = data["accent"]
-        if cols[j].button(theme_name, key=f"theme_{theme_name}"):
-            st.session_state.selected_theme = theme_name
+st.markdown('<div class="theme-scroll">', unsafe_allow_html=True)
+for theme_name in theme_names:
+    data = themes[theme_name]
+    accent = data["accent"]
+    if st.button(theme_name, key=f"theme_{theme_name}"):
+        st.session_state.selected_theme = theme_name
+st.markdown('</div>', unsafe_allow_html=True)
             
 # --- Extract Selected Theme ---
 selected = themes[st.session_state.selected_theme]
@@ -139,6 +137,26 @@ Client Management System — Techware Hub
 # --- HEADER ---
 st.markdown(f"""
 <style>
+/* --- SCROLLABLE SINGLE-LINE THEMES ROW --- */
+.theme-scroll {{
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 8px 0;
+    gap: 10px;
+}}
+.theme-scroll::-webkit-scrollbar {{
+    height: 6px;
+}}
+.theme-scroll::-webkit-scrollbar-thumb {{
+    background: {accent};
+    border-radius: 10px;
+}}
+.theme-scroll > div {{
+    flex: 0 0 auto;
+}}
+</style>
+""", unsafe_allow_html=True)
 /* ---------------- keyframes ---------------- */
 @keyframes pulseGlow {{
   0% {{ box-shadow: 0 0 0px {accent}44; }}
@@ -481,6 +499,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
