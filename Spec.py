@@ -59,6 +59,30 @@ dark_themes = {
     "Neon Cyan": {"bg1": "#001111", "bg2": "#002222", "accent": "#00ffff"},
 }
 
+theme_names = list(themes.keys())
+half = len(theme_names) // 2
+
+# First row
+cols1 = st.columns(len(theme_names[:half]))
+for i, theme_name in enumerate(theme_names[:half]):
+    accent = themes[theme_name]["accent"]
+    display_name = theme_name.replace(" ", "\n")
+    if cols1[i].button(display_name, key=f"theme_{theme_name}"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+            st.rerun()
+
+# Second row
+cols2 = st.columns(len(theme_names[half:]))
+for i, theme_name in enumerate(theme_names[half:]):
+    accent = themes[theme_name]["accent"]
+    display_name = theme_name.replace(" ", "\n")
+    if cols2[i].button(display_name, key=f"theme_{theme_name}_2"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
+            st.rerun()
 # ------------------ THEME RANDOMIZATION ------------------
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
@@ -495,6 +519,7 @@ if record is not None:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 
