@@ -7,14 +7,6 @@ import requests
 import time
 import random
 
-
-def safe_rerun(delay=0.3):
-    now = time.time()
-    last = st.session_state.get("_last_rerun", 0)
-    if now - last > delay:
-        st.session_state["_last_rerun"] = now
-        st.rerun()
-
 st.set_page_config(page_title="Client Management System", layout="wide")
 
 # --- THEMES ---
@@ -61,7 +53,7 @@ with col1:
             st.session_state.theme_mode = "Light"
             st.session_state.selected_theme = list(light_themes.keys())[0]
             st.session_state["show_toast"] = "Switched to Light Mode 🌞"
-            safe_rerun()
+            st.rerun()()
 
 with col2:
     if st.button("🌙 Dark Mode", use_container_width=True):
@@ -69,7 +61,7 @@ with col2:
             st.session_state.theme_mode = "Dark"
             st.session_state.selected_theme = list(dark_themes.keys())[0]
             st.session_state["show_toast"] = "Switched to Dark Mode 🌙"
-            safe_rerun()
+            st.rerun()()
 
 # ------------------ SELECT THEME SET ------------------
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
@@ -85,7 +77,7 @@ for i, (theme_name, data) in enumerate(themes.items()):
         if st.session_state.selected_theme != theme_name:
             st.session_state.selected_theme = theme_name
             st.session_state["show_toast"] = f"🎨 Switched to {theme_name}"
-            safe_rerun()
+            st.rerun()()
 
 # ------------------ SELECTED THEME ------------------
 selected = themes[st.session_state.selected_theme]
@@ -302,7 +294,7 @@ insurance_ws = gc.open(SHEET_NAME).worksheet("Sheet2")
 
 # --- REFRESH BUTTON ---
 if st.button("Refresh Now"):
-    safe_rerun()
+    st.rerun()()
 
 # --- LOAD DATA FUNCTION ---
 def load_data(ws):
@@ -389,12 +381,12 @@ def render_transaction_tabs(df, worksheet, label):
                             )
                             send_pushbullet_notification("Transaction Approved ✅", message)
                             st.success("Approved successfully!")
-                            safe_rerun()
+                            st.rerun()()
                     with col2:
                         if st.button("Decline", key=f"decline_{label}_{i}"):
                             worksheet.update_cell(row_number, col_number, "Declined")
                             st.error("Declined successfully!")
-                            safe_rerun()
+                            st.rerun()()
 
 # --- CLEAR SIGNUP FIELDS AFTER SUCCESS ---
 if st.session_state.get("clear_signup_fields"):
@@ -420,7 +412,7 @@ def login_signup_screen():
                     st.session_state["logged_in"] = True
                     st.session_state["user_id"] = user_id
                     st.success("✅ Login successful!")
-                    safe_rerun()
+                    st.rerun()()
                 else:
                     st.error("❌ Invalid ID or password")
 
@@ -444,7 +436,7 @@ def login_signup_screen():
                         add_user(new_id, new_pw)
                         st.success("🎉 Account created! You can now log in.")
                         st.session_state["clear_signup_fields"] = True    
-                        safe_rerun()
+                        st.rerun()()
 
 
 # --- CHECK LOGIN STATE ---
@@ -487,7 +479,7 @@ st.markdown(f"""
 # --- LOGOUT HANDLER ---
 if st.query_params.get("logout") is not None:
     st.session_state["logged_in"] = False
-    safe_rerun()
+    st.rerun()()
 
 # --- LOAD DATA FOR BOTH SHEETS ---
 df_spectrum = load_data(spectrum_ws)
@@ -576,7 +568,7 @@ with main_tab3:
                             row_num = row_index[0] + 2  # header = row 1
                             worksheet.delete_rows(row_num)
                             st.success(f"Record {record['Record_ID']} deleted successfully!")
-                            safe_rerun()
+                            st.rerun()()
                         else:
                             st.error("Record not found in sheet. Try refreshing the page.")
                     except Exception as e:
@@ -612,7 +604,7 @@ with main_tab3:
             
                         worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                         st.success(f"Record {record['Record_ID']} updated successfully!")
-                        safe_rerun()
+                        st.rerun()()
                     else:
                         st.error("Record not found in sheet. Try refreshing the page.")
                 except Exception as e:
