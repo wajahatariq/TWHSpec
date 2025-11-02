@@ -48,7 +48,7 @@ st.session_state.theme_colors = theme_set[random_theme_name]
 # ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
 with col1:
-    if st.button("🌞 Light Mode", use_container_width=True):
+    if st.button("🌞 Light Mode", key="btn_light_mode", use_container_width=True):
         if st.session_state.theme_mode != "Light":
             st.session_state.theme_mode = "Light"
             st.session_state.selected_theme = list(light_themes.keys())[0]
@@ -56,7 +56,7 @@ with col1:
             st.rerun()
 
 with col2:
-    if st.button("🌙 Dark Mode", use_container_width=True):
+    if st.button("🌙 Dark Mode", key="btn_dark_mode", use_container_width=True):
         if st.session_state.theme_mode != "Dark":
             st.session_state.theme_mode = "Dark"
             st.session_state.selected_theme = list(dark_themes.keys())[0]
