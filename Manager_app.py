@@ -40,10 +40,18 @@ dark_themes = {
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
 
+# Decide which theme set to use
 theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-random_theme_name = random.choice(list(theme_set.keys()))
-st.session_state.selected_theme = random_theme_name
-st.session_state.theme_colors = theme_set[random_theme_name]
+
+# Initialize a random theme only once (not on every rerun)
+if "theme_initialized" not in st.session_state:
+    random_theme_name = random.choice(list(theme_set.keys()))
+    st.session_state.selected_theme = random_theme_name
+    st.session_state.theme_colors = theme_set[random_theme_name]
+    st.session_state.theme_initialized = True  # Mark it done
+else:
+    # Keep using the current selected theme
+    theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
 
 # ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
@@ -412,7 +420,8 @@ def login_signup_screen():
                     st.session_state["logged_in"] = True
                     st.session_state["user_id"] = user_id
                     st.success("✅ Login successful!")
-                    st.rerun()()
+                    st.session_state.theme_initialized = False  # Allow new random theme after login
+                    st.rerun()
                 else:
                     st.error("❌ Invalid ID or password")
 
