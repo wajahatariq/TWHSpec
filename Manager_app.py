@@ -40,10 +40,12 @@ dark_themes = {
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
 
-theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-random_theme_name = random.choice(list(theme_set.keys()))
-st.session_state.selected_theme = random_theme_name
-st.session_state.theme_colors = theme_set[random_theme_name]
+# Randomize theme only once — e.g., right after login
+if "selected_theme" not in st.session_state:
+    theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
+    random_theme_name = random.choice(list(theme_set.keys()))
+    st.session_state.selected_theme = random_theme_name
+    st.session_state.theme_colors = theme_set[random_theme_name]
 
 # ------------------ MODE TOGGLE ------------------
 col1, col2, _ = st.columns([1, 1, 6])
