@@ -583,28 +583,49 @@ with main_tab3:
                     row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
                     if row_index:
                         row_num = row_index[0] + 2  # header = row 1
-            
-                        # Convert all values to native Python types
-                        updated_data = [
-                            str(record["Record_ID"]),
-                            str(record["Agent Name"]),
-                            str(record["Name"]),
-                            str(record["Ph Number"]),
-                            str(record["Address"]),
-                            str(record["Email"]),
-                            str(record["Card Holder Name"]),
-                            str(record["Card Number"]),
-                            str(record["Expiry Date"]),
-                            int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
-                            str(new_charge),
-                            str(record["LLC"]),
-                            str(record["Provider"]) if "Provider" in record else "Nil",
-                            str(record["Date of Charge"]),
-                            str(new_status),
-                            str(record["Timestamp"])
-                        ]
-            
-                        worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                    
+                        if sheet_option.startswith("Spectrum"):
+                            # Include Provider column
+                            updated_data = [
+                                str(record["Record_ID"]),
+                                str(record["Agent Name"]),
+                                str(record["Name"]),
+                                str(record["Ph Number"]),
+                                str(record["Address"]),
+                                str(record["Email"]),
+                                str(record["Card Holder Name"]),
+                                str(record["Card Number"]),
+                                str(record["Expiry Date"]),
+                                int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
+                                str(new_charge),
+                                str(record["LLC"]),
+                                str(record["Provider"]),
+                                str(record["Date of Charge"]),
+                                str(new_status),
+                                str(record["Timestamp"])
+                            ]
+                            worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                        else:
+                            # Insurance sheet — exclude Provider
+                            updated_data = [
+                                str(record["Record_ID"]),
+                                str(record["Agent Name"]),
+                                str(record["Name"]),
+                                str(record["Ph Number"]),
+                                str(record["Address"]),
+                                str(record["Email"]),
+                                str(record["Card Holder Name"]),
+                                str(record["Card Number"]),
+                                str(record["Expiry Date"]),
+                                int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
+                                str(new_charge),
+                                str(record["LLC"]),
+                                str(record["Date of Charge"]),
+                                str(new_status),
+                                str(record["Timestamp"])
+                            ]
+                            # Note: range adjusted to 14 columns now (A to N)
+                            worksheet.update(f"A{row_num}:N{row_num}", [updated_data])
                         st.success(f"Record {record['Record_ID']} updated successfully!")
                         st.rerun()
                     else:
