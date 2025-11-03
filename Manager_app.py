@@ -754,42 +754,27 @@ with main_tab3:
         st.info("No transaction data available to generate chart.")
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
 from datetime import datetime, time, timedelta
-import pytz
 
+now = datetime.now()
+one_day_ago = now - timedelta(days=1)
 
-tz = pytz.timezone("Asia/Karachi")
-now = datetime.now(tz).replace(tzinfo=None)  # naive datetime for comparison
+df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors="coerce")
 
-if time(7, 0) <= now.time() < time(19, 0):
-    # Daytime: last night 7 PM → today 6 AM
-    window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-    window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
-    window_start_2 = datetime.combine(now.date(), time(0, 0))
-    window_end_2 = datetime.combine(now.date(), time(6, 0))
-else:
-    # Nighttime: today 7 PM → tomorrow 6 AM
-    if now.time() >= time(19, 0):
-        window_start_1 = datetime.combine(now.date(), time(19, 0))
-        window_end_1 = datetime.combine(now.date(), time(23, 59, 59, 999999))
-        window_start_2 = datetime.combine(now.date() + timedelta(days=1), time(0, 0))
-        window_end_2 = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
-    else:  # between midnight and 6 AM
-        window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-        window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
-        window_start_2 = datetime.combine(now.date(), time(0, 0))
-        window_end_2 = datetime.combine(now.date(), time(6, 0))
+# Filter last 24 hours
+last_24h_df = df_all[df_all["Date of Charge"] >= one_day_ago]
 
-def in_night_window(ts):
-    return (window_start_1 <= ts <= window_end_1) or (window_start_2 <= ts <= window_end_2)
+# Filter for Charged status only
+charged_last_24h = last_24h_df[last_24h_df["Status"] == "Charged"]
 
-df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
-night_charged_df = df_all[
-    (df_all['Status'] == "Charged") & 
-    (df_all['Timestamp'].apply(in_night_window))
-]
+# Sum charge values safely after converting to numeric
+charged_last_24h["ChargeFloat"] = pd.to_numeric(
+    charged_last_24h["Charge"].replace('[\$,]', '', regex=True),
+    errors='coerce'
+).fillna(0)
 
-total_night_charge = night_charged_df['ChargeFloat'].sum()
-total_night_charge_str = f"${total_night_charge:,.2f}"
+total_last_24h_charge = charged_last_24h["ChargeFloat"].sum()
+print(f"Total Charge in last 24 hours: ${total_last_24h_charge:.2f}")
+
 
 amount_text_color = get_contrast_color(accent)
 
