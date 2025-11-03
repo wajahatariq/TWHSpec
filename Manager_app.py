@@ -753,7 +753,9 @@ with main_tab3:
     else:
         st.info("No transaction data available to generate chart.")
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
-from datetime import datetime, time, timedelta
+
+import pandas as pd
+from datetime import datetime, timedelta
 
 now = datetime.now()
 one_day_ago = now - timedelta(days=1)
@@ -774,6 +776,7 @@ charged_last_24h["ChargeFloat"] = pd.to_numeric(
 
 total_last_24h_charge = charged_last_24h["ChargeFloat"].sum()
 print(f"Total Charge in last 24 hours: ${total_last_24h_charge:.2f}")
+
 
 
 amount_text_color = get_contrast_color(accent)
