@@ -516,11 +516,12 @@ if record is not None:
             row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
             if row_index:
                 row_num = row_index[0] + 2
+                new_timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
                 updated_data = [
                     record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
                     new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
                     new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                    new_status, str(record["Timestamp"])
+                    new_status, new_timestamp
                 ]
                 worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
                 st.success(f"Lead for {new_name} updated successfully!")
@@ -627,6 +628,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
