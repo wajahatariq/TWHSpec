@@ -753,32 +753,40 @@ with main_tab3:
     else:
         st.info("No transaction data available to generate chart.")
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
+from datetime import datetime, time, timedelta
+import pytz
 
-import pandas as pd
-from datetime import datetime, timedelta
+tz = pytz.timezone("Asia/Karachi")
 
-now = datetime.now()
-one_day_ago = now - timedelta(days=1)
+# Convert Timestamp to datetime
+df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp']).dt.tz_localize(None)
 
-df_all["Date of Charge"] = pd.to_datetime(df_all["Date of Charge"], errors="coerce")
+now = datetime.now(tz)
 
-# Filter last 24 hours
-last_24h_df = df_all[df_all["Date of Charge"] >= one_day_ago]
+# Determine current night window (7 PM → 6 AM)
+if now.time() >= time(7, 0) and now.time() < time(19, 0):
+    # Daytime: window was yesterday 19:00 → today 06:00
+    window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+    window_end = datetime.combine(now.date(), time(6, 0))
+else:
+    # Nighttime
+    if now.time() >= time(19, 0):
+        window_start = datetime.combine(now.date(), time(19, 0))
+        window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+    else:  # 00:00 → 06:00
+        window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+        window_end = datetime.combine(now.date(), time(6, 0))
 
-# Filter for Charged status only
-charged_last_24h = last_24h_df[last_24h_df["Status"] == "Charged"]
+# Filter Charged transactions in this window
+night_charged_df = df_all[
+    (df_all['Status'] == "Charged") &
+    (df_all['Timestamp'] >= window_start) &
+    (df_all['Timestamp'] <= window_end)
+]
 
-# Sum charge values safely after converting to numeric
-charged_last_24h["ChargeFloat"] = pd.to_numeric(
-    charged_last_24h["Charge"].replace('[\$,]', '', regex=True),
-    errors='coerce'
-).fillna(0)
-
-total_last_24h_charge = charged_last_24h["ChargeFloat"].sum()
-print(f"Total Charge in last 24 hours: ${total_last_24h_charge:.2f}")
-
-
-
+# Calculate total charged amount
+total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+total_night_charge_str = f"${total_night_charge:,.2f}"
 amount_text_color = get_contrast_color(accent)
 
 amount_text_color = get_contrast_color(accent)
