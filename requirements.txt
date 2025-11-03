@@ -1,4 +1,4 @@
-streamlit
+streamlit 1.51.0
 gspread
 pandas
 requests
@@ -9,3 +9,4 @@ tabulate
 matplotlib
 seaborn 
 plotly
+
