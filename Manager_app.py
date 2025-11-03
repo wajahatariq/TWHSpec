@@ -756,10 +756,9 @@ with main_tab3:
 from datetime import datetime, time, timedelta
 import pytz
 
-from datetime import datetime, time, timedelta
 
 tz = pytz.timezone("Asia/Karachi")
-now = datetime.now(tz).replace(tzinfo=None)  # naive for comparison with naive timestamps
+now = datetime.now(tz).replace(tzinfo=None)  # naive datetime for comparison
 
 if time(7, 0) <= now.time() < time(19, 0):
     # Daytime: last night 7 PM → today 6 AM
@@ -780,9 +779,8 @@ else:
         window_start_2 = datetime.combine(now.date(), time(0, 0))
         window_end_2 = datetime.combine(now.date(), time(6, 0))
 
-# Now filter your dataframe:
 def in_night_window(ts):
-    return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
+    return (window_start_1 <= ts <= window_end_1) or (window_start_2 <= ts <= window_end_2)
 
 df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
 night_charged_df = df_all[
@@ -792,6 +790,7 @@ night_charged_df = df_all[
 
 total_night_charge = night_charged_df['ChargeFloat'].sum()
 total_night_charge_str = f"${total_night_charge:,.2f}"
+
 amount_text_color = get_contrast_color(accent)
 
 amount_text_color = get_contrast_color(accent)
