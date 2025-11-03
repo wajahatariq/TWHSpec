@@ -733,13 +733,17 @@ with main_tab3:
     
             # --- Ultra Analysis Options ---
             st.markdown("### Ultra Analytics Options")
-            col_u1, col_u2, col_u3 = st.columns(3)
+            col_u1, col_u2, col_u3, col_u4 = st.columns(4)
             with col_u1:
                 st.metric("Total Charge", f"${df_chart['ChargeFloat'].sum():,.2f}")
             with col_u2:
-                st.metric("Average Daily Charge", f"${daily_sum['ChargeFloat'].mean():,.2f}")
+                total_charges = len(df_chart)
+                st.metric("Total Number of Charges", f"{total_charges:,}")
             with col_u3:
+                st.metric("Average Daily Charge", f"${daily_sum['ChargeFloat'].mean():,.2f}")
+            with col_u4:
                 st.metric("Peak Charge Day", str(daily_sum.loc[daily_sum['ChargeFloat'].idxmax(), "Date of Charge"]))
+
     
             # Additional insights for data analyst
             st.markdown("#### Top Agents by Total Charge")
