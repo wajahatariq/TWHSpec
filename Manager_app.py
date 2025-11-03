@@ -756,38 +756,41 @@ with main_tab3:
 from datetime import datetime, time, timedelta
 import pytz
 
+from datetime import datetime, time, timedelta
+
 tz = pytz.timezone("Asia/Karachi")
 now = datetime.now(tz).replace(tzinfo=None)  # naive for comparison with naive timestamps
 
 if time(7, 0) <= now.time() < time(19, 0):
     # Daytime: last night 7 PM → today 6 AM
-    window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-    window_end = datetime.combine(now.date(), time(6, 0))
+    window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+    window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
+    window_start_2 = datetime.combine(now.date(), time(0, 0))
+    window_end_2 = datetime.combine(now.date(), time(6, 0))
 else:
     # Nighttime: today 7 PM → tomorrow 6 AM
     if now.time() >= time(19, 0):
-        window_start = datetime.combine(now.date(), time(19, 0))
-        window_end = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+        window_start_1 = datetime.combine(now.date(), time(19, 0))
+        window_end_1 = datetime.combine(now.date(), time(23, 59, 59, 999999))
+        window_start_2 = datetime.combine(now.date() + timedelta(days=1), time(0, 0))
+        window_end_2 = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
     else:  # between midnight and 6 AM
-        window_start = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-        window_end = datetime.combine(now.date(), time(6, 0))
+        window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+        window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
+        window_start_2 = datetime.combine(now.date(), time(0, 0))
+        window_end_2 = datetime.combine(now.date(), time(6, 0))
 
-# Note: Because window_start > window_end in daytime case (e.g. 7 PM yesterday > 6 AM today),
-# you need to filter accordingly, maybe using an OR condition or split filter.
-
-# Example of filtering with this window spanning midnight:
+# Now filter your dataframe:
 def in_night_window(ts):
-    return (ts >= window_start) or (ts <= window_end)
+    return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
 
-# Usage in pandas:
 df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
 night_charged_df = df_all[
     (df_all['Status'] == "Charged") & 
     (df_all['Timestamp'].apply(in_night_window))
 ]
 
-# Calculate total charged amount
-total_night_charge = night_charged_df['ChargeFloat'].sum() if not night_charged_df.empty else 0
+total_night_charge = night_charged_df['ChargeFloat'].sum()
 total_night_charge_str = f"${total_night_charge:,.2f}"
 amount_text_color = get_contrast_color(accent)
 
