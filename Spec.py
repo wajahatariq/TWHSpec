@@ -289,6 +289,7 @@ def clear_form():
     st.session_state.charge = ""
     st.session_state.llc = "Select LLC"
     st.session_state.provider = "Select Provider"
+    st.session_state.order_id = ""
     st.session_state.date_of_charge = datetime.now().date()
     st.rerun()
     st.success("Form cleared!")
@@ -625,6 +626,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
