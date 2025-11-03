@@ -598,7 +598,7 @@ with main_tab3:
                             int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
                             str(new_charge),
                             str(record["LLC"]),
-                            str(record["Provider"]),
+                            str(record["Provider"]) if "Provider" in record else "Nil"
                             str(record["Date of Charge"]),
                             str(new_status),
                             str(record["Timestamp"])
