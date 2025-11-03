@@ -604,7 +604,7 @@ with main_tab3:
                                 str(new_status),
                                 str(record["Timestamp"])
                             ]
-                            worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                            worksheet.update(f"A{row_num}:O{row_num}", [updated_data])
                         else:
                             # Insurance sheet — exclude Provider
                             updated_data = [
