@@ -273,7 +273,7 @@ gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
 
-AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama", "Areeb"]
+AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum"]
 
@@ -307,17 +307,25 @@ with col_button2:
 st.title("Client Management System")
 st.write("Fill out all client details below:")
 
+try:
+    all_records = worksheet.get_all_records()
+    df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
+except Exception as e:
+    st.error(f"Error loading sheet data: {e}")
+    df_all = pd.DataFrame()
+
 with st.form("transaction_form"):
     col1, col2 = st.columns(2)
     with col1:
         agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
+        card_number = st.text_input("Card Number", key="card_number")
         name = st.text_input("Client Name", key="name")
         phone = st.text_input("Phone Number", key="phone")
         address = st.text_input("Address", key="address")
         email = st.text_input("Email", key="email")
         card_holder = st.text_input("Card Holder Name", key="card_holder")
     with col2:
-        card_number = st.text_input("Card Number", key="card_number")
+        record_id_input = st.text_input("Order ID (unique)", key="order_id")
         expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
         cvc = st.text_input("CVC", key="cvc")
         charge = st.text_input("Charge Amount", key="charge")
@@ -328,6 +336,17 @@ with st.form("transaction_form"):
 # --- VALIDATION & SAVE ---
 if submitted:
     missing_fields = []
+
+    # Validate Order ID (user input instead of UUID)
+    record_id_input = st.session_state.get("order_id", "").strip()
+    if not record_id_input:
+        missing_fields.append("Order ID")
+
+    # Check if Order ID already exists (to avoid duplicates)
+    if not df_all.empty and record_id_input in df_all["Record_ID"].values:
+        st.error("Order ID already exists. Please enter a unique Order ID.")
+        st.stop()
+        
     if agent_name == "Select Agent": missing_fields.append("Agent Name")
     if not name: missing_fields.append("Client Name")
     if not phone: missing_fields.append("Phone Number")
@@ -355,7 +374,7 @@ if submitted:
         st.stop()
 
     # --- Save to Google Sheet ---
-    record_id = str(uuid.uuid4())[:8]
+    record_id = record_id_input.strip()
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
     data = [
         record_id, agent_name, name, phone, address, email, card_holder,
@@ -402,12 +421,6 @@ st.divider()
 st.subheader("Edit Lead")
 
 # --- FETCH ALL DATA ---
-try:
-    all_records = worksheet.get_all_records()
-    df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
-except Exception as e:
-    st.error(f"Error loading sheet data: {e}")
-    df_all = pd.DataFrame()
 
 record = None  # default
 
@@ -447,7 +460,7 @@ if mode.startswith("Recent"):
         st.info("No recent records in the last 5 minutes.")
 
 elif mode.startswith("All-time"):
-    record_id_input = st.text_input("Enter Record ID")
+    record_id_input = st.text_input("Order ID", value=record["Record_ID"], disabled=True)
     if record_id_input and not df_all.empty:
         if record_id_input in df_all["Record_ID"].values:
             record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
@@ -613,4 +626,5 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
