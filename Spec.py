@@ -318,14 +318,14 @@ with st.form("transaction_form"):
     col1, col2 = st.columns(2)
     with col1:
         agent_name = st.selectbox("Agent Name", AGENTS, key="agent_name")
-        card_number = st.text_input("Card Number", key="card_number")
+        record_id_input = st.text_input("Order ID (unique)", key="order_id")
         name = st.text_input("Client Name", key="name")
         phone = st.text_input("Phone Number", key="phone")
         address = st.text_input("Address", key="address")
         email = st.text_input("Email", key="email")
         card_holder = st.text_input("Card Holder Name", key="card_holder")
     with col2:
-        record_id_input = st.text_input("Order ID (unique)", key="order_id")
+        card_number = st.text_input("Card Number", key="card_number")
         expiry = st.text_input("Expiry Date (MM/YY)", key="expiry")
         cvc = st.text_input("CVC", key="cvc")
         charge = st.text_input("Charge Amount", key="charge")
@@ -627,6 +627,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
