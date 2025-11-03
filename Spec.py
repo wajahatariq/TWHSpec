@@ -460,6 +460,7 @@ if mode.startswith("Recent"):
         st.info("No recent records in the last 5 minutes.")
 
 elif mode.startswith("All-time"):
+    record_id_value = record["Record_ID"] if record and "Record_ID" in record else ""
     record_id_input = st.text_input("Order ID", value=record["Record_ID"], disabled=True)
     if record_id_input and not df_all.empty:
         if record_id_input in df_all["Record_ID"].values:
@@ -626,6 +627,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
