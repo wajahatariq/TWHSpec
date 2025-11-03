@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 import pytz
 import json
-import uuid
 import requests
 import random
 import time
@@ -626,5 +625,6 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
