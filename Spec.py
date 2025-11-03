@@ -499,7 +499,7 @@ if record is not None:
         # --- STATUS LOGIC ---
         current_status = record["Status"]
         if current_status == "Charged":
-            status_options = ["Charged", "Pending Charge Back"]
+            status_options = ["Charged", "Pending", "Charge Back"]
             status_disabled = False
         elif current_status == "Declined":
             status_options = ["Declined", "Pending", "Charge Back"]
@@ -628,6 +628,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
