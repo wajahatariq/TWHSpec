@@ -658,8 +658,6 @@ with main_tab3:
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     import seaborn as sns
-    from datetime import datetime, timedelta
-    import pytz
     
     st.divider()
     st.subheader("Transaction Analysis Chart")
@@ -669,7 +667,9 @@ with main_tab3:
     if not df_all.empty:
         # --- Preprocess timestamps and charges ---
         df_all["Timestamp"] = pd.to_datetime(df_all["Timestamp"], errors="coerce")
-        df_all["ChargeFloat"] = pd.to_numeric(df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce')
+        df_all["ChargeFloat"] = pd.to_numeric(
+            df_all["Charge"].replace('[\$,]', '', regex=True), errors='coerce'
+        )
     
         # --- Filters ---
         col_f1, col_f2, col_f3 = st.columns([1, 1, 1])
@@ -682,22 +682,18 @@ with main_tab3:
         with col_f3:
             chart_type = st.selectbox("Chart Type", ["Bar", "Line", "Stacked Bar"])
     
-        # --- Timestamp range selection ---
+        # --- Timestamp range selection (compatible way) ---
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            start_time = st.datetime_input(
-                "From (Timestamp)",
-                value=pd.to_datetime(df_all["Timestamp"].min()) if "Timestamp" in df_all else datetime.now(tz),
-                step=timedelta(seconds=1),
-                format="YYYY-MM-DD HH:mm:ss"
-            )
+            start_date = st.date_input("From Date", value=df_all["Timestamp"].min().date())
+            start_time = st.time_input("From Time", value=time(0, 0, 0))
         with col_d2:
-            end_time = st.datetime_input(
-                "To (Timestamp)",
-                value=pd.to_datetime(df_all["Timestamp"].max()) if "Timestamp" in df_all else datetime.now(tz),
-                step=timedelta(seconds=1),
-                format="YYYY-MM-DD HH:mm:ss"
-            )
+            end_date = st.date_input("To Date", value=df_all["Timestamp"].max().date())
+            end_time = st.time_input("To Time", value=time(23, 59, 59))
+    
+        # Combine date and time
+        start_datetime = tz.localize(datetime.combine(start_date, start_time))
+        end_datetime = tz.localize(datetime.combine(end_date, end_time))
     
         # --- Apply filters ---
         df_chart = df_all.copy()
@@ -706,8 +702,11 @@ with main_tab3:
         if status_filter != "All Status":
             df_chart = df_chart[df_chart["Status"] == status_filter]
     
+        # Localize timestamps for comparison
+        df_chart["Timestamp"] = df_chart["Timestamp"].dt.tz_localize("UTC").dt.tz_convert(tz)
         df_chart = df_chart[
-            (df_chart["Timestamp"] >= start_time) & (df_chart["Timestamp"] <= end_time)
+            (df_chart["Timestamp"] >= start_datetime) &
+            (df_chart["Timestamp"] <= end_datetime)
         ]
     
         # --- Check if data is available ---
@@ -715,22 +714,22 @@ with main_tab3:
             st.info("No data available for selected filters and timestamp range.")
         else:
             # --- Aggregate data ---
-            df_chart["Date"] = df_chart["Timestamp"].dt.floor("h")  # round to hour for grouping clarity
-            hourly_sum = df_chart.groupby("Date")["ChargeFloat"].sum().reset_index()
+            df_chart["Hour"] = df_chart["Timestamp"].dt.floor("h")
+            hourly_sum = df_chart.groupby("Hour")["ChargeFloat"].sum().reset_index()
     
             # --- Chart setup ---
             sns.set_palette("tab20")
             fig, ax = plt.subplots(figsize=(12, 6))
     
             if chart_type == "Bar":
-                ax.bar(hourly_sum["Date"], hourly_sum["ChargeFloat"],
+                ax.bar(hourly_sum["Hour"], hourly_sum["ChargeFloat"],
                        color=sns.color_palette("tab20", len(hourly_sum)))
             elif chart_type == "Line":
-                ax.plot(hourly_sum["Date"], hourly_sum["ChargeFloat"],
+                ax.plot(hourly_sum["Hour"], hourly_sum["ChargeFloat"],
                         marker='o', linestyle='-', color='tab:blue')
             elif chart_type == "Stacked Bar":
                 df_stack = df_chart.pivot_table(
-                    index="Date", columns="Status", values="ChargeFloat",
+                    index="Hour", columns="Status", values="ChargeFloat",
                     aggfunc="sum", fill_value=0
                 )
                 df_stack.plot(kind="bar", stacked=True, ax=ax, colormap="tab20")
@@ -741,8 +740,8 @@ with main_tab3:
             ax.set_xlabel("Timestamp")
             ax.set_ylabel("Total Charge ($)")
             ax.set_title(
-                f"Total Charges from {start_time.strftime('%Y-%m-%d %H:%M:%S')} "
-                f"to {end_time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"Total Charges from {start_datetime.strftime('%Y-%m-%d %H:%M:%S')} "
+                f"to {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}",
                 fontsize=16, fontweight='bold'
             )
             ax.grid(alpha=0.3)
@@ -758,7 +757,8 @@ with main_tab3:
             with col_u3:
                 st.metric("Average Charge per Hour", f"${hourly_sum['ChargeFloat'].mean():,.2f}")
             with col_u4:
-                st.metric("Peak Charge Timestamp", str(hourly_sum.loc[hourly_sum['ChargeFloat'].idxmax(), 'Date']))
+                peak_time = hourly_sum.loc[hourly_sum['ChargeFloat'].idxmax(), 'Hour']
+                st.metric("Peak Charge Timestamp", peak_time.strftime('%Y-%m-%d %H:%M:%S'))
     
             # --- Insights ---
             st.markdown("#### Top Agents by Total Charge")
