@@ -272,7 +272,7 @@ gc = gspread.service_account_from_dict(creds)
 SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
 
-AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq", "Usama"]
+AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq"]
 LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
 PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum"]
 
@@ -633,6 +633,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
