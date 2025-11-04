@@ -588,38 +588,86 @@ else:
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-# --- NIGHT WINDOW TOTAL WIDGET ---
+# --- NIGHT WINDOW TOTAL WIDGET (with 3 agent boxes) ---
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-st.markdown(f"""
+# --- Calculate per-agent totals ---
+agents = ["Arham Kaleem", "Arham Ali", "Haziq"]
+agent_totals = {}
+for agent in agents:
+    agent_df = night_charged_df[
+        night_charged_df['Agent Name'].str.strip().str.lower() == agent.lower()
+    ]
+    agent_total = agent_df['ChargeFloat'].sum()
+    agent_totals[agent] = f"${agent_total:,.2f}"
+
+# --- Create all four widgets dynamically ---
+box_html = f"""
 <div style="
-    position: fixed;
-    top: 20px;
-    right: 30px;
     background: {accent};
     padding: 16px 24px;
     border-radius: 16px;
     font-size: 18px;
     font-weight: 700;
     box-shadow: 0 8px 24px {accent}77;
-    z-index: 9999;
     text-align: center;
-    transition: all 0.3s ease;
     backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
+    color: {amount_text_color};
 ">
-    <!-- Label -->
     <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
         🌙 Night Charged Total
     </div>
-    <!-- Sub-label -->
     <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
         Today's Total
     </div>
-    <!-- Amount -->
     <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
         {total_night_charge_str}
     </div>
+</div>
+"""
+
+# Add per-agent boxes
+for agent, total in agent_totals.items():
+    box_html += f"""
+    <div style="
+        background: {accent};
+        padding: 16px 24px;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px {accent}77;
+        text-align: center;
+        backdrop-filter: blur(6px);
+        transition: all 0.3s ease;
+        color: {amount_text_color};
+    ">
+        <div style='font-size:13px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+            👨‍💻 {agent}
+        </div>
+        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+            Night Total
+        </div>
+        <div style='font-size:22px; font-weight:800; color:{amount_text_color};'>
+            {total}
+        </div>
+    </div>
+    """
+
+# Wrap all boxes in a single floating container
+st.markdown(f"""
+<div style="
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    flex-wrap: wrap;
+    z-index: 9999;
+">
+    {box_html}
 </div>
 
 <style>
@@ -633,15 +681,3 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
