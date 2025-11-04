@@ -592,89 +592,44 @@ label_text_color = get_contrast_color(accent)
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-# --- Define agents ---
-agents = ["Arham Kaleem", "Arham Ali", "Haziq"]
-
-# --- Calculate agent-wise totals dynamically ---
-agent_totals = {}
-for agent in agents:
-    if "Agent Name" in df_all.columns:
-        df_agent = night_charged_df[night_charged_df["Agent Name"].str.strip().str.lower() == agent.lower()]
-        agent_total = df_agent["ChargeFloat"].sum()
-        agent_totals[agent] = f"${agent_total:,.2f}"
-    else:
-        agent_totals[agent] = "$0.00"
-
-# --- CSS + HTML ---
 st.markdown(f"""
-<style>
-    .floating-container {{
-        position: fixed;
-        top: 20px;
-        right: 30px;
-        display: flex;
-        flex-direction: row;
-        gap: 12px;
-        z-index: 9999;
-    }}
-    .charge-box {{
-        background: {accent};
-        padding: 14px 22px;
-        border-radius: 16px;
-        font-size: 16px;
-        font-weight: 700;
-        box-shadow: 0 8px 24px {accent}77;
-        text-align: center;
-        backdrop-filter: blur(6px);
-        transition: all 0.3s ease;
-        min-width: 170px;
-    }}
-    .charge-label {{
-        font-size: 14px;
-        opacity: 0.85;
-        color: {label_text_color};
-        margin-bottom: 2px;
-    }}
-    .charge-sub {{
-        font-size: 12px;
-        opacity: 0.75;
-        color: {label_text_color};
-        margin-bottom: 4px;
-    }}
-    .charge-amount {{
-        font-size: 24px;
-        font-weight: 800;
-        color: {amount_text_color};
-    }}
-</style>
-
-<div class="floating-container">
-
-    <!-- Night Total Box -->
-    <div class="charge-box">
-        <div class="charge-label">🌙 Night Charged Total</div>
-        <div class="charge-sub">Today's Total</div>
-        <div class="charge-amount">{total_night_charge_str}</div>
+<div style="
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: {accent};
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px {accent}77;
+    z-index: 9999;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+">
+    <!-- Label -->
+    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+        🌙 Night Charged Total
     </div>
-
-    <!-- Agent Boxes -->
-    <div class="charge-box">
-        <div class="charge-label">👨‍💻 Arham Kaleem</div>
-        <div class="charge-sub">Night Total</div>
-        <div class="charge-amount">{agent_totals["Arham Kaleem"]}</div>
+    <!-- Sub-label -->
+    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+        Today's Total
     </div>
-
-    <div class="charge-box">
-        <div class="charge-label">👨‍💻 Arham Ali</div>
-        <div class="charge-sub">Night Total</div>
-        <div class="charge-amount">{agent_totals["Arham Ali"]}</div>
+    <!-- Amount -->
+    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+        {total_night_charge_str}
     </div>
-
-    <div class="charge-box">
-        <div class="charge-label">👨‍💻 Haziq</div>
-        <div class="charge-sub">Night Total</div>
-        <div class="charge-amount">{agent_totals["Haziq"]}</div>
-    </div>
-
 </div>
+
+<style>
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0px {accent}44; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+div[style*="{total_night_charge_str}"] {{
+    animation: pulseGlow 2s infinite;
+}}
+</style>
 """, unsafe_allow_html=True)
