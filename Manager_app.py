@@ -117,7 +117,6 @@ if "show_toast" in st.session_state:
     }}
     </style>
     """, unsafe_allow_html=True)
-    time.sleep(2.5)
     del st.session_state["show_toast"]
 
 # ------------------ HEADER & APP STYLING ------------------
