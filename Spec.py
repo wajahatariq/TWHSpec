@@ -592,44 +592,99 @@ label_text_color = get_contrast_color(accent)
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-st.markdown(f"""
+# --- Calculate per-agent totals ---
+agents = ["Arham Kaleem", "Arham Ali", "Haziq"]
+agent_totals = {}
+
+for agent in agents:
+    try:
+        agent_df = night_charged_df[
+            night_charged_df['Agent Name'].astype(str).str.strip().str.lower() == agent.lower()
+        ]
+        agent_total = agent_df['ChargeFloat'].sum()
+        agent_totals[agent] = f"${agent_total:,.2f}"
+    except Exception:
+        agent_totals[agent] = "$0.00"
+
+# --- Floating Box Layout ---
+boxes_html = f"""
 <div style="
     position: fixed;
     top: 20px;
     right: 30px;
-    background: {accent};
-    padding: 16px 24px;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    box-shadow: 0 8px 24px {accent}77;
+    display: flex;
+    flex-direction: row;
+    gap: 14px;
+    flex-wrap: wrap;
     z-index: 9999;
-    text-align: center;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(6px);
 ">
-    <!-- Label -->
-    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
-        🌙 Night Charged Total
-    </div>
-    <!-- Sub-label -->
-    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
-        Today's Total
-    </div>
-    <!-- Amount -->
-    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
-        {total_night_charge_str}
-    </div>
-</div>
+"""
 
+# Add the main total box
+boxes_html += f"""
+    <div style="
+        background: {accent};
+        padding: 16px 24px;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px {accent}77;
+        text-align: center;
+        backdrop-filter: blur(6px);
+        color: {amount_text_color};
+        animation: pulseGlow 2s infinite;
+    ">
+        <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+            🌙 Night Charged Total
+        </div>
+        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+            Today's Total
+        </div>
+        <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+            {total_night_charge_str}
+        </div>
+    </div>
+"""
+
+# Add each agent box
+for agent, total in agent_totals.items():
+    boxes_html += f"""
+    <div style="
+        background: {accent};
+        padding: 16px 20px;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px {accent}77;
+        text-align: center;
+        backdrop-filter: blur(6px);
+        color: {amount_text_color};
+    ">
+        <div style='font-size:13px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+            👨‍💻 {agent}
+        </div>
+        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+            Night Total
+        </div>
+        <div style='font-size:22px; font-weight:800; color:{amount_text_color};'>
+            {total}
+        </div>
+    </div>
+    """
+
+# Close the flex container
+boxes_html += "</div>"
+
+# --- CSS animation ---
+css_style = f"""
 <style>
 @keyframes pulseGlow {{
     0% {{ box-shadow: 0 0 0px {accent}44; }}
     50% {{ box-shadow: 0 0 20px {accent}aa; }}
     100% {{ box-shadow: 0 0 0px {accent}44; }}
 }}
-div[style*="{total_night_charge_str}"] {{
-    animation: pulseGlow 2s infinite;
-}}
 </style>
-""", unsafe_allow_html=True)
+"""
+
+# --- Render on screen ---
+st.markdown(css_style + boxes_html, unsafe_allow_html=True)
