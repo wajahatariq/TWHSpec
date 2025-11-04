@@ -521,6 +521,8 @@ with main_tab3:
         record = None
 
         if record_id_input:
+            df_all["Record_ID"] = df_all["Record_ID"].astype(str).str.strip()
+            record_id_input = record_id_input.strip()
             matched = df_all[df_all["Record_ID"] == record_id_input]
             if not matched.empty:
                 record = matched.iloc[0]
