@@ -588,48 +588,91 @@ else:
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-# --- NIGHT WINDOW TOTAL WIDGET ---
+#Agent Based
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-st.markdown(f"""
-<div style="
-    position: fixed;
-    top: 20px;
-    right: 30px;
-    background: {accent};
-    padding: 16px 24px;
-    border-radius: 16px;
-    font-size: 18px;
-    font-weight: 700;
-    box-shadow: 0 8px 24px {accent}77;
-    z-index: 9999;
-    text-align: center;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(6px);
-">
-    <!-- Label -->
-    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
-        🌙 Night Charged Total
-    </div>
-    <!-- Sub-label -->
-    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
-        Today's Total
-    </div>
-    <!-- Amount -->
-    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
-        {total_night_charge_str}
-    </div>
-</div>
+# Calculate per-agent totals
+agents = ["Arham Kaleem", "Arham Ali", "Haziq"]
+agent_totals = {}
 
+for agent in agents:
+    try:
+        agent_df = night_charged_df[
+            night_charged_df['Agent Name'].astype(str).str.strip().str.lower() == agent.lower()
+        ]
+        agent_total = agent_df['ChargeFloat'].sum()
+        agent_totals[agent] = f"${agent_total:,.2f}"
+    except Exception:
+        agent_totals[agent] = "$0.00"
+
+# --- Build the full HTML ---
+boxes_html = f"""
+<div style="position: fixed; top: 20px; right: 30px; display: flex; gap: 10px; flex-wrap: wrap; z-index: 9999;">
+
+  <!-- Main Total Box -->
+  <div style="
+      background: {accent};
+      padding: 16px 24px;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      box-shadow: 0 8px 24px {accent}77;
+      text-align: center;
+      backdrop-filter: blur(6px);
+      color: {amount_text_color};
+      animation: pulseGlow 2s infinite;
+  ">
+      <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+          🌙 Night Charged Total
+      </div>
+      <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+          Today's Total
+      </div>
+      <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+          {total_night_charge_str}
+      </div>
+  </div>
+"""
+
+# Add boxes for each agent
+for agent, total in agent_totals.items():
+    boxes_html += f"""
+    <div style="
+        background: {accent};
+        padding: 14px 20px;
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        box-shadow: 0 8px 24px {accent}77;
+        text-align: center;
+        backdrop-filter: blur(6px);
+        color: {amount_text_color};
+    ">
+        <div style='font-size:13px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+            👨‍💻 {agent}
+        </div>
+        <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+            Night Total
+        </div>
+        <div style='font-size:22px; font-weight:800; color:{amount_text_color};'>
+            {total}
+        </div>
+    </div>
+    """
+
+boxes_html += "</div>"
+
+# --- Add animation CSS ---
+css_style = f"""
 <style>
 @keyframes pulseGlow {{
-    0% {{ box-shadow: 0 0 0px {accent}44; }}
-    50% {{ box-shadow: 0 0 20px {accent}aa; }}
-    100% {{ box-shadow: 0 0 0px {accent}44; }}
-}}
-div[style*="{total_night_charge_str}"] {{
-    animation: pulseGlow 2s infinite;
+  0% {{ box-shadow: 0 0 0px {accent}44; }}
+  50% {{ box-shadow: 0 0 20px {accent}aa; }}
+  100% {{ box-shadow: 0 0 0px {accent}44; }}
 }}
 </style>
-""", unsafe_allow_html=True)
+"""
+
+# --- Render HTML ---
+st.markdown(css_style + boxes_html, unsafe_allow_html=True)
