@@ -588,82 +588,48 @@ else:
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
+# --- NIGHT WINDOW TOTAL WIDGET ---
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-# Example agent totals (replace with your actual logic)
-agent_totals = {
-    "🌙 Night Charged Total": total_night_charge_str,
-    "👨‍💻 Arham Kaleem": "$210.00",
-    "👨‍💻 Arham Ali": "$180.00",
-    "👨‍💻 Haziq": "$155.00"
-}
-
-# CSS + HTML combined
-boxes_html = f"""
-<style>
-    .floating-container {{
-        position: fixed;
-        top: 20px;
-        right: 30px;
-        display: flex;
-        flex-direction: row;
-        gap: 12px;
-        z-index: 9999;
-    }}
-    .charge-box {{
-        background: {accent};
-        padding: 14px 22px;
-        border-radius: 16px;
-        font-size: 16px;
-        font-weight: 700;
-        box-shadow: 0 8px 24px {accent}77;
-        text-align: center;
-        backdrop-filter: blur(6px);
-        transition: all 0.3s ease;
-        min-width: 170px;
-    }}
-    .charge-label {{
-        font-size: 14px;
-        opacity: 0.85;
-        color: {label_text_color};
-        margin-bottom: 2px;
-    }}
-    .charge-sub {{
-        font-size: 12px;
-        opacity: 0.75;
-        color: {label_text_color};
-        margin-bottom: 4px;
-    }}
-    .charge-amount {{
-        font-size: 24px;
-        font-weight: 800;
-        color: {amount_text_color};
-    }}
-    @keyframes pulseGlow {{
-        0% {{ box-shadow: 0 0 0px {accent}44; }}
-        50% {{ box-shadow: 0 0 20px {accent}aa; }}
-        100% {{ box-shadow: 0 0 0px {accent}44; }}
-    }}
-    .charge-box:hover {{
-        animation: pulseGlow 2s infinite;
-        transform: translateY(-2px);
-    }}
-</style>
-
-<div class="floating-container">
-"""
-
-for label, amount in agent_totals.items():
-    sub_label = "Today's Total" if "Night Charged" in label else "Night Total"
-    boxes_html += f"""
-    <div class="charge-box">
-        <div class="charge-label">{label}</div>
-        <div class="charge-sub">{sub_label}</div>
-        <div class="charge-amount">{amount}</div>
+st.markdown(f"""
+<div style="
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    background: {accent};
+    padding: 16px 24px;
+    border-radius: 16px;
+    font-size: 18px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px {accent}77;
+    z-index: 9999;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(6px);
+">
+    <!-- Label -->
+    <div style='font-size:14px; opacity:0.85; color:{label_text_color}; margin-bottom:2px;'>
+        🌙 Night Charged Total
     </div>
-    """
+    <!-- Sub-label -->
+    <div style='font-size:12px; opacity:0.75; color:{label_text_color}; margin-bottom:4px;'>
+        Today's Total
+    </div>
+    <!-- Amount -->
+    <div style='font-size:26px; font-weight:800; color:{amount_text_color};'>
+        {total_night_charge_str}
+    </div>
+</div>
 
-boxes_html += "</div>"
-
-st.markdown(boxes_html, unsafe_allow_html=True)
+<style>
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0px {accent}44; }}
+    50% {{ box-shadow: 0 0 20px {accent}aa; }}
+    100% {{ box-shadow: 0 0 0px {accent}44; }}
+}}
+div[style*="{total_night_charge_str}"] {{
+    animation: pulseGlow 2s infinite;
+}}
+</style>
+""", unsafe_allow_html=True)
