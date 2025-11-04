@@ -462,7 +462,12 @@ if mode.startswith("Recent"):
 elif mode.startswith("All-time"):
     record_id_value = record["Record_ID"] if record and "Record_ID" in record else ""
     record_id_input = st.text_input("Order ID", value=record_id_value)
+
     if record_id_input and not df_all.empty:
+        # Normalize types
+        df_all["Record_ID"] = df_all["Record_ID"].astype(str).str.strip()
+        record_id_input = str(record_id_input).strip()
+
         if record_id_input in df_all["Record_ID"].values:
             record = df_all[df_all["Record_ID"] == record_id_input].iloc[0]
         else:
@@ -628,6 +633,7 @@ div[style*="{total_night_charge_str}"] {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
