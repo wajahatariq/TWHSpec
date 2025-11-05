@@ -646,7 +646,21 @@ with main_tab3:
     if df_spectrum.empty:
         st.info("No data available in Spectrum (Sheet1).")
     else:
-        st.dataframe(style_status_rows(df_spectrum), use_container_width=True)
+        from st_aggrid import AgGrid, GridOptionsBuilder
+
+        # Prepare the DataFrame (including styling if needed)
+        df = style_status_rows(df_spectrum)
+        
+        # Build grid options for more customization
+        gb = GridOptionsBuilder.from_dataframe(df)
+        gb.configure_pagination(paginationAutoPageSize=True)  # Pagination
+        gb.configure_side_bar()  # Adds sidebar for filters, columns
+        gb.configure_default_column(filterable=True, sortable=True, editable=False)
+        
+        grid_options = gb.build()
+        
+        AgGrid(df, gridOptions=grid_options, enable_enterprise_modules=False, fit_columns_on_grid_load=True)
+
 
     st.divider()
 
@@ -654,7 +668,20 @@ with main_tab3:
     if df_insurance.empty:
         st.info("No data available in Insurance (Sheet2).")
     else:
-        st.dataframe(style_status_rows(df_insurance), use_container_width=True)
+        from st_aggrid import AgGrid, GridOptionsBuilder
+
+        # Prepare the DataFrame (including styling if needed)
+        df = style_status_rows(df_spectrum)
+        
+        # Build grid options for more customization
+        gb = GridOptionsBuilder.from_dataframe(df)
+        gb.configure_pagination(paginationAutoPageSize=True)  # Pagination
+        gb.configure_side_bar()  # Adds sidebar for filters, columns
+        gb.configure_default_column(filterable=True, sortable=True, editable=False)
+        
+        grid_options = gb.build()
+        
+        AgGrid(df, gridOptions=grid_options, enable_enterprise_modules=False, fit_columns_on_grid_load=True)
 
 
     import matplotlib.pyplot as plt
