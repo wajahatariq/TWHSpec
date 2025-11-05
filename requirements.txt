@@ -9,5 +9,4 @@ tabulate
 matplotlib
 seaborn 
 plotly
-
-
+streamlit-aggrid
