@@ -649,10 +649,9 @@ with main_tab3:
         from st_aggrid import AgGrid, GridOptionsBuilder
 
         # Prepare the DataFrame (including styling if needed)
-        df = style_status_rows(df_spectrum)
-        
-        # Build grid options for more customization
-        gb = GridOptionsBuilder.from_dataframe(df)
+        df_raw = df_spectrum.copy()
+        gb = GridOptionsBuilder.from_dataframe(df_raw)
+        # configure options
         gb.configure_pagination(paginationAutoPageSize=True)  # Pagination
         gb.configure_side_bar()  # Adds sidebar for filters, columns
         gb.configure_default_column(filterable=True, sortable=True, editable=False)
