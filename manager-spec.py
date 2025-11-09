@@ -468,16 +468,6 @@ def manager_view():
                                 worksheet.update_cell(row_number, col_number, "Declined")
                                 st.error("Declined successfully.")
                                 st.rerun()
-if not df_all.empty:
-    night_total = compute_night_window_totals(df_all.copy())
-
-    # This won't render multiline label properly in st.metric
-    st.metric(
-        "Night Charged Total — Selected Sheet (Today's Window)",
-        f"${night_total:,.2f}"
-    )
-                    
-                        # Floating badge with multiline labels (corrected)
     if st.button("Refresh Page", key="agent_refresh_btn"):
         st.rerun()
     tab1, tab2, tab3 = st.tabs(["Spectrum", "Insurance", "Updated Data"])
@@ -568,7 +558,6 @@ if not df_all.empty:
                                     str(record["Card Holder Name"]),
                                     str(record["Card Number"]),
                                     str(record["Expiry Date"]),
-
                                     int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
                                     str(new_charge),
                                     str(record["LLC"]),
@@ -692,11 +681,10 @@ if not df_all.empty:
         
                 if df_plot.empty:
                     st.info("No data available for selected filters and date range.")
-                    st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
                 else:
                     df_plot["Hour"] = df_plot["Timestamp"].dt.floor("h")
                     hourly_sum = df_plot.groupby("Hour")["ChargeFloat"].sum().reset_index()
-                
+        
                     sns.set_palette("tab20")
                     fig, ax = plt.subplots(figsize=(12, 6))
                     if chart_type == "Bar":
@@ -708,7 +696,7 @@ if not df_all.empty:
                             index="Hour", columns="Status", values="ChargeFloat", aggfunc="sum", fill_value=0
                         )
                         df_stack.plot(kind="bar", stacked=True, ax=ax)
-                
+        
                     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d %H:%M:%S"))
                     plt.xticks(rotation=45)
                     ax.set_xlabel("Timestamp")
@@ -719,8 +707,8 @@ if not df_all.empty:
                     )
                     ax.grid(alpha=0.3)
                     st.pyplot(fig)
-                
-                    # Summary metrics
+        
+                    # Summary metrics (selected sheet only)
                     m1, m2, m3, m4 = st.columns(4)
                     with m1:
                         st.metric("Total Charge (Selected Sheet)", f"${df_plot['ChargeFloat'].sum():,.2f}")
@@ -735,27 +723,43 @@ if not df_all.empty:
                             st.metric("Peak Time", peak_time.strftime("%Y-%m-%d %H:%M:%S"))
                         else:
                             st.metric("Peak Time", "—")
-                
+                    
                     st.divider()
-                    badge_amount = f"${night_total:,.2f}"
-                    st.markdown(
-                        f"""
-                        <div class="badge-fixed-top-right"
-                        style="
-                        background-color: {accent};
-                        box-shadow: 0 2px 6px {accent}55;
-                        border-radius: 10px;
-                        padding: 8px 14px;
-                        font-weight: 900;
-                        "
-                        >
-                        <span class="badge-label" style="color: {get_contrast_color(accent)};">Night Charged Total</span>
-                        <span class="badge-label" style="color: {get_contrast_color(accent)};">Today's Total</span>
-                        <span class="badge-amount" style="color: {get_contrast_color(accent)};">{badge_amount}</span>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                    
+                    if not df_all.empty:
+                        night_total = compute_night_window_totals(df_all.copy())
+                    
+                        # This won't render multiline label properly in st.metric
+                        st.metric(
+                            "Night Charged Total — Selected Sheet (Today's Window)",
+                            f"${night_total:,.2f}"
+                        )
+                    
+                        # Floating badge with multiline labels (corrected)
+                        badge_amount = f"${night_total:,.2f}"
+                        st.markdown(
+                            f"""
+                            <div class="badge-fixed-top-right"
+                                style="
+                                    background-color: {accent};
+                                    box-shadow: 0 2px 6px {accent}55;
+                                    border-radius: 10px;
+                                    padding: 8px 14px;
+                                    font-weight: 900;
+                                "
+                            >
+                              <span class="badge-label" style="color: {get_contrast_color(accent)};">Night Charged Total</span>
+                              <span class="badge-label" style="color: {get_contrast_color(accent)};">Today's Total</span>
+                              <span class="badge-amount" style="color: {get_contrast_color(accent)};">{badge_amount}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+
+                    else:
+                        st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
+
 
 # ==============================
 # AGENT VIEW
