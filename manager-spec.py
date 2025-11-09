@@ -735,9 +735,9 @@ if not df_all.empty:
                         else:
                             st.metric("Peak Time", "—")
                     
-                    st.divider()
-                    badge_amount = f"${night_total:,.2f}"
-                    st.markdown(
+                st.divider()
+                badge_amount = f"${night_total:,.2f}"
+                st.markdown(
                     f"""
                     <div class="badge-fixed-top-right"
                     style="
@@ -754,11 +754,11 @@ if not df_all.empty:
                     </div>
                     """,
                     unsafe_allow_html=True,
-                    )
-
-                    
-                    else:
-                        st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")                    
+                )
+                
+                else:
+                    st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")     
+                                   
                     
 
 # ==============================
