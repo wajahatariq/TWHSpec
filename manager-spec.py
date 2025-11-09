@@ -468,7 +468,8 @@ def manager_view():
                                 worksheet.update_cell(row_number, col_number, "Declined")
                                 st.error("Declined successfully.")
                                 st.rerun()
-
+    if st.button("Refresh Page", key="agent_refresh_btn"):
+        st.rerun()
     tab1, tab2, tab3 = st.tabs(["Spectrum", "Insurance", "Updated Data"])
     with tab1:
         render_transaction_tabs(df_spectrum, ws_spectrum, "spectrum")
