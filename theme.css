@@ -352,6 +352,33 @@ tbody td, thead th {
   50%  { background-position: 50% 50%; }
   100% { background-position: 0% 0%; }
 }
+/* ---------- Theme Pills Row (Scoped Layout) ---------- */
+.theme-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px; /* adjust between 12–16px if needed */
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Optional: make sure each pill behaves consistently */
+.theme-pills .stButton > button {
+  margin: 0 !important;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--text);
+  background: transparent;
+  font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+.theme-pills .stButton > button:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 0 20px var(--ring);
+}
 
 /* ---------- Utility ---------- */
 .hidden { display: none !important; }
