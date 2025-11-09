@@ -870,114 +870,6 @@ Submitted At: {timestamp}
 
     st.divider()
     st.subheader("My Submissions")
-    # --- Edit My Lead (by Record ID) ---
-st.divider()
-st.subheader("Edit My Lead (by Record ID)")
-
-edit_rid = st.text_input("Enter Record ID to edit", key="agent_edit_rid").strip()
-
-if edit_rid:
-    # Ensure df_all is loaded from ws_spectrum earlier in agent_view
-    if df_all.empty:
-        st.warning("No records available in Spectrum (Sheet1).")
-    else:
-        # Normalize types and filter to agent's own record
-        df_all["Record_ID"] = df_all["Record_ID"].astype(str).str.strip()
-        df_all_agent = df_all[(df_all["Record_ID"] == edit_rid) & (df_all["Agent Name"] == agent_name)]
-
-        if df_all_agent.empty:
-            st.error("No matching record found for your Agent Name and this Record ID.")
-        else:
-            record = df_all_agent.iloc[0]
-            can_edit = str(record.get("Status", "Pending")) == "Pending"
-
-            st.info(f"Editing Record ID: {record['Record_ID']}  •  Status: {record['Status']}")
-            if not can_edit:
-                st.warning("This lead is not Pending anymore. Fields are locked for safety.")
-
-            with st.form("agent_edit_lead_form"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.text_input("Agent Name", value=agent_name, disabled=True)
-                    new_name = st.text_input("Client Name", value=str(record.get("Name", "")), disabled=not can_edit)
-                    new_phone = st.text_input("Phone Number", value=str(record.get("Ph Number", "")), disabled=not can_edit)
-                    new_address = st.text_input("Address", value=str(record.get("Address", "")), disabled=not can_edit)
-                    new_email = st.text_input("Email", value=str(record.get("Email", "")), disabled=not can_edit)
-                    new_card_holder = st.text_input("Card Holder Name", value=str(record.get("Card Holder Name", "")), disabled=not can_edit)
-                with col2:
-                    new_card_number = st.text_input("Card Number", value=str(record.get("Card Number", "")), disabled=not can_edit)
-                    new_expiry = st.text_input("Expiry Date (MM/YY)", value=str(record.get("Expiry Date", "")), disabled=not can_edit)
-                    new_cvc = st.text_input("CVC", value=str(record.get("CVC", "")), disabled=not can_edit)
-                    new_charge = st.text_input("Charge Amount", value=str(record.get("Charge", "")), disabled=not can_edit)
-                    new_llc = st.selectbox(
-                        "LLC", LLC_OPTIONS,
-                        index=LLC_OPTIONS.index(record.get("LLC", "Select LLC")) if record.get("LLC", "Select LLC") in LLC_OPTIONS else 0,
-                        disabled=not can_edit
-                    )
-                    new_provider = st.selectbox(
-                        "Provider", PROVIDERS,
-                        index=PROVIDERS.index(record.get("Provider", "Select Provider")) if record.get("Provider", "Select Provider") in PROVIDERS else 0,
-                        disabled=not can_edit
-                    )
-                    # Date of Charge
-                    try:
-                        default_doc = pd.to_datetime(record.get("Date of Charge")).date()
-                    except Exception:
-                        default_doc = datetime.now().date()
-                    new_date_of_charge = st.date_input("Date of Charge", value=default_doc, disabled=not can_edit)
-
-                # Status is read-only for agents
-                st.text_input("Status (read-only)", value=str(record.get("Status", "Pending")), disabled=True)
-
-                colu1, colu2 = st.columns([1, 4])
-                with colu1:
-                    do_update = st.form_submit_button("Update Lead", disabled=not can_edit)
-
-            if do_update:
-                try:
-                    # Clean and validate
-                    new_card_number_clean = new_card_number.replace(" ", "").replace("-", "")
-                    new_expiry_clean = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
-                    try:
-                        charge_value = float(str(new_charge).replace("$", "").strip())
-                        new_charge_fmt = f"${charge_value:.2f}"
-                    except ValueError:
-                        st.error("Charge amount must be numeric (e.g., 29 or 29.00).")
-                        st.stop()
-
-                    # Find row number in sheet (A:P for Sheet1)
-                    row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                    if not row_index:
-                        st.error("Record not found in sheet. Try refreshing.")
-                        st.stop()
-                    row_num = row_index[0] + 2  # header row offset
-
-                    # Timestamp stays as-is (P column)
-                    updated_data = [
-                        str(record["Record_ID"]),
-                        str(agent_name),
-                        str(new_name),
-                        str(new_phone),
-                        str(new_address),
-                        str(new_email),
-                        str(new_card_holder),
-                        str(new_card_number_clean),
-                        str(new_expiry_clean),
-                        str(new_cvc),
-                        str(new_charge_fmt),
-                        str(new_llc),
-                        str(new_provider),
-                        new_date_of_charge.strftime("%Y-%m-%d"),
-                        str(record.get("Status", "Pending")),         # Status unchanged by agent
-                        str(record.get("Timestamp", "")),             # keep original timestamp
-                    ]
-
-                    # Update on the Spectrum sheet (Sheet1)
-                    ws_spectrum.update(f"A{row_num}:P{row_num}", [updated_data])
-                    st.success(f"Lead {record['Record_ID']} updated successfully.")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error updating lead: {e}")
 
     if df_all.empty:
         st.info("No records available yet.")
@@ -1006,6 +898,105 @@ if edit_rid:
                 st.metric("Pending", int((df_mine["Status"] == "Pending").sum()))
             with col_s2:
                 st.metric("Charged Today", f"${today_total:,.2f}")
+
+    st.divider()
+    st.subheader("Edit My Lead (by Record ID)")
+
+    edit_rid = st.text_input("Enter Record ID to edit", key="agent_edit_rid").strip()
+
+    if edit_rid:
+        if df_all.empty:
+            st.warning("No records available in Spectrum (Sheet1).")
+        else:
+            df_all["Record_ID"] = df_all["Record_ID"].astype(str).str.strip()
+            df_all_agent = df_all[(df_all["Record_ID"] == edit_rid) & (df_all["Agent Name"] == agent_name)]
+
+            if df_all_agent.empty:
+                st.error("No matching record found for your Agent Name and this Record ID.")
+            else:
+                record = df_all_agent.iloc[0]
+                status_value = str(record.get("Status", "Pending"))
+                can_edit = status_value == "Pending"
+
+                st.info(f"Editing Record ID: {record['Record_ID']}  •  Status: {status_value}")
+                if not can_edit:
+                    st.warning("This lead is not Pending anymore. Fields are read-only.")
+
+                with st.form("agent_edit_lead_form"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.text_input("Agent Name", value=agent_name, disabled=True, key="ae_agent_name")
+                        new_name = st.text_input("Client Name", value=str(record.get("Name", "")), disabled=not can_edit, key="ae_name")
+                        new_phone = st.text_input("Phone Number", value=str(record.get("Ph Number", "")), disabled=not can_edit, key="ae_phone")
+                        new_address = st.text_input("Address", value=str(record.get("Address", "")), disabled=not can_edit, key="ae_address")
+                        new_email = st.text_input("Email", value=str(record.get("Email", "")), disabled=not can_edit, key="ae_email")
+                        new_card_holder = st.text_input("Card Holder Name", value=str(record.get("Card Holder Name", "")), disabled=not can_edit, key="ae_holder")
+                    with col2:
+                        new_card_number = st.text_input("Card Number", value=str(record.get("Card Number", "")), disabled=not can_edit, key="ae_card")
+                        new_expiry = st.text_input("Expiry Date (MM/YY)", value=str(record.get("Expiry Date", "")), disabled=not can_edit, key="ae_expiry")
+                        new_cvc = st.text_input("CVC", value=str(record.get("CVC", "")), disabled=not can_edit, key="ae_cvc")
+                        new_charge = st.text_input("Charge Amount", value=str(record.get("Charge", "")), disabled=not can_edit, key="ae_charge")
+                        new_llc = st.selectbox(
+                            "LLC", LLC_OPTIONS,
+                            index=LLC_OPTIONS.index(record.get("LLC", "Select LLC")) if record.get("LLC", "Select LLC") in LLC_OPTIONS else 0,
+                            disabled=not can_edit, key="ae_llc"
+                        )
+                        new_provider = st.selectbox(
+                            "Provider", PROVIDERS,
+                            index=PROVIDERS.index(record.get("Provider", "Select Provider")) if record.get("Provider", "Select Provider") in PROVIDERS else 0,
+                            disabled=not can_edit, key="ae_provider"
+                        )
+                        try:
+                            default_doc = pd.to_datetime(record.get("Date of Charge")).date()
+                        except Exception:
+                            default_doc = datetime.now().date()
+                        new_date_of_charge = st.date_input("Date of Charge", value=default_doc, disabled=not can_edit, key="ae_doc")
+
+                    st.text_input("Status (read-only)", value=status_value, disabled=True, key="ae_status_ro")
+
+                    do_update = st.form_submit_button("Update Lead", disabled=not can_edit)
+
+                if do_update:
+                    try:
+                        new_card_number_clean = new_card_number.replace(" ", "").replace("-", "")
+                        new_expiry_clean = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
+                        try:
+                            charge_value = float(str(new_charge).replace("$", "").strip())
+                            new_charge_fmt = f"${charge_value:.2f}"
+                        except ValueError:
+                            st.error("Charge amount must be numeric (e.g., 29 or 29.00).")
+                            st.stop()
+
+                        row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
+                        if not row_index:
+                            st.error("Record not found in sheet. Try refreshing.")
+                            st.stop()
+                        row_num = row_index[0] + 2
+
+                        updated_data = [
+                            str(record["Record_ID"]),
+                            str(agent_name),
+                            str(new_name),
+                            str(new_phone),
+                            str(new_address),
+                            str(new_email),
+                            str(new_card_holder),
+                            str(new_card_number_clean),
+                            str(new_expiry_clean),
+                            str(new_cvc),
+                            str(new_charge_fmt),
+                            str(new_llc),
+                            str(new_provider),
+                            new_date_of_charge.strftime("%Y-%m-%d"),
+                            status_value,
+                            str(record.get("Timestamp", "")),
+                        ]
+
+                        ws_spectrum.update(f"A{row_num}:P{row_num}", [updated_data])
+                        st.success(f"Lead {record['Record_ID']} updated successfully.")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error updating lead: {e}")
 
     total_night_agent = compute_night_window_totals(df_all if 'df_all' in locals() else pd.DataFrame(), agent_filter=agent_name)
     total_night_agent_str = f"${total_night_agent:,.2f}"
