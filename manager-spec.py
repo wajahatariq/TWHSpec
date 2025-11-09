@@ -745,7 +745,7 @@ def manager_view():
                                     box-shadow: 0 2px 6px {accent}55;
                                     border-radius: 10px;
                                     padding: 8px 14px;
-                                    font-weight: 700;
+                                    font-weight: 900;
                                 "
                             >
                               <span class="badge-label" style="color: {get_contrast_color(accent)};">Night Charged Total</span>
