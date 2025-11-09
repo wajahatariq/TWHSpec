@@ -1053,14 +1053,22 @@ Submitted At: {timestamp}
     total_night_agent_str = f"${total_night_agent:,.2f}"
     st.markdown(
         f"""
-<div class="badge-fixed-top-right">
-  <span class="badge-label">Night Charged Total</span>
-  <span class="badge-label">Today's Total</span>
-  <span class="badge-amount">{total_night_agent_str}</span>
-</div>
-""",
+    <div class="badge-fixed-top-right" 
+         style="
+           background-color: {accent};
+           box-shadow: 0 2px 6px {accent}55;
+           border-radius: 10px;
+           padding: 8px 14px;
+           font-weight: 700;
+         ">
+      <span class="badge-label" style="color: {get_contrast_color(accent)};">Night Charged Total</span>
+      <span class="badge-label" style="color: {get_contrast_color(accent)};">Today's Total</span>
+      <span class="badge-amount" style="color: {get_contrast_color(accent)};">{total_night_agent_str}</span>
+    </div>
+    """,
         unsafe_allow_html=True,
     )
+
 # ==============================
 # Route based on role
 # ==============================
