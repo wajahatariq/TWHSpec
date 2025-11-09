@@ -31,155 +31,6 @@ load_css()
 # ==============================
 # Theme definitions (unchanged)
 # ==============================
-# light_themes = {
-#     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
-#     "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
-#     "Golden Sand":     {"bg1": "#fffbea", "bg2": "#fff2d1", "accent": "#f59e0b"},
-#     "Lilac Mist":      {"bg1": "#faf5ff", "bg2": "#f3e8ff", "accent": "#a78bfa"},
-#     "Mint Breeze":     {"bg1": "#f0fff9", "bg2": "#d7fff0", "accent": "#10b981"},
-#     "Blush Quartz":    {"bg1": "#fff5f7", "bg2": "#ffe3eb", "accent": "#ec4899"},
-#     "Azure Frost":     {"bg1": "#f5fbff", "bg2": "#e0f2fe", "accent": "#0284c7"},
-#     "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
-#     "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
-#     "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
-# }
-# dark_themes = {
-#     "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
-#     "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
-#     "Crimson Shadow":  {"bg1": "#1c0b0b", "bg2": "#2a0f0f", "accent": "#ff4444"},
-#     "Deep Ocean":      {"bg1": "#0a1b2a", "bg2": "#0d2c4a", "accent": "#1f8ef1"},
-#     "Neon Violet":     {"bg1": "#12001e", "bg2": "#1e0033", "accent": "#bb00ff"},
-#     "Emerald Abyss":   {"bg1": "#001a14", "bg2": "#00322b", "accent": "#00ff99"},
-#     "Cyber Pink":      {"bg1": "#0a0014", "bg2": "#1a0033", "accent": "#ff00aa"},
-#     "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
-#     "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
-#     "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
-# }
-
-# if "theme_mode" not in st.session_state:
-#     st.session_state.theme_mode = "Dark"
-# if "selected_theme" not in st.session_state:
-#     theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-#     random_theme_name = random.choice(list(theme_set.keys()))
-#     st.session_state.selected_theme = random_theme_name
-
-# def get_contrast_color(hex_color: str) -> str:
-#     hex_color = hex_color.lstrip('#')
-#     r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-#     brightness = (r * 299 + g * 587 + b * 114) / 1000
-#     return "#000000" if brightness > 155 else "#ffffff"
-
-# def apply_theme_vars():
-#     themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-#     if st.session_state.selected_theme not in themes:
-#         st.session_state.selected_theme = list(themes.keys())[0]
-#     selected = themes[st.session_state.selected_theme]
-#     bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
-#     text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
-#     st.markdown(
-#         f"<style>:root{{--bg1:{bg1};--bg2:{bg2};--accent:{accent};--text:{text_color};}}</style>",
-#         unsafe_allow_html=True,
-#     )
-#     return bg1, bg2, accent, text_color
-
-# bg1, bg2, accent, text_color = apply_theme_vars()
-# title_text_color = get_contrast_color(accent)
-
-# st.markdown(
-#     f"""
-# <div class="app-title" style="font-size:22px; margin: 12px 0 22px;">
-#   Client Management System — Techware Hub
-# </div>
-# """,
-#     unsafe_allow_html=True,
-# )
-
-# theme_names = list(themes.keys())
-# half = len(theme_names) // 2  # split evenly
-
-# # First row of theme buttons
-# cols1 = st.columns(len(theme_names[:half]))
-# for i, theme_name in enumerate(theme_names[:half]):
-#     if cols1[i].button(theme_name, key=f"theme_{theme_name}"):
-#         if st.session_state.selected_theme != theme_name:
-#             st.session_state.selected_theme = theme_name
-#             st.rerun()
-
-# # Second row of theme buttons
-# cols2 = st.columns(len(theme_names[half:]))
-# for i, theme_name in enumerate(theme_names[half:]):
-#     if cols2[i].button(theme_name, key=f"theme_{theme_name}_2"):
-#         if st.session_state.selected_theme != theme_name:
-#             st.session_state.selected_theme = theme_name
-#             st.rerun()
-
-# themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-
-# # ---- Horizontal scrollable and evenly spaced theme buttons ----
-# st.markdown(
-#     """
-#     <style>
-#     .theme-scroll-container {
-#         display: flex;
-#         flex-direction: row;
-#         flex-wrap: nowrap;
-#         overflow-x: auto;
-#         gap: 12px; /* consistent distance between buttons */
-#         padding: 10px 8px 12px;
-#         scrollbar-width: thin;
-#         scrollbar-color: var(--accent) rgba(255,255,255,0.08);
-#     }
-
-#     .theme-scroll-container::-webkit-scrollbar {
-#         height: 8px;
-#     }
-#     .theme-scroll-container::-webkit-scrollbar-thumb {
-#         background: var(--accent);
-#         border-radius: 10px;
-#     }
-#     .theme-scroll-container::-webkit-scrollbar-track {
-#         background: rgba(255,255,255,0.05);
-#     }
-
-#     /* Force Streamlit columns to act inline instead of stacking */
-#     .theme-scroll-container [data-testid="column"] {
-#         flex: 0 0 auto !important;
-#         margin: 0 !important;
-#         padding: 0 !important;
-#     }
-#     .theme-scroll-container [data-testid="stVerticalBlock"] {
-#         margin: 0 !important;
-#         padding: 0 !important;
-#     }
-#     .theme-scroll-container [data-testid="stButton"] {
-#         margin: 0 !important;
-#         padding: 0 !important;
-#     }
-
-#     /* Add right margin between buttons for consistent gap */
-#     .theme-scroll-container [data-testid="stButton"] > div {
-#         margin-right: 12px !important;
-#     }
-#     .theme-scroll-container [data-testid="stButton"]:last-child > div {
-#         margin-right: 0 !important;
-#     }
-#     </style>
-
-#     <div class="theme-scroll-container">
-#     """,
-#     unsafe_allow_html=True,
-# )
-
-# # Render Streamlit buttons (logic unchanged)
-# cols_palette = st.columns(len(themes))
-# for i, (theme_name, data) in enumerate(themes.items()):
-#     with cols_palette[i]:
-#         if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=True):
-#             if st.session_state.selected_theme != theme_name:
-#                 st.session_state.selected_theme = theme_name
-#                 st.rerun()
-
-# st.markdown("</div>", unsafe_allow_html=True)
 light_themes = {
     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
     "Skyline Blue":    {"bg1": "#f0f8ff", "bg2": "#dcefff", "accent": "#3b82f6"},
@@ -191,19 +42,7 @@ light_themes = {
     "Citrus Bloom":    {"bg1": "#fffef2", "bg2": "#fff8d6", "accent": "#facc15"},
     "Pearl Sage":      {"bg1": "#f9fff9", "bg2": "#e6f7e6", "accent": "#65a30d"},
     "Creamy Mocha":    {"bg1": "#fffaf5", "bg2": "#f5ebe0", "accent": "#c08457"},
-    "Rosewater":       {"bg1": "#fff0f3", "bg2": "#ffd6e0", "accent": "#f43f5e"},
-    "Sky Morning":     {"bg1": "#e6f7ff", "bg2": "#ccefff", "accent": "#2563eb"},
-    "Peach Delight":   {"bg1": "#fff5eb", "bg2": "#ffe0cc", "accent": "#f97316"},
-    "Lavender Glow":   {"bg1": "#f9f5ff", "bg2": "#ede0ff", "accent": "#8b5cf6"},
-    "Seafoam":         {"bg1": "#f0fff9", "bg2": "#d4fff2", "accent": "#0d9488"},
-    "Soft Pink":       {"bg1": "#fff5f7", "bg2": "#ffe4ed", "accent": "#db2777"},
-    "Morning Haze":    {"bg1": "#fefce8", "bg2": "#fef3c7", "accent": "#eab308"},
-    "Vanilla Sky":     {"bg1": "#fffaf0", "bg2": "#fff0d6", "accent": "#f59e0b"},
-    "Crystal Blue":    {"bg1": "#f0f9ff", "bg2": "#e0f2fe", "accent": "#0ea5e9"},
-    "Green Whisper":   {"bg1": "#f0fff4", "bg2": "#dcfce7", "accent": "#22c55e"},
 }
-
-# ------------------ DARK THEMES (20) ------------------
 dark_themes = {
     "Midnight Gold":   {"bg1": "#0d0d0d", "bg2": "#1a1a1a", "accent": "#ffd700"},
     "Obsidian Night":  {"bg1": "#0b0c10", "bg2": "#1f2833", "accent": "#66fcf1"},
@@ -215,111 +54,132 @@ dark_themes = {
     "Steel Indigo":    {"bg1": "#0c0f1a", "bg2": "#1c2333", "accent": "#7dd3fc"},
     "Velvet Crimson":  {"bg1": "#1a0000", "bg2": "#330000", "accent": "#e11d48"},
     "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
-    "Graphite Blue":   {"bg1": "#0a0f1a", "bg2": "#1f2a3a", "accent": "#3b82f6"},
-    "Cosmic Purple":   {"bg1": "#1b001e", "bg2": "#2a0033", "accent": "#a855f7"},
-    "Forest Shadow":   {"bg1": "#001100", "bg2": "#002200", "accent": "#22c55e"},
-    "Iron Night":      {"bg1": "#101010", "bg2": "#202020", "accent": "#94a3b8"},
-    "Lunar Blue":      {"bg1": "#001022", "bg2": "#002244", "accent": "#0ea5e9"},
-    "Solar Flare":     {"bg1": "#2b0000", "bg2": "#5c0000", "accent": "#f59e0b"},
-    "Twilight Teal":   {"bg1": "#001818", "bg2": "#003333", "accent": "#14b8a6"},
-    "Ruby Night":      {"bg1": "#1a0000", "bg2": "#330000", "accent": "#ef4444"},
-    "Midnight Purple": {"bg1": "#0b001a", "bg2": "#1c0033", "accent": "#a21caf"},
-    "Neon Cyan":       {"bg1": "#001111", "bg2": "#002222", "accent": "#00ffff"},
 }
 
-# ------------------ THEME MODE ------------------
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
 if "selected_theme" not in st.session_state:
     theme_set = dark_themes if st.session_state.theme_mode == "Dark" else light_themes
-    st.session_state.selected_theme = random.choice(list(theme_set.keys()))
+    random_theme_name = random.choice(list(theme_set.keys()))
+    st.session_state.selected_theme = random_theme_name
 
-# ------------------ APPLY THEME ------------------
-themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-selected = themes[st.session_state.selected_theme]
-bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
+def get_contrast_color(hex_color: str) -> str:
+    hex_color = hex_color.lstrip('#')
+    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return "#000000" if brightness > 155 else "#ffffff"
 
-# ------------------ MODE TOGGLE ------------------
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("🌞 Light Mode", use_container_width=True):
-        st.session_state.theme_mode = "Light"
-        st.session_state.selected_theme = list(light_themes.keys())[0]
-        st.rerun()
-with col2:
-    if st.button("🌙 Dark Mode", use_container_width=True):
-        st.session_state.theme_mode = "Dark"
-        st.session_state.selected_theme = list(dark_themes.keys())[0]
-        st.rerun()
+def apply_theme_vars():
+    themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+    if st.session_state.selected_theme not in themes:
+        st.session_state.selected_theme = list(themes.keys())[0]
+    selected = themes[st.session_state.selected_theme]
+    bg1, bg2, accent = selected["bg1"], selected["bg2"], selected["accent"]
+    text_color = "#111" if st.session_state.theme_mode == "Light" else "#e6e6e6"
+    st.markdown(
+        f"<style>:root{{--bg1:{bg1};--bg2:{bg2};--accent:{accent};--text:{text_color};}}</style>",
+        unsafe_allow_html=True,
+    )
+    return bg1, bg2, accent, text_color
 
-# ------------------ THEME BUTTONS (2 Rows) ------------------
+bg1, bg2, accent, text_color = apply_theme_vars()
+title_text_color = get_contrast_color(accent)
+
+st.markdown(
+    f"""
+<div class="app-title" style="font-size:22px; margin: 12px 0 22px;">
+  Client Management System — Techware Hub
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
 theme_names = list(themes.keys())
-half = len(theme_names) // 2
+half = len(theme_names) // 2  # split evenly
 
+# First row of theme buttons
 cols1 = st.columns(len(theme_names[:half]))
 for i, theme_name in enumerate(theme_names[:half]):
     if cols1[i].button(theme_name, key=f"theme_{theme_name}"):
-        st.session_state.selected_theme = theme_name
-        st.rerun()
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.rerun()
 
+# Second row of theme buttons
 cols2 = st.columns(len(theme_names[half:]))
 for i, theme_name in enumerate(theme_names[half:]):
     if cols2[i].button(theme_name, key=f"theme_{theme_name}_2"):
-        st.session_state.selected_theme = theme_name
-        st.rerun()
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.rerun()
 
-# ------------------ STYLING ------------------
+themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
+
+# ---- Horizontal scrollable and evenly spaced theme buttons ----
 st.markdown(
-    f"""
+    """
     <style>
-    [data-testid="stAppViewContainer"] {{
-        background: radial-gradient(circle at top left, {bg2}, {bg1});
-        transition: all 0.3s ease-in-out;
-    }}
-    div.stButton > button {{
-        border-radius: 999px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        padding: 0.45rem 1rem !important;
-        box-shadow: 0 0 6px {accent}33;
-        background-color: transparent !important;
-        color: {accent} !important;
-        border: 1px solid {accent}55 !important;
-    }}
-    div.stButton > button:hover {{
-        background: {accent}22 !important;
-        color: white !important;
-        box-shadow: 0 0 22px {accent}99, inset 0 0 12px {accent}66 !important;
-        transform: scale(1.05);
-    }}
-    ::-webkit-scrollbar {{
-        width: 10px;
+    .theme-scroll-container {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 12px; /* consistent distance between buttons */
+        padding: 10px 8px 12px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) rgba(255,255,255,0.08);
+    }
+
+    .theme-scroll-container::-webkit-scrollbar {
         height: 8px;
-    }}
-    ::-webkit-scrollbar-thumb {{
-        background: linear-gradient({accent}, {accent}cc);
+    }
+    .theme-scroll-container::-webkit-scrollbar-thumb {
+        background: var(--accent);
         border-radius: 10px;
-    }}
+    }
+    .theme-scroll-container::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+    }
+
+    /* Force Streamlit columns to act inline instead of stacking */
+    .theme-scroll-container [data-testid="column"] {
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .theme-scroll-container [data-testid="stVerticalBlock"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .theme-scroll-container [data-testid="stButton"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Add right margin between buttons for consistent gap */
+    .theme-scroll-container [data-testid="stButton"] > div {
+        margin-right: 12px !important;
+    }
+    .theme-scroll-container [data-testid="stButton"]:last-child > div {
+        margin-right: 0 !important;
+    }
     </style>
+
+    <div class="theme-scroll-container">
     """,
     unsafe_allow_html=True,
 )
 
-# ------------------ APP TITLE ------------------
-st.markdown(
-    f"""
-    <h3 style='text-align:center;
-               background: linear-gradient(90deg, {accent}, #ffffff, {accent});
-               -webkit-background-clip: text;
-               color: transparent;
-               font-weight: 800;
-               letter-spacing: 0.4px;
-               animation: shimmerText 3s linear infinite;'>
-    Client Management System — Techware Hub
-    </h3>
-    """,
-    unsafe_allow_html=True,
-)
+# Render Streamlit buttons (logic unchanged)
+cols_palette = st.columns(len(themes))
+for i, (theme_name, data) in enumerate(themes.items()):
+    with cols_palette[i]:
+        if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=True):
+            if st.session_state.selected_theme != theme_name:
+                st.session_state.selected_theme = theme_name
+                st.rerun()
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ==============================
