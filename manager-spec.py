@@ -725,31 +725,32 @@ def manager_view():
                             st.metric("Peak Time", peak_time.strftime("%Y-%m-%d %H:%M:%S"))
                         else:
                             st.metric("Peak Time", "—")
-        
-        # --- Today's total (Night window) for the selected sheet only ---
-        st.divider()
-        if not df_all.empty:
-            night_total = compute_night_window_totals(df_all.copy())
-            st.metric(
-    "Night Charged Total — Selected Sheet\n(Today's Window)",
-    f"${night_total:,.2f}"
-)
-
-        
-            # Floating badge for the SELECTED sheet
-            badge_amount = f"${night_total:,.2f}"
-            st.markdown(
-                f"""
-        <div class="badge-fixed-top-right">
-          <span class="badge-label">Night Charged Total</span>
-          <span class="badge-label">Selected Sheet</span>
-          <span class="badge-amount">{badge_amount}</span>
-        </div>
-        """,
-                unsafe_allow_html=True,
-            )
-        else:
-            st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
+                    
+                    st.divider()
+                    
+                    if not df_all.empty:
+                        night_total = compute_night_window_totals(df_all.copy())
+                    
+                        # This won't render multiline label properly in st.metric
+                        st.metric(
+                            "Night Charged Total — Selected Sheet (Today's Window)",
+                            f"${night_total:,.2f}"
+                        )
+                    
+                        # Floating badge with multiline labels (corrected)
+                        badge_amount = f"${night_total:,.2f}"
+                        st.markdown(
+                            f"""
+                            <div class="badge-fixed-top-right">
+                              <span class="badge-label">Night Charged Total</span>
+                              <span class="badge-label">Today's Total</span>
+                              <span class="badge-amount">{badge_amount}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
 
 
 # ==============================
