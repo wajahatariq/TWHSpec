@@ -94,92 +94,34 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-theme_names = list(themes.keys())
-half = len(theme_names) // 2  # split evenly
-
-# First row of theme buttons
-cols1 = st.columns(len(theme_names[:half]))
-for i, theme_name in enumerate(theme_names[:half]):
-    if cols1[i].button(theme_name, key=f"theme_{theme_name}"):
-        if st.session_state.selected_theme != theme_name:
-            st.session_state.selected_theme = theme_name
+col_tm1, col_tm2, _ = st.columns([1, 1, 6])
+with col_tm1:
+    st.markdown("<div style='display:flex; justify-content:center;'>", unsafe_allow_html=True)
+    if st.button("Light Mode", use_container_width=True):
+        if st.session_state.theme_mode != "Light":
+            st.session_state.theme_mode = "Light"
+            st.session_state.selected_theme = list(light_themes.keys())[0]
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# Second row of theme buttons
-cols2 = st.columns(len(theme_names[half:]))
-for i, theme_name in enumerate(theme_names[half:]):
-    if cols2[i].button(theme_name, key=f"theme_{theme_name}_2"):
-        if st.session_state.selected_theme != theme_name:
-            st.session_state.selected_theme = theme_name
+with col_tm2:
+    st.markdown("<div style='display:flex; justify-content:center;'>", unsafe_allow_html=True)
+    if st.button("Dark Mode", use_container_width=True):
+        if st.session_state.theme_mode != "Dark":
+            st.session_state.theme_mode = "Dark"
+            st.session_state.selected_theme = list(dark_themes.keys())[0]
             st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 
-# ---- Horizontal scrollable and evenly spaced theme buttons ----
-st.markdown(
-    """
-    <style>
-    .theme-scroll-container {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        gap: 12px; /* consistent distance between buttons */
-        padding: 10px 8px 12px;
-        scrollbar-width: thin;
-        scrollbar-color: var(--accent) rgba(255,255,255,0.08);
-    }
-
-    .theme-scroll-container::-webkit-scrollbar {
-        height: 8px;
-    }
-    .theme-scroll-container::-webkit-scrollbar-thumb {
-        background: var(--accent);
-        border-radius: 10px;
-    }
-    .theme-scroll-container::-webkit-scrollbar-track {
-        background: rgba(255,255,255,0.05);
-    }
-
-    /* Force Streamlit columns to act inline instead of stacking */
-    .theme-scroll-container [data-testid="column"] {
-        flex: 0 0 auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .theme-scroll-container [data-testid="stVerticalBlock"] {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .theme-scroll-container [data-testid="stButton"] {
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    /* Add right margin between buttons for consistent gap */
-    .theme-scroll-container [data-testid="stButton"] > div {
-        margin-right: 12px !important;
-    }
-    .theme-scroll-container [data-testid="stButton"]:last-child > div {
-        margin-right: 0 !important;
-    }
-    </style>
-
-    <div class="theme-scroll-container">
-    """,
-    unsafe_allow_html=True,
-)
-
-# Render Streamlit buttons (logic unchanged)
 cols_palette = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
-    with cols_palette[i]:
-        if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=True):
-            if st.session_state.selected_theme != theme_name:
-                st.session_state.selected_theme = theme_name
-                st.rerun()
+    if cols_palette[i].button(theme_name.replace(" ", "\n"), key=f"theme_{theme_name}"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
+            st.rerun()
 
-st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ==============================
