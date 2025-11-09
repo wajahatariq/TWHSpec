@@ -1,311 +1,363 @@
+/* =========================================================
+   Techware Hub — Streamlit Theme
+   File: theme.css
+   Notes:
+   - Use CSS variables for colors. You can override them from Python.
+   - No emojis are used inside code as requested.
+   ========================================================= */
 
-
-/* ------------------- Design Tokens (base) ------------------- */
+/* ---------- Color System (defaults) ---------- */
 :root {
-  /* Color palette (defaults) */
-  --color-bg-primary: #0d0f12;   /* page background */
-  --color-bg-secondary: #10151c; /* secondary gradient stop */
-  --color-surface: #0b1119;      /* cards, inputs */
-  --color-accent: #3b82f6;       /* primary accent */
-  --color-text: #e6e6e6;         /* primary text */
-  --color-muted: #94a3b8;        /* subdued text */
-  --color-ring: rgba(59,130,246,0.45);
+  --bg1: #0d0f12;
+  --bg2: #10151c;
+  --accent: #3b82f6;
+  --text: #e6e6e6;
+  --muted: #94a3b8;
+  --card: #131923;
+  --ring: rgba(59, 130, 246, 0.45);
 
-  /* Semantic aliases */
-  --bg1: var(--color-bg-primary);
-  --bg2: var(--color-bg-secondary);
-  --card: var(--color-surface);
-  --accent: var(--color-accent);
-  --text: var(--color-text);
-  --muted: var(--color-muted);
-  --ring: var(--color-ring);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
 
-  /* Radius scale */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
-
-  /* Motion & transitions */
-  --motion-fast: 120ms;
-  --motion-normal: 180ms;
-  --motion-slow: 300ms;
-  --motion-ease: cubic-bezier(.2,.9,.3,1);
-
-  /* Elevation (shadows) */
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.12);
-  --shadow-2: 0 6px 20px rgba(0,0,0,0.25);
-  --shadow-3: 0 14px 40px rgba(0,0,0,0.35);
-
-  /* Small helpers */
-  --max-content-width: 1280px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.25);
+  --shadow-lg: 0 14px 40px rgba(0,0,0,0.35);
 }
 
-/* ------------------- Dark & Light alternate sets ------------------- */
+/* Optional dark variant trigger:
+   Add data-theme="dark" to <html> if you want alternate defaults */
 html[data-theme="dark"] {
-  --color-bg-primary: #050b12;
-  --color-bg-secondary: #0e1822;
-  --color-surface: #0b1119;
-  --color-accent: #38bdf8;
-  --color-text: #e8eef5;
-  --color-muted: #97a6b2;
-  --color-ring: rgba(56,189,248,0.45);
-
-  --shadow-1: 0 1px 4px rgba(0,0,0,0.35);
-  --shadow-2: 0 10px 30px rgba(0,0,0,0.55);
-  --shadow-3: 0 22px 60px rgba(0,0,0,0.7);
+  --bg1: #050b12;
+  --bg2: #0e1822;
+  --accent: #38bdf8;
+  --text: #e8eef5;
+  --muted: #97a6b2;
+  --card: #0b1119;
+  --ring: rgba(56, 189, 248, 0.45);
 }
 
-html[data-theme="light"] {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f7fafc;
-  --color-surface: #ffffff;
-  --color-accent: #2563eb;
-  --color-text: #0f172a;
-  --color-muted: #475569;
-  --color-ring: rgba(37,99,235,0.18);
-
-  --shadow-1: 0 1px 6px rgba(16,24,40,0.06);
-  --shadow-2: 0 8px 24px rgba(16,24,40,0.08);
-  --shadow-3: 0 20px 50px rgba(16,24,40,0.12);
-}
-
-/* Respect reduce motion preference */
-@media (prefers-reduced-motion: reduce) {
-  :root { --motion-fast: 1ms; --motion-normal: 1ms; --motion-slow: 1ms; }
-  * { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
-}
-
-/* ------------------- Base reset & app container ------------------- */
+/* ---------- Base Reset ---------- */
 html, body {
   margin: 0;
   padding: 0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   color: var(--text);
   background: var(--bg1);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* App view (Streamlit root) */
+/* ---------- App Background & Layout ---------- */
 [data-testid="stAppViewContainer"] {
   background: radial-gradient(1200px 800px at 10% 0%, var(--bg2) 0%, var(--bg1) 45%, var(--bg1) 100%);
   background-size: 200% 200%;
-  animation: twh-bgShift 60s var(--motion-ease) infinite;
-  min-height: 100vh;
+  animation: bgShift 60s ease infinite;
 }
 
-/* Smooth page fades to hide rerenders */
-[data-testid="stAppViewContainer"] > main {
-  transition: opacity var(--motion-normal) var(--motion-ease), transform var(--motion-normal) var(--motion-ease);
-}
-
-/* Container padding */
 main.block-container {
   padding-top: 1.2rem;
   padding-bottom: 4rem;
-  max-width: var(--max-content-width);
-  margin-inline: auto;
 }
 
-/* Sidebar styling */
+/* Sidebar */
 [data-testid="stSidebar"] {
   background: linear-gradient(180deg, var(--bg2), var(--bg1));
-  border-right: 1px solid rgba(255,255,255,0.04);
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+[data-testid="stSidebar"] * {
   color: var(--text);
 }
 
-/* ------------------- Typography ------------------- */
-h1,h2,h3,h4 { margin: .1rem 0 .6rem; color: var(--text); }
+/* ---------- Typography ---------- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text);
+  letter-spacing: 0.2px;
+  margin: 0.2em 0 0.6em;
+}
 h1 { font-size: 2rem; font-weight: 800; }
 h2 { font-size: 1.5rem; font-weight: 700; }
-h3 { font-size: 1.2rem; font-weight: 700; }
+h3 { font-size: 1.25rem; font-weight: 700; }
 
-p { color: var(--text); opacity: 0.95; line-height: 1.6; }
-small, .muted { color: var(--muted); }
-
-code, pre {
-  background: rgba(255,255,255,0.04);
-  border-radius: 8px;
-  padding: 0.15rem 0.35rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
-  color: inherit;
+p {
+  color: var(--text);
+  opacity: 0.92;
+  line-height: 1.6;
 }
 
-/* ------------------- App Title (shimmer) ------------------- */
+strong { color: var(--text); }
+
+code, pre {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.15rem 0.35rem;
+  color: #e2e8f0;
+}
+
+/* ---------- Title Banner (use with .app-title) ---------- */
 .app-title {
-  font-weight: 800;
-  font-size: 22px;
-  letter-spacing: 0.4px;
-  text-align: center;
-  padding: 6px 0 12px;
   background: linear-gradient(90deg, var(--accent), #ffffff, var(--accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: twh-shimmer 2.8s linear infinite;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  animation: shimmerText 3s linear infinite, fadeIn 500ms ease;
+  text-align: center;
+  padding: 4px 0;
 }
 
-/* ------------------- Buttons (Streamlit-friendly) ------------------- */
-/* Reset Streamlit button and style with tokens */
-div.stButton > button {
-  all: unset;
-  cursor: pointer;
+/* ---------- Buttons ---------- */
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
-  padding: 0.45rem 1.05rem;
-  border-radius: var(--radius-pill);
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
   font-weight: 600;
-  font-size: 0.95rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text);
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease, border-color 200ms ease;
+  box-shadow: 0 0 0 0 transparent;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--ring);
+  box-shadow: 0 10px 30px var(--ring), inset 0 0 10px rgba(255,255,255,0.04);
+}
+.btn:active { transform: translateY(0); }
+
+.btn--primary {
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+.btn--primary:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 16px 50px var(--ring), inset 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* Apply to Streamlit buttons */
+div.stButton > button {
+  all: unset;
+  cursor: pointer;
+  width: auto;
   white-space: nowrap;
+}
+div.stButton > button {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
   border: 1px solid var(--accent);
   color: var(--accent);
   background: transparent;
-  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-normal) var(--motion-ease), background var(--motion-normal) var(--motion-ease), color var(--motion-normal) var(--motion-ease);
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease;
+  box-shadow: 0 0 0 0 transparent;
 }
-
 div.stButton > button:hover {
-  color: #fff;
+  color: #ffffff;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
-  box-shadow: 0 0 16px var(--ring), inset 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 50px var(--ring), inset 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
-div.stButton > button:active { transform: scale(0.985); }
-
-/* Primary utility class for custom HTML buttons */
-.btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
-  padding:.5rem 1rem; border-radius:var(--radius-pill); font-weight:600;
-  border:1px solid rgba(255,255,255,0.06); background: transparent; color:var(--text);
-  transition: all var(--motion-fast) var(--motion-ease);
-}
-.btn--primary { color:#fff; border-color:var(--accent); background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #000 10%)); }
-
-/* ------------------- Theme pills / palette row ------------------- */
-.theme-pills { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center; margin:1rem 0 1.25rem; }
-.theme-pills .theme-btn {
-  display:inline-flex; align-items:center; gap:10px; padding:8px 12px; border-radius:999px; cursor:pointer; user-select:none;
-  border:1px solid rgba(255,255,255,0.06); background: linear-gradient(180deg, color-mix(in srgb, var(--card, var(--card)) 96%, transparent), var(--card));
-  transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-normal) var(--motion-ease);
-}
-.theme-pills .theme-btn:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
-.theme-pills .theme-btn .theme-dot { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.06); box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
-.theme-pills .theme-btn.selected { color:#fff; background: color-mix(in srgb, var(--accent) 18%, transparent); border-color: var(--accent); box-shadow: 0 8px 30px var(--ring); }
-
-/* Helper: show multiline label with controlled break */
-.theme-btn .label { display:inline-block; line-height:1.05; text-align:left; }
-.theme-btn .label .break { display:block; }
-
-/* ------------------- Inputs & Forms ------------------- */
-input[type="text"], input[type="password"], input[type="number"], input[type="email"], textarea, select {
+/* ---------- Inputs ---------- */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+textarea, select {
   color: var(--text) !important;
   background: var(--card) !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
-  border-radius: var(--radius-md) !important;
-  padding: .5rem .65rem !important;
-  box-shadow: var(--shadow-1) !important;
-  transition: border-color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-sm) !important;
 }
-input:focus, textarea:focus, select:focus { outline: none !important; border-color: var(--ring) !important; box-shadow: 0 0 0 6px var(--ring) !important; }
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 4px var(--ring) !important;
+}
 
-/* Date/time / baseweb widgets */
-[data-baseweb="select"] div, [data-baseweb="input"] input { color: var(--text); }
+/* Date/Time widgets */
+[data-baseweb="select"] div,
+[data-baseweb="input"] input {
+  color: var(--text);
+}
 
-/* ------------------- Cards & utility ------------------- */
-.card { background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card)); border-radius: var(--radius-lg); padding: 16px; border:1px solid rgba(255,255,255,0.04); box-shadow: var(--shadow-1); }
-.card-glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border-radius: var(--radius-lg); border:1px solid rgba(255,255,255,0.06); padding: 16px; box-shadow: var(--shadow-2); }
+/* ---------- Tables ---------- */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100%;
+  background: transparent;
+}
+thead tr th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 95%, transparent), var(--card));
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+tbody tr {
+  transition: transform 120ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+tbody tr:hover {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+  transform: scale(1.005);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+tbody td, thead th {
+  padding: 12px 10px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
 
-/* ------------------- Tables ------------------- */
-table { width:100%; border-collapse: separate !important; border-spacing: 0 !important; background: transparent; }
-thead th { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card)); color: var(--muted); font-weight:700; border-bottom:1px solid rgba(255,255,255,0.04); }
-tbody tr { transition: background-color var(--motion-fast) var(--motion-ease), transform var(--motion-fast) var(--motion-ease); }
-tbody tr:hover { background-color: color-mix(in srgb, var(--accent) 8%, transparent) !important; transform: scale(1.002); box-shadow: 0 0 0 1px rgba(255,255,255,0.02); }
+/* ---------- Expanders ---------- */
+[data-testid="stExpander"] {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 92%, transparent), var(--card));
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p {
+  margin-bottom: 0.25rem;
+}
 
-/* ------------------- Metrics & Expanders ------------------- */
-[data-testid="stMetric"] { border-radius: 12px; padding: 12px 14px; border:1px solid rgba(255,255,255,0.04); background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card)); box-shadow: var(--shadow-1); }
-[data-testid="stExpander"] { border-radius: 14px; padding: 8px; border:1px solid rgba(255,255,255,0.04); background: linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent), var(--card)); box-shadow: var(--shadow-1); }
+/* ---------- Metric Cards ---------- */
+[data-testid="stMetric"] {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card));
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+  color: var(--muted);
+  font-weight: 600;
+}
+[data-testid="stMetric"] [data-testid="stMetricValue"] {
+  color: var(--text);
+  font-weight: 800;
+}
 
-/* ------------------- Toasts & badges ------------------- */
-.toast { position: fixed; top: 20px; right: 20px; min-width: 280px; max-width: 380px; padding: 12px 16px; background: var(--accent); color: #fff; border-radius: 12px; box-shadow: 0 12px 30px var(--ring); z-index: 9999; font-weight:700; animation: twh-toast-in 240ms var(--motion-ease), twh-toast-out 600ms var(--motion-ease) 2.8s forwards; }
+/* ---------- Cards (utility class) ---------- */
+.card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent), var(--card));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
 
-.badge-fixed-top-right { position: fixed; top: 20px; right: 30px; background: var(--accent); color:#fff; padding: 14px 20px; border-radius: 16px; font-weight:800; font-size:18px; box-shadow: 0 12px 30px var(--ring); z-index:9998; }
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 280px;
+  max-width: 380px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px var(--ring);
+  font-weight: 700;
+  z-index: 9999;
+  animation: fadeIn 240ms ease, fadeOut 600ms ease 2.7s forwards;
+}
 
-/* ------------------- Pills & status ------------------- */
-.pill { display:inline-block; padding: 4px 10px; border-radius: 999px; font-weight:700; font-size:12px; }
-.pill--success { background: color-mix(in srgb, var(--success, #10b981) 18%, transparent); color: var(--success, #10b981); border:1px solid color-mix(in srgb, var(--success, #10b981) 35%, transparent); }
-.pill--warning { background: color-mix(in srgb, var(--warning, #f59e0b) 18%, transparent); color: var(--warning, #f59e0b); border:1px solid color-mix(in srgb, var(--warning, #f59e0b) 35%, transparent); }
-.pill--danger { background: color-mix(in srgb, var(--danger, #ef4444) 18%, transparent); color: var(--danger, #ef4444); border:1px solid color-mix(in srgb, var(--danger, #ef4444) 35%, transparent); }
+/* ---------- Fixed Badge (Night Charged Total) ---------- */
+.badge-fixed-top-right {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 12px 30px var(--ring);
+  z-index: 9998;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.badge-fixed-top-right .badge-label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+.badge-fixed-top-right .badge-amount {
+  display: block;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: 0.2px;
+  color: #ffffff;
+}
 
-/* ------------------- Scrollbar enhancements ------------------- */
+/* ---------- Progress / Status Pills ---------- */
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+.pill--success { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 35%, transparent); }
+.pill--warning { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); }
+.pill--danger  { background: color-mix(in srgb, var(--danger) 20%, transparent);  color: var(--danger);  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); }
+
+/* ---------- Scrollbar ---------- */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 70%, #000 30%)); border-radius: 10px; }
-*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--accent) 85%, #000 10%); }
-*::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 70%, #000 30%));
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
 
-/* ------------------- Elevation utility classes ------------------- */
-.elev-1 { box-shadow: var(--shadow-1); }
-.elev-2 { box-shadow: var(--shadow-2); }
-.elev-3 { box-shadow: var(--shadow-3); }
+/* ---------- Animations ---------- */
+@keyframes pulseGlow {
+  0%   { box-shadow: 0 0 0 0 var(--ring); }
+  50%  { box-shadow: 0 0 24px 2px var(--ring); }
+  100% { box-shadow: 0 0 0 0 var(--ring); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes fadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes shimmerText {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes bgShift {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 50% 50%; }
+  100% { background-position: 0% 0%; }
+}
 
-/* ------------------- Modal overlay helper ------------------- */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); z-index: 9996; display: grid; place-items: center; }
-.modal { background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card)); border-radius: var(--radius-lg); padding: 18px; max-width: 980px; width: calc(100% - 32px); box-shadow: var(--shadow-3); border:1px solid rgba(255,255,255,0.04); }
-
-/* ------------------- Utility helpers ------------------- */
+/* ---------- Utility ---------- */
 .hidden { display: none !important; }
 .center { display: grid; place-items: center; }
 .mt-1 { margin-top: .25rem; } .mt-2 { margin-top: .5rem; } .mt-3 { margin-top: .75rem; } .mt-4 { margin-top: 1rem; }
 .mb-1 { margin-bottom: .25rem; } .mb-2 { margin-bottom: .5rem; } .mb-3 { margin-bottom: .75rem; } .mb-4 { margin-bottom: 1rem; }
 .p-2 { padding: .5rem; } .p-3 { padding: .75rem; } .p-4 { padding: 1rem; }
-.rounded-xl { border-radius: var(--radius-lg); }
-.shadow-md { box-shadow: var(--shadow-2); }
-
-/* ------------------- Responsive tweaks ------------------- */
-@media (max-width: 900px) {
-  .app-title { font-size: 18px; }
-  .theme-pills { gap: 10px; }
-  div.stButton > button { padding: 0.35rem .9rem; font-size: .88rem; }
-  main.block-container { padding-left: 10px; padding-right: 10px; }
-}
-
-@media (max-width: 520px) {
-  .theme-pills .theme-btn { padding: 6px 8px; gap: 8px; }
-  .theme-pills .theme-btn .label { font-size: .86rem; }
-}
-
-/* ------------------- Animations (keyframes) ------------------- */
-@keyframes twh-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-@keyframes twh-bgShift { 0% { background-position: 0% 0%; } 50% { background-position: 50% 50%; } 100% { background-position: 0% 0%; } }
-@keyframes twh-toast-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes twh-toast-out { 0% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
-
-/* ------------------- Small accessibility helpers ------------------- */
-:focus { outline: 3px solid transparent; outline-offset: 3px; }
-:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; border-radius: 6px; }
-
-/* ------------------- Minor Streamlit-specific layout fixes ------------------- */
-/* Add equal spacing to Streamlit button row and make it wrap cleanly */
-.theme-scroll-container [data-testid="column"] > div[data-testid="stVerticalBlock"],
-.theme-scroll-container [data-testid="stButton"] { margin-right: 12px !important; }
-.theme-scroll-container [data-testid="column"]:last-child > div[data-testid="stVerticalBlock"],
-.theme-scroll-container [data-testid="stButton"]:last-child { margin-right: 0 !important; }
-.theme-scroll-container { display:flex; flex-wrap:wrap; align-items:center; }
-
-.badge-fixed-top-right {
-  background: var(--accent);
-  color: #ffffff;  /* text color for all text by default */
-}
-
-.badge-fixed-top-right .badge-label {
-  color: rgba(255, 255, 255, 0.85); /* slightly transparent white */
-}
-
-.badge-fixed-top-right .badge-amount {
-  color: #ffffff; /* full white */
-}
-
-
-/* ------------------- End of file ------------------- */
+.rounded-xl { border-radius: 16px; }
+.shadow-md { box-shadow: var(--shadow-md); }
