@@ -112,6 +112,7 @@ themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 
 # Theme selection row with horizontal scrollbar
 # ---- Horizontal scrollable theme row ----
+# ---- Horizontal scrollable, evenly spaced theme row ----
 st.markdown(
     """
     <style>
@@ -119,8 +120,8 @@ st.markdown(
         display: flex;
         flex-wrap: nowrap;
         overflow-x: auto;
-        gap: 10px;
-        padding: 6px 4px 10px;
+        padding: 10px 6px 12px;
+        gap: 14px; /* consistent spacing */
         scrollbar-width: thin;
         scrollbar-color: var(--accent) rgba(255,255,255,0.05);
     }
@@ -134,13 +135,29 @@ st.markdown(
     .theme-scroll-container::-webkit-scrollbar-track {
         background: rgba(255,255,255,0.05);
     }
+
+    /* Ensure Streamlit buttons inside columns behave inline */
+    .theme-scroll-container [data-testid="column"] {
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .theme-scroll-container [data-testid="stVerticalBlock"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .theme-scroll-container [data-testid="stButton"] {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     </style>
+
     <div class="theme-scroll-container">
     """,
     unsafe_allow_html=True,
 )
 
-# Render buttons horizontally in columns
+# Streamlit still renders each button normally — logic unchanged
 cols_palette = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
     with cols_palette[i]:
@@ -150,6 +167,7 @@ for i, (theme_name, data) in enumerate(themes.items()):
                 st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 
 
 # ==============================
