@@ -109,20 +109,31 @@ with col_tm2:
             st.rerun()
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-# Theme selection row (works with .theme-pills in theme.css)
-st.markdown('<div class="theme-pills">', unsafe_allow_html=True)
 
+query_params = st.query_params
+if "theme" in query_params:
+    chosen_theme = query_params["theme"]
+    if chosen_theme in (light_themes if st.session_state.theme_mode == "Light" else dark_themes):
+        if st.session_state.selected_theme != chosen_theme:
+            st.session_state.selected_theme = chosen_theme
+            st.rerun()
+
+# Theme selection row (inside one HTML block)
+theme_buttons_html = '<div class="theme-pills">'
 for theme_name, data in themes.items():
-    # mark current theme as selected in the DOM
-    selected_attr = "selected" if theme_name == st.session_state.selected_theme else ""
-    button_html = f"""
-        <div data-testid="stButton" class="{'selected' if selected_attr else ''}">
-            <button onclick="window.location.href='?theme={theme_name}'">{theme_name}</button>
+    selected = "selected" if theme_name == st.session_state.selected_theme else ""
+    theme_buttons_html += f"""
+        <div data-testid="stButton" class="{selected}">
+            <form action="" method="get">
+                <input type="hidden" name="theme" value="{theme_name}">
+                <button type="submit">{theme_name}</button>
+            </form>
         </div>
     """
-    st.markdown(button_html, unsafe_allow_html=True)
+theme_buttons_html += "</div>"
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown(theme_buttons_html, unsafe_allow_html=True)
+
 
 # ==============================
 # Timezone and constants
