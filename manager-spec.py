@@ -589,19 +589,18 @@ def manager_view():
         else:
             st.info("No data available to edit.")
 
+# --- Existing Data Display (scoped to the selected sheet) ---
         st.divider()
-        st.subheader("Spectrum Data (Sheet1)")
-        if df_spectrum.empty:
-            st.info("No data available in Spectrum (Sheet1).")
+        if sheet_option.startswith("Spectrum"):
+            st.subheader("Spectrum Data (Sheet1)")
         else:
-            st.dataframe(style_status_rows(df_spectrum), use_container_width=True)
+            st.subheader("Insurance Data (Sheet2)")
+        
+        if df_all.empty:
+            st.info("No data available in the selected sheet.")
+        else:
+            st.dataframe(style_status_rows(df_all), use_container_width=True)
 
-        st.divider()
-        st.subheader("Insurance Data (Sheet2)")
-        if df_insurance.empty:
-            st.info("No data available in Insurance (Sheet2).")
-        else:
-            st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
         st.divider()
         st.subheader("Transaction Analysis Chart")
