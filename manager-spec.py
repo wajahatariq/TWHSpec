@@ -111,29 +111,46 @@ with col_tm2:
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 
 # Theme selection row with horizontal scrollbar
+# ---- Horizontal scrollable theme row ----
 st.markdown(
     """
-    <div style="
+    <style>
+    .theme-scroll-container {
         display: flex;
         flex-wrap: nowrap;
         overflow-x: auto;
         gap: 10px;
-        padding-bottom: 8px;
+        padding: 6px 4px 10px;
         scrollbar-width: thin;
         scrollbar-color: var(--accent) rgba(255,255,255,0.05);
-    ">
+    }
+    .theme-scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    .theme-scroll-container::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 10px;
+    }
+    .theme-scroll-container::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.05);
+    }
+    </style>
+    <div class="theme-scroll-container">
     """,
     unsafe_allow_html=True,
 )
 
-# Buttons stay functional and independent
+# Render buttons horizontally in columns
+cols_palette = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
-    if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=False):
-        if st.session_state.selected_theme != theme_name:
-            st.session_state.selected_theme = theme_name
-            st.rerun()
+    with cols_palette[i]:
+        if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=True):
+            if st.session_state.selected_theme != theme_name:
+                st.session_state.selected_theme = theme_name
+                st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
+
 
 # ==============================
 # Timezone and constants
