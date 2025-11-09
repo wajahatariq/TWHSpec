@@ -741,6 +741,19 @@ def manager_view():
                         badge_amount = f"${night_total:,.2f}"
                         st.markdown(
                             f"""
+                            <style>
+                            .badge-fixed-top-right {{
+                                background: {accent};
+                                color: {badge_text_color};
+                            }}
+                            .badge-fixed-top-right .badge-label {{
+                                color: {badge_text_color};
+                                opacity: 0.85;
+                            }}
+                            .badge-fixed-top-right .badge-amount {{
+                                color: {badge_text_color};
+                            }}
+                            </style>
                             <div class="badge-fixed-top-right">
                               <span class="badge-label">Night Charged Total</span>
                               <span class="badge-label">Today's Total</span>
