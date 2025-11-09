@@ -276,36 +276,33 @@ def time_in_range(start: dtime, end: dtime, x: dtime) -> bool:
         return start <= x < end
     return start <= x or x < end
 
+from datetime import datetime, timedelta, time as dtime
+
 def compute_night_window_totals(df_all: pd.DataFrame, agent_filter: str = None) -> float:
     if df_all.empty:
         return 0.0
+
     df = df_all.copy()
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
     df = df.dropna(subset=["Timestamp"])
     df = ensure_numeric_charge(df)
+
     now = datetime.now(tz)
-    if time_in_range(dtime(7, 0), dtime(19, 0), now.time()):
-        window_start_1 = datetime.combine(now.date() - timedelta(days=1), dtime(19, 0))
-        window_end_1 = datetime.combine(now.date() - timedelta(days=1), dtime(23, 59, 59, 999999))
-        window_start_2 = datetime.combine(now.date(), dtime(0, 0))
-        window_end_2 = datetime.combine(now.date(), dtime(6, 0))
-    else:
-        if now.time() >= dtime(19, 0):
-            window_start_1 = datetime.combine(now.date(), dtime(19, 0))
-            window_end_1 = datetime.combine(now.date(), dtime(23, 59, 59, 999999))
-            window_start_2 = datetime.combine(now.date() + timedelta(days=1), dtime(0, 0))
-            window_end_2 = datetime.combine(now.date() + timedelta(days=1), dtime(6, 0))
-        else:
-            window_start_1 = datetime.combine(now.date() - timedelta(days=1), dtime(19, 0))
-            window_end_1 = datetime.combine(now.date() - timedelta(days=1), dtime(23, 59, 59, 999999))
-            window_start_2 = datetime.combine(now.date(), dtime(0, 0))
-            window_end_2 = datetime.combine(now.date(), dtime(6, 0))
+
+    # Night window always from today 6 PM to tomorrow 9 AM
+    window_start = datetime.combine(now.date(), dtime(18, 0))  # 6:00 PM today
+    window_end = datetime.combine(now.date() + timedelta(days=1), dtime(9, 0))  # 9:00 AM tomorrow
+
     def in_window(ts):
-        return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
+        return window_start <= ts <= window_end
+
     if agent_filter:
         df = df[df["Agent Name"] == agent_filter]
+
     night_df = df[(df["Status"] == "Charged") & (df["Timestamp"].apply(in_window))]
+
     return float(night_df["ChargeFloat"].sum())
+
 
 # ==============================
 # Unified Auth screen (Sign In / Sign Up)
