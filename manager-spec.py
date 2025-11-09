@@ -730,7 +730,7 @@ def manager_view():
         st.divider()
         if not df_all.empty:
             night_total = compute_night_window_totals(df_all.copy())
-            st.metric("Night Charged Total — Selected Sheet (Today's Window)", f"${night_total:,.2f}")
+            st.metric("Night Charged Total — Selected Sheet (Today's Window)", \nf"${night_total:,.2f}")
         
             # Floating badge for the SELECTED sheet
             badge_amount = f"${night_total:,.2f}"
