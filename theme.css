@@ -314,12 +314,13 @@ tbody tr:hover { background-color: color-mix(in srgb, var(--accent) 8%, transpar
 }
 
 .badge-fixed-top-right .badge-label {
-  display: block;
-  font-size: 14px;             /* smaller label font */
-  opacity: 0.85;
-  margin-bottom: 6px;          /* spacing between label lines */
-  font-weight: 600;
+  display: block !important;
+  margin-bottom: 6px !important;
+  font-size: 14px !important;
+  opacity: 0.85 !important;
+  font-weight: 600 !important;
 }
+
 
 .badge-fixed-top-right .badge-amount {
   display: block;
