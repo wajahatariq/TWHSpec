@@ -703,8 +703,6 @@ def manager_view():
         unsafe_allow_html=True,
     )
 
-    manager_view()
-
 # ==============================
 # AGENT VIEW
 # ==============================
