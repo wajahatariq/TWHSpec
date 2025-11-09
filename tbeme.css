@@ -1,0 +1,363 @@
+/* =========================================================
+   Techware Hub — Streamlit Theme
+   File: theme.css
+   Notes:
+   - Use CSS variables for colors. You can override them from Python.
+   - No emojis are used inside code as requested.
+   ========================================================= */
+
+/* ---------- Color System (defaults) ---------- */
+:root {
+  --bg1: #0d0f12;
+  --bg2: #10151c;
+  --accent: #3b82f6;
+  --text: #e6e6e6;
+  --muted: #94a3b8;
+  --card: #131923;
+  --ring: rgba(59, 130, 246, 0.45);
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 6px 20px rgba(0,0,0,0.25);
+  --shadow-lg: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+/* Optional dark variant trigger:
+   Add data-theme="dark" to <html> if you want alternate defaults */
+html[data-theme="dark"] {
+  --bg1: #050b12;
+  --bg2: #0e1822;
+  --accent: #38bdf8;
+  --text: #e8eef5;
+  --muted: #97a6b2;
+  --card: #0b1119;
+  --ring: rgba(56, 189, 248, 0.45);
+}
+
+/* ---------- Base Reset ---------- */
+html, body {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  background: var(--bg1);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- App Background & Layout ---------- */
+[data-testid="stAppViewContainer"] {
+  background: radial-gradient(1200px 800px at 10% 0%, var(--bg2) 0%, var(--bg1) 45%, var(--bg1) 100%);
+  background-size: 200% 200%;
+  animation: bgShift 60s ease infinite;
+}
+
+main.block-container {
+  padding-top: 1.2rem;
+  padding-bottom: 4rem;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, var(--bg2), var(--bg1));
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+[data-testid="stSidebar"] * {
+  color: var(--text);
+}
+
+/* ---------- Typography ---------- */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text);
+  letter-spacing: 0.2px;
+  margin: 0.2em 0 0.6em;
+}
+h1 { font-size: 2rem; font-weight: 800; }
+h2 { font-size: 1.5rem; font-weight: 700; }
+h3 { font-size: 1.25rem; font-weight: 700; }
+
+p {
+  color: var(--text);
+  opacity: 0.92;
+  line-height: 1.6;
+}
+
+strong { color: var(--text); }
+
+code, pre {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.15rem 0.35rem;
+  color: #e2e8f0;
+}
+
+/* ---------- Title Banner (use with .app-title) ---------- */
+.app-title {
+  background: linear-gradient(90deg, var(--accent), #ffffff, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  animation: shimmerText 3s linear infinite, fadeIn 500ms ease;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text);
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease, border-color 200ms ease;
+  box-shadow: 0 0 0 0 transparent;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--ring);
+  box-shadow: 0 10px 30px var(--ring), inset 0 0 10px rgba(255,255,255,0.04);
+}
+.btn:active { transform: translateY(0); }
+
+.btn--primary {
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+.btn--primary:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 16px 50px var(--ring), inset 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* Apply to Streamlit buttons */
+div.stButton > button {
+  all: unset;
+  cursor: pointer;
+  width: auto;
+  white-space: nowrap;
+}
+div.stButton > button {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  font-weight: 600;
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease;
+  box-shadow: 0 0 0 0 transparent;
+}
+div.stButton > button:hover {
+  color: #ffffff;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 50px var(--ring), inset 0 0 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ---------- Inputs ---------- */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+textarea, select {
+  color: var(--text) !important;
+  background: var(--card) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none !important;
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 4px var(--ring) !important;
+}
+
+/* Date/Time widgets */
+[data-baseweb="select"] div,
+[data-baseweb="input"] input {
+  color: var(--text);
+}
+
+/* ---------- Tables ---------- */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100%;
+  background: transparent;
+}
+thead tr th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 95%, transparent), var(--card));
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+tbody tr {
+  transition: transform 120ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+tbody tr:hover {
+  background-color: rgba(59, 130, 246, 0.08) !important;
+  transform: scale(1.005);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+tbody td, thead th {
+  padding: 12px 10px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ---------- Expanders ---------- */
+[data-testid="stExpander"] {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 92%, transparent), var(--card));
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p {
+  margin-bottom: 0.25rem;
+}
+
+/* ---------- Metric Cards ---------- */
+[data-testid="stMetric"] {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 96%, transparent), var(--card));
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+  color: var(--muted);
+  font-weight: 600;
+}
+[data-testid="stMetric"] [data-testid="stMetricValue"] {
+  color: var(--text);
+  font-weight: 800;
+}
+
+/* ---------- Cards (utility class) ---------- */
+.card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent), var(--card));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 280px;
+  max-width: 380px;
+  padding: 12px 16px;
+  background: var(--accent);
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px var(--ring);
+  font-weight: 700;
+  z-index: 9999;
+  animation: fadeIn 240ms ease, fadeOut 600ms ease 2.7s forwards;
+}
+
+/* ---------- Fixed Badge (Night Charged Total) ---------- */
+.badge-fixed-top-right {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  background: var(--accent);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 12px 30px var(--ring);
+  z-index: 9998;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.badge-fixed-top-right .badge-label {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+.badge-fixed-top-right .badge-amount {
+  display: block;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: 0.2px;
+  color: #ffffff;
+}
+
+/* ---------- Progress / Status Pills ---------- */
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+}
+.pill--success { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 35%, transparent); }
+.pill--warning { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); }
+.pill--danger  { background: color-mix(in srgb, var(--danger) 20%, transparent);  color: var(--danger);  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); }
+
+/* ---------- Scrollbar ---------- */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--accent), color-mix(in srgb, var(--accent) 70%, #000 30%));
+  border-radius: 10px;
+}
+*::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); }
+
+/* ---------- Animations ---------- */
+@keyframes pulseGlow {
+  0%   { box-shadow: 0 0 0 0 var(--ring); }
+  50%  { box-shadow: 0 0 24px 2px var(--ring); }
+  100% { box-shadow: 0 0 0 0 var(--ring); }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+@keyframes fadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes shimmerText {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes bgShift {
+  0%   { background-position: 0% 0%; }
+  50%  { background-position: 50% 50%; }
+  100% { background-position: 0% 0%; }
+}
+
+/* ---------- Utility ---------- */
+.hidden { display: none !important; }
+.center { display: grid; place-items: center; }
+.mt-1 { margin-top: .25rem; } .mt-2 { margin-top: .5rem; } .mt-3 { margin-top: .75rem; } .mt-4 { margin-top: 1rem; }
+.mb-1 { margin-bottom: .25rem; } .mb-2 { margin-bottom: .5rem; } .mb-3 { margin-bottom: .75rem; } .mb-4 { margin-bottom: 1rem; }
+.p-2 { padding: .5rem; } .p-3 { padding: .75rem; } .p-4 { padding: 1rem; }
+.rounded-xl { border-radius: 16px; }
+.shadow-md { box-shadow: var(--shadow-md); }
