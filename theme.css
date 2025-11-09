@@ -352,7 +352,6 @@ tbody td, thead th {
   50%  { background-position: 50% 50%; }
   100% { background-position: 0% 0%; }
 }
-/* ---------- Theme Pills Row (Scoped Layout - Streamlit Safe) ---------- */
 .theme-pills {
   display: flex;
   flex-wrap: wrap;
@@ -363,15 +362,13 @@ tbody td, thead th {
   margin-bottom: 1.5rem;
 }
 
-/* Streamlit button containers inside theme-pills */
 .theme-pills > div[data-testid="stButton"] {
   flex: 0 1 auto !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Actual buttons */
-.theme-pills div[data-testid="stButton"] > button {
+.theme-pills div[data-testid="stButton"] > form > button {
   all: unset;
   cursor: pointer;
   display: inline-flex;
@@ -388,32 +385,20 @@ tbody td, thead th {
   transition: all 160ms ease;
 }
 
-/* Hover state */
-.theme-pills div[data-testid="stButton"] > button:hover {
+.theme-pills div[data-testid="stButton"] > form > button:hover {
   color: #ffffff;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   box-shadow: 0 0 16px var(--ring), inset 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
   transform: translateY(-2px);
 }
 
-/* Optional: Selected theme highlight */
-.theme-pills div[data-testid="stButton"].selected > button {
+.theme-pills div[data-testid="stButton"].selected > form > button {
   color: #ffffff;
   background: color-mix(in srgb, var(--accent) 25%, transparent);
   border-color: var(--accent);
   box-shadow: 0 0 25px 2px var(--ring), inset 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-/* Make it responsive */
-@media (max-width: 768px) {
-  .theme-pills {
-    gap: 10px;
-  }
-  .theme-pills div[data-testid="stButton"] > button {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
-  }
-}
 /* ---------- Utility ---------- */
 .hidden { display: none !important; }
 .center { display: grid; place-items: center; }
