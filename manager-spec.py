@@ -94,18 +94,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-col_tm1, col_tm2, _ = st.columns([1, 1, 6])
-with col_tm1:
-    if st.button("Light Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Light":
-            st.session_state.theme_mode = "Light"
-            st.session_state.selected_theme = list(light_themes.keys())[0]
+theme_names = list(themes.keys())
+half = len(theme_names) // 2  # split evenly
+
+# First row of theme buttons
+cols1 = st.columns(len(theme_names[:half]))
+for i, theme_name in enumerate(theme_names[:half]):
+    if cols1[i].button(theme_name, key=f"theme_{theme_name}"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
             st.rerun()
-with col_tm2:
-    if st.button("Dark Mode", use_container_width=True):
-        if st.session_state.theme_mode != "Dark":
-            st.session_state.theme_mode = "Dark"
-            st.session_state.selected_theme = list(dark_themes.keys())[0]
+
+# Second row of theme buttons
+cols2 = st.columns(len(theme_names[half:]))
+for i, theme_name in enumerate(theme_names[half:]):
+    if cols2[i].button(theme_name, key=f"theme_{theme_name}_2"):
+        if st.session_state.selected_theme != theme_name:
+            st.session_state.selected_theme = theme_name
             st.rerun()
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
