@@ -110,31 +110,30 @@ with col_tm2:
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 
-query_params = st.query_params
-if "theme" in query_params:
-    chosen_theme = query_params["theme"]
-    if chosen_theme in (light_themes if st.session_state.theme_mode == "Light" else dark_themes):
-        if st.session_state.selected_theme != chosen_theme:
-            st.session_state.selected_theme = chosen_theme
-            st.rerun()
+theme_scroll = st.container()
+with theme_scroll:
+    st.markdown(
+        """
+        <div style="
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 10px;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+        ">
+        """,
+        unsafe_allow_html=True,
+    )
 
-# Theme selection row (inside one HTML block)
-theme_buttons_html = '<div class="theme-pills">'
-for theme_name, data in themes.items():
-    selected = "selected" if theme_name == st.session_state.selected_theme else ""
-    theme_buttons_html += f"""
-        <div data-testid="stButton" class="{selected}">
-            <form action="" method="get">
-                <input type="hidden" name="theme" value="{theme_name}">
-                <button type="submit">{theme_name}</button>
-            </form>
-        </div>
-    """
-theme_buttons_html += "</div>"
+    for i, (theme_name, data) in enumerate(themes.items()):
+        # Use container_width=False so they don't squeeze into fixed columns
+        if st.button(theme_name, key=f"theme_{theme_name}", use_container_width=False):
+            if st.session_state.selected_theme != theme_name:
+                st.session_state.selected_theme = theme_name
+                st.rerun()
 
-st.markdown(theme_buttons_html, unsafe_allow_html=True)
-
-
+    st.markdown("</div>", unsafe_allow_html=True)
 # ==============================
 # Timezone and constants
 # ==============================
