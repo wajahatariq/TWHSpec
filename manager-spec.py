@@ -1040,7 +1040,7 @@ Submitted At: {timestamp}
     # ---------------------------------------------------------
     # Night badge for this agent (Spectrum only)
     # ---------------------------------------------------------
-    total_night_agent = compute_night_window_totals(df_all if not df_all.empty else pd.DataFrame(), agent_filter=agent_name)
+    total_night_agent = compute_night_window_totals(df_all if 'df_all' in locals() else pd.DataFrame(), agent_filter=agent_name)
     total_night_agent_str = f"${total_night_agent:,.2f}"
     st.markdown(
         f"""
@@ -1052,7 +1052,6 @@ Submitted At: {timestamp}
 """,
         unsafe_allow_html=True,
     )
-
 # ==============================
 # Route based on role
 # ==============================
