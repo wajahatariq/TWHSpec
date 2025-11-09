@@ -407,3 +407,24 @@ tbody td, thead th {
 .p-2 { padding: .5rem; } .p-3 { padding: .75rem; } .p-4 { padding: 1rem; }
 .rounded-xl { border-radius: 16px; }
 .shadow-md { box-shadow: var(--shadow-md); }
+
+/* ---------- Streamlit Button Row Fix (equal spacing) ---------- */
+
+/* Apply equal margin to every Streamlit button container */
+.theme-scroll-container [data-testid="column"] > div[data-testid="stVerticalBlock"],
+.theme-scroll-container [data-testid="stButton"] {
+  margin-right: 14px !important;  /* consistent horizontal gap */
+}
+
+/* Remove the extra space after the last button */
+.theme-scroll-container [data-testid="column"]:last-child > div[data-testid="stVerticalBlock"],
+.theme-scroll-container [data-testid="stButton"]:last-child {
+  margin-right: 0 !important;
+}
+
+/* Optional: make the row wrap cleanly if space is very tight */
+.theme-scroll-container {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
