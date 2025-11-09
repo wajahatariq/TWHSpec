@@ -724,16 +724,16 @@ def manager_view():
                         else:
                             st.metric("Peak Time", "—")
                     
-                    st.divider()
+st.divider()
                     
-                    if not df_all.empty:
-                        night_total = compute_night_window_totals(df_all.copy())
-                    
-                        # This won't render multiline label properly in st.metric
-                        st.metric(
-                            "Night Charged Total — Selected Sheet (Today's Window)",
-                            f"${night_total:,.2f}"
-                        )
+if not df_all.empty:
+    night_total = compute_night_window_totals(df_all.copy())
+
+    # This won't render multiline label properly in st.metric
+    st.metric(
+        "Night Charged Total — Selected Sheet (Today's Window)",
+        f"${night_total:,.2f}"
+    )
                     
                         # Floating badge with multiline labels (corrected)
 badge_amount = f"${night_total:,.2f}"
@@ -757,8 +757,8 @@ st.markdown(
 )
 
 
-                    else:
-                        st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
+else:
+    st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
 
 
 # ==============================
