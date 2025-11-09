@@ -757,9 +757,6 @@ if not df_all.empty:
                         unsafe_allow_html=True,
                     )
 
-                                   
-                    
-
 # ==============================
 # AGENT VIEW
 # ==============================
