@@ -290,7 +290,7 @@ def compute_night_window_totals(df_all: pd.DataFrame, agent_filter: str = None) 
     now = datetime.now(tz)
 
     # Night window always from today 6 PM to tomorrow 9 AM
-    window_start = datetime.combine(now.date(), dtime(18, 0))  # 6:00 PM today
+    window_start = datetime.combine(now.date(), dtime(10, 0))  # 6:00 PM today
     window_end = datetime.combine(now.date() + timedelta(days=1), dtime(9, 0))  # 9:00 AM tomorrow
 
     def in_window(ts):
