@@ -110,21 +110,21 @@ with col_tm2:
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
 
-# Theme selection row with horizontal scrollbar
-# ---- Horizontal scrollable theme row ----
-# ---- Horizontal scrollable, evenly spaced theme row ----
+# ---- Horizontal scrollable and evenly spaced theme buttons ----
 st.markdown(
     """
     <style>
     .theme-scroll-container {
         display: flex;
+        flex-direction: row;
         flex-wrap: nowrap;
         overflow-x: auto;
-        padding: 10px 6px 12px;
-        gap: 14px; /* consistent spacing */
+        gap: 12px; /* consistent distance between buttons */
+        padding: 10px 8px 12px;
         scrollbar-width: thin;
-        scrollbar-color: var(--accent) rgba(255,255,255,0.05);
+        scrollbar-color: var(--accent) rgba(255,255,255,0.08);
     }
+
     .theme-scroll-container::-webkit-scrollbar {
         height: 8px;
     }
@@ -136,7 +136,7 @@ st.markdown(
         background: rgba(255,255,255,0.05);
     }
 
-    /* Ensure Streamlit buttons inside columns behave inline */
+    /* Force Streamlit columns to act inline instead of stacking */
     .theme-scroll-container [data-testid="column"] {
         flex: 0 0 auto !important;
         margin: 0 !important;
@@ -150,6 +150,14 @@ st.markdown(
         margin: 0 !important;
         padding: 0 !important;
     }
+
+    /* Add right margin between buttons for consistent gap */
+    .theme-scroll-container [data-testid="stButton"] > div {
+        margin-right: 12px !important;
+    }
+    .theme-scroll-container [data-testid="stButton"]:last-child > div {
+        margin-right: 0 !important;
+    }
     </style>
 
     <div class="theme-scroll-container">
@@ -157,7 +165,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Streamlit still renders each button normally — logic unchanged
+# Render Streamlit buttons (logic unchanged)
 cols_palette = st.columns(len(themes))
 for i, (theme_name, data) in enumerate(themes.items()):
     with cols_palette[i]:
@@ -167,7 +175,6 @@ for i, (theme_name, data) in enumerate(themes.items()):
                 st.rerun()
 
 st.markdown("</div>", unsafe_allow_html=True)
-
 
 
 # ==============================
