@@ -109,12 +109,20 @@ with col_tm2:
             st.rerun()
 
 themes = light_themes if st.session_state.theme_mode == "Light" else dark_themes
-cols_palette = st.columns(len(themes))
-for i, (theme_name, data) in enumerate(themes.items()):
-    if cols_palette[i].button(theme_name.replace(" ", "\n"), key=f"theme_{theme_name}"):
-        if st.session_state.selected_theme != theme_name:
-            st.session_state.selected_theme = theme_name
-            st.rerun()
+# Theme selection row (works with .theme-pills in theme.css)
+st.markdown('<div class="theme-pills">', unsafe_allow_html=True)
+
+for theme_name, data in themes.items():
+    # mark current theme as selected in the DOM
+    selected_attr = "selected" if theme_name == st.session_state.selected_theme else ""
+    button_html = f"""
+        <div data-testid="stButton" class="{'selected' if selected_attr else ''}">
+            <button onclick="window.location.href='?theme={theme_name}'">{theme_name}</button>
+        </div>
+    """
+    st.markdown(button_html, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================
 # Timezone and constants
