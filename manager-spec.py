@@ -1,7 +1,7 @@
 # app.py
 # Unified Streamlit app with single login and role-based views (Manager vs Agent).
+# Adds Sign In / Sign Up, role + agent assignment, and password migration to SHA-256 if legacy plain text exists.
 # Workflow, sheet names, agent names, providers, and data schema remain unchanged.
-# Styling is loaded from theme.css. Passwords are stored as SHA-256 hashes in Sheet3.
 # Columns in Sheet3: ID | Password | Role | Agent Name
 
 import streamlit as st
@@ -29,7 +29,7 @@ def load_css():
 load_css()
 
 # ==============================
-# Theme definitions (unchanged source values)
+# Theme definitions (unchanged)
 # ==============================
 light_themes = {
     "Sunlit Coral":    {"bg1": "#fff8f2", "bg2": "#ffe8df", "accent": "#ff6f61"},
@@ -56,7 +56,6 @@ dark_themes = {
     "Arctic Noir":     {"bg1": "#050b12", "bg2": "#0e1822", "accent": "#38bdf8"},
 }
 
-# Theme state
 if "theme_mode" not in st.session_state:
     st.session_state.theme_mode = "Dark"
 if "selected_theme" not in st.session_state:
@@ -86,7 +85,6 @@ def apply_theme_vars():
 bg1, bg2, accent, text_color = apply_theme_vars()
 title_text_color = get_contrast_color(accent)
 
-# Header title with .app-title class (theme.css)
 st.markdown(
     f"""
 <div class="app-title" style="font-size:22px; margin: 12px 0 22px;">
@@ -96,7 +94,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Theme toggles and palette
 col_tm1, col_tm2, _ = st.columns([1, 1, 6])
 with col_tm1:
     if st.button("Light Mode", use_container_width=True):
@@ -135,6 +132,13 @@ ws_insurance = gc.open(SHEET_NAME).worksheet("Sheet2")
 ws_users = gc.open(SHEET_NAME).worksheet("Sheet3")
 
 # ==============================
+# Agent constants (unchanged)
+# ==============================
+AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq"]
+LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
+PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum"]
+
+# ==============================
 # Auth utilities (Sheet3)
 # ==============================
 def load_users_df() -> pd.DataFrame:
@@ -144,6 +148,33 @@ def load_users_df() -> pd.DataFrame:
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
+def migrate_plain_password_if_needed(user_id: str, input_plain: str) -> bool:
+    """
+    If the stored Password equals the plaintext the user typed,
+    update it to SHA-256 hash in the sheet. Returns True if migrated.
+    """
+    data = ws_users.get_all_values()
+    if not data:
+        return False
+    header = data[0]
+    try:
+        id_idx = header.index("ID")
+        pw_idx = header.index("Password")
+    except ValueError:
+        return False
+    for r_idx in range(1, len(data)):
+        row = data[r_idx]
+        if len(row) <= max(id_idx, pw_idx):
+            continue
+        if row[id_idx] == user_id:
+            stored_pw = row[pw_idx]
+            if stored_pw == input_plain:
+                new_hash = hash_password(input_plain)
+                ws_users.update_cell(r_idx + 1, pw_idx + 1, new_hash)  # +1: 1-based
+                return True
+            break
+    return False
+
 def validate_login(user_id: str, password: str):
     users = load_users_df()
     if users.empty:
@@ -151,11 +182,35 @@ def validate_login(user_id: str, password: str):
     hashed = hash_password(password)
     row = users[(users["ID"] == user_id) & (users["Password"] == hashed)]
     if row.empty:
+        # Try legacy plain-text migration path
+        migrated = migrate_plain_password_if_needed(user_id, password)
+        if migrated:
+            users = load_users_df()
+            row = users[(users["ID"] == user_id) & (users["Password"] == hash_password(password))]
+    if row.empty:
         return None
     record = row.iloc[0].to_dict()
     role = str(record.get("Role", "")).strip()
     agent_name = str(record.get("Agent Name", "")).strip()
     return {"id": user_id, "role": role, "agent_name": agent_name}
+
+def create_user(user_id: str, password: str, role: str, agent_name: str = "") -> str:
+    """
+    Returns empty string on success; else error message.
+    """
+    if not user_id or not password or not role:
+        return "All fields are required."
+    users = load_users_df()
+    if not users.empty and user_id in users["ID"].values:
+        return "User ID already exists."
+    if role == "Agent":
+        if agent_name not in AGENTS or agent_name == "Select Agent":
+            return "Please select a valid Agent Name for role Agent."
+    elif role != "Manager":
+        return "Role must be Manager or Agent."
+    hashed = hash_password(password)
+    ws_users.append_row([user_id, hashed, role, agent_name if role == "Agent" else ""])
+    return ""
 
 # ==============================
 # Pushbullet
@@ -208,6 +263,11 @@ def ensure_numeric_charge(df: pd.DataFrame) -> pd.DataFrame:
         ).fillna(0.0)
     return df
 
+def time_in_range(start: dtime, end: dtime, x: dtime) -> bool:
+    if start <= end:
+        return start <= x < end
+    return start <= x or x < end
+
 def compute_night_window_totals(df_all: pd.DataFrame, agent_filter: str = None) -> float:
     if df_all.empty:
         return 0.0
@@ -234,51 +294,72 @@ def compute_night_window_totals(df_all: pd.DataFrame, agent_filter: str = None) 
             window_end_2 = datetime.combine(now.date(), dtime(6, 0))
     def in_window(ts):
         return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
-
     if agent_filter:
         df = df[df["Agent Name"] == agent_filter]
     night_df = df[(df["Status"] == "Charged") & (df["Timestamp"].apply(in_window))]
     return float(night_df["ChargeFloat"].sum())
 
-def time_in_range(start: dtime, end: dtime, x: dtime) -> bool:
-    if start <= end:
-        return start <= x < end
-    return start <= x or x < end
+# ==============================
+# Unified Auth screen (Sign In / Sign Up)
+# ==============================
+def auth_screen():
+    st.title("Authentication")
 
-# ==============================
-# Agent-facing constants (unchanged names)
-# ==============================
-AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq"]
-LLC_OPTIONS = ["Select LLC", "Bite Bazaar LLC", "Apex Prime Solutions"]
-PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum"]
-
-# ==============================
-# Unified login screen
-# ==============================
-def login_screen():
-    st.title("Login")
-    with st.form("login_form", clear_on_submit=False):
-        user_id = st.text_input("User ID")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Sign In")
-    if submitted:
-        profile = validate_login(user_id, password)
-        if not profile:
-            st.error("Invalid credentials.")
-            st.stop()
-        # If Agent, require valid Agent Name
-        if profile["role"] == "Agent":
-            if profile["agent_name"] not in AGENTS:
-                st.error("Agent Name in users sheet is missing or not recognized.")
+    tabs = st.tabs(["Sign In", "Sign Up"])
+    with tabs[0]:
+        with st.form("login_form", clear_on_submit=False):
+            user_id = st.text_input("User ID")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Sign In")
+        if submitted:
+            profile = validate_login(user_id, password)
+            if not profile:
+                st.error("Invalid credentials.")
                 st.stop()
-        st.session_state["logged_in"] = True
-        st.session_state["user_id"] = profile["id"]
-        st.session_state["role"] = profile["role"]
-        st.session_state["agent_name"] = profile["agent_name"]
-        st.rerun()
+            # Agent must have a valid agent name
+            if profile["role"] == "Agent":
+                if profile["agent_name"] not in AGENTS or profile["agent_name"] == "Select Agent":
+                    st.error("Agent Name in users sheet is missing or not recognized.")
+                    st.stop()
+            st.session_state["logged_in"] = True
+            st.session_state["user_id"] = profile["id"]
+            st.session_state["role"] = profile["role"]
+            st.session_state["agent_name"] = profile["agent_name"]
+            st.rerun()
 
+    with tabs[1]:
+        users_now = load_users_df()
+        bootstrap_mode = users_now.empty  # allow first user creation if sheet is empty
+        st.caption("Create an account. Role determines what you can see after login.")
+        with st.form("signup_form", clear_on_submit=False):
+            new_id = st.text_input("New User ID")
+            new_pw = st.text_input("New Password", type="password")
+            new_pw2 = st.text_input("Confirm Password", type="password")
+            role = st.selectbox("Role", ["Manager", "Agent"])
+            agent_name = ""
+            if role == "Agent":
+                agent_name = st.selectbox("Agent Name (must match list)", AGENTS, index=0)
+            submitted_signup = st.form_submit_button("Create Account")
+
+        if submitted_signup:
+            if new_pw != new_pw2:
+                st.error("Passwords do not match.")
+                st.stop()
+            err = create_user(new_id, new_pw, role, agent_name if role == "Agent" else "")
+            if err:
+                st.error(err)
+            else:
+                st.success("Account created. You can now sign in.")
+                # Optional: auto login after signup
+                st.session_state["logged_in"] = True
+                st.session_state["user_id"] = new_id
+                st.session_state["role"] = role
+                st.session_state["agent_name"] = agent_name if role == "Agent" else ""
+                st.rerun()
+
+# Guard: show auth if not logged in
 if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
-    login_screen()
+    auth_screen()
     st.stop()
 
 # Logout button
@@ -307,12 +388,8 @@ if st.query_params.get("logout") is not None:
     st.rerun()
 
 # ==============================
-# Role-based routing
+# Load data for views
 # ==============================
-role = st.session_state.get("role", "")
-agent_identity = st.session_state.get("agent_name", "").strip()
-
-# Shared data loads
 df_spectrum = load_df(ws_spectrum)
 df_insurance = load_df(ws_insurance)
 
@@ -353,7 +430,6 @@ def manager_view():
                         st.write(f"Card Number: {row['Card Number']}")
                         st.write(f"Expiry Date: {row['Expiry Date']}")
                         st.write(f"Charge: {row['Charge']}")
-                        # Safe name split
                         card_holder = str(row.get("Card Holder Name", "")).strip()
                         name_parts = card_holder.split()
                         first_name = name_parts[0] if len(name_parts) > 0 else ""
@@ -527,7 +603,6 @@ def manager_view():
         else:
             st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
-        # Analytics
         st.divider()
         st.subheader("Transaction Analysis Chart")
         try:
@@ -617,7 +692,6 @@ def manager_view():
     df_all_for_badge = pd.concat([df_spectrum.copy(), df_insurance.copy()], ignore_index=True)
     total_night = compute_night_window_totals(df_all_for_badge)
     total_night_str = f"${total_night:,.2f}"
-    amount_text_color = get_contrast_color(accent)
     st.markdown(
         f"""
 <div class="badge-fixed-top-right">
@@ -629,7 +703,6 @@ def manager_view():
         unsafe_allow_html=True,
     )
 
-    # Render manager content
     manager_view()
 
 # ==============================
@@ -638,7 +711,6 @@ def manager_view():
 def agent_view(agent_name: str):
     st.title(f"Agent Dashboard — {agent_name}")
 
-    # Buttons
     col_b1, col_b2 = st.columns(2)
     with col_b1:
         if st.button("Refresh Page"):
@@ -651,7 +723,7 @@ def agent_view(agent_name: str):
             st.success("Form cleared.")
             st.rerun()
 
-    # Load all existing records from Spectrum (do not change original workflow; submissions go to Sheet1)
+    # Load Spectrum rows for form duplicate check and "My Submissions"
     try:
         all_records = ws_spectrum.get_all_records()
         df_all = pd.DataFrame(all_records) if all_records else pd.DataFrame()
@@ -660,7 +732,7 @@ def agent_view(agent_name: str):
         df_all = pd.DataFrame()
 
     st.subheader("Submit New Client")
-    st.write("All new submissions are saved to Spectrum (Sheet1). Workflow remains unchanged.")
+    st.write("New submissions are saved to Spectrum (Sheet1). Workflow remains unchanged.")
     with st.form("transaction_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -791,7 +863,6 @@ Submitted At: {timestamp}
             with col_s2:
                 st.metric("Charged Today", f"${today_total:,.2f}")
 
-    # Night window badge for this agent
     total_night_agent = compute_night_window_totals(df_all if 'df_all' in locals() else pd.DataFrame(), agent_filter=agent_name)
     total_night_agent_str = f"${total_night_agent:,.2f}"
     st.markdown(
@@ -806,8 +877,11 @@ Submitted At: {timestamp}
     )
 
 # ==============================
-# Dispatch view
+# Route based on role
 # ==============================
+role = st.session_state.get("role", "")
+agent_identity = st.session_state.get("agent_name", "").strip()
+
 if role == "Manager":
     manager_view()
 elif role == "Agent":
