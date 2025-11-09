@@ -356,7 +356,7 @@ tbody td, thead th {
 .theme-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px; /* adjust between 12–16px if needed */
+  gap: 14px;
   justify-content: center;
   align-items: center;
   margin-top: 1rem;
@@ -372,14 +372,40 @@ tbody td, thead th {
   background: transparent;
   font-weight: 600;
   padding: 0.45rem 1.1rem;
-  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease;
+  transition: transform 120ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease;
 }
+
+/* Hover effect */
 .theme-pills .stButton > button:hover {
   transform: translateY(-2px);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   box-shadow: 0 0 20px var(--ring);
 }
 
+/* Active / Selected theme visual */
+.theme-pills .stButton > button[data-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  color: #ffffff;
+  box-shadow: 0 0 25px 2px var(--ring), inset 0 0 10px color-mix(in srgb, var(--accent) 40%, transparent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+/* Ensure consistent spacing in older Streamlit versions */
+.theme-pills div[data-testid="stButton"] {
+  margin: 0 !important;
+}
+
+/* Responsive: tighten spacing on smaller viewports */
+@media (max-width: 768px) {
+  .theme-pills {
+    gap: 10px;
+  }
+  .theme-pills .stButton > button {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+  }
+}
 /* ---------- Utility ---------- */
 .hidden { display: none !important; }
 .center { display: grid; place-items: center; }
