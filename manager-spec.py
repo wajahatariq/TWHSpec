@@ -589,7 +589,7 @@ def manager_view():
         else:
             st.info("No data available to edit.")
 
-# --- Existing Data Display (scoped to the selected sheet) ---
+        # --- Existing Data Display (scoped to the selected sheet) ---
         st.divider()
         if sheet_option.startswith("Spectrum"):
             st.subheader("Spectrum Data (Sheet1)")
@@ -600,9 +600,8 @@ def manager_view():
             st.info("No data available in the selected sheet.")
         else:
             st.dataframe(style_status_rows(df_all), use_container_width=True)
-
-
-# --- Per-sheet analysis (scoped to the selected sheet) ---
+        
+        # --- Per-sheet analysis (scoped to the selected sheet) ---
         st.divider()
         st.subheader("Transaction Analysis (Selected Sheet)")
         
@@ -617,33 +616,42 @@ def manager_view():
                 st.info("No data available for analysis in the selected sheet.")
             else:
                 df_analysis = df_all.copy()
+        
                 # Parse fields
                 df_analysis["Timestamp"] = pd.to_datetime(df_analysis["Timestamp"], errors="coerce")
                 df_analysis = df_analysis.dropna(subset=["Timestamp"])
                 df_analysis["ChargeFloat"] = pd.to_numeric(
-                    df_analysis["Charge"].replace('[\$,]', '', regex=True), errors="coerce"
+                    df_analysis["Charge"].replace('[\\$,]', '', regex=True), errors="coerce"
                 ).fillna(0.0)
         
-                # Simple filters (optional but handy)
+                # Filters
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     ag_list = ["All Agents"] + sorted(df_analysis["Agent Name"].dropna().unique().tolist())
-                    agent_filter = st.selectbox("Filter by Agent", ag_list)
+                    agent_filter = st.selectbox("Filter by Agent", ag_list, key="ud_agent_filter")
                 with c2:
                     st_list = ["All Status"] + df_analysis["Status"].dropna().unique().tolist()
-                    status_filter = st.selectbox("Filter by Status", st_list)
+                    status_filter = st.selectbox("Filter by Status", st_list, key="ud_status_filter")
                 with c3:
-                    chart_type = st.selectbox("Chart Type", ["Bar", "Line", "Stacked Bar"])
+                    chart_type = st.selectbox("Chart Type", ["Bar", "Line", "Stacked Bar"], key="ud_chart_type")
         
                 d1, d2 = st.columns(2)
                 with d1:
                     min_ts = df_analysis["Timestamp"].min()
-                    start_date = st.date_input("From Date", value=min_ts.date() if pd.notna(min_ts) else datetime.now().date())
-                    start_time = st.time_input("From Time", value=dtime(0, 0, 0))
+                    start_date = st.date_input(
+                        "From Date",
+                        value=min_ts.date() if pd.notna(min_ts) else datetime.now().date(),
+                        key="ud_start_date",
+                    )
+                    start_time = st.time_input("From Time", value=dtime(0, 0, 0), key="ud_start_time")
                 with d2:
                     max_ts = df_analysis["Timestamp"].max()
-                    end_date = st.date_input("To Date", value=max_ts.date() if pd.notna(max_ts) else datetime.now().date())
-                    end_time = st.time_input("To Time", value=dtime(23, 59, 59))
+                    end_date = st.date_input(
+                        "To Date",
+                        value=max_ts.date() if pd.notna(max_ts) else datetime.now().date(),
+                        key="ud_end_date",
+                    )
+                    end_time = st.time_input("To Time", value=dtime(23, 59, 59), key="ud_end_time")
         
                 start_dt = tz.localize(datetime.combine(start_date, start_time))
                 end_dt = tz.localize(datetime.combine(end_date, end_time))
@@ -656,7 +664,13 @@ def manager_view():
                     df_plot = df_plot[df_plot["Status"] == status_filter]
         
                 # Localize to PKT for display range
-                df_plot["Timestamp"] = df_plot["Timestamp"].dt.tz_localize("UTC").dt.tz_convert(tz)
+                # If your timestamps are already PKT (not UTC), remove the next line and just filter directly
+                try:
+                    df_plot["Timestamp"] = df_plot["Timestamp"].dt.tz_localize("UTC").dt.tz_convert(tz)
+                except (TypeError, AttributeError, ValueError):
+                    # Already tz-aware or naive: fall back to naive filtering
+                    pass
+        
                 df_plot = df_plot[(df_plot["Timestamp"] >= start_dt) & (df_plot["Timestamp"] <= end_dt)]
         
                 if df_plot.empty:
@@ -695,30 +709,36 @@ def manager_view():
                     with m2:
                         st.metric("Total Transactions", f"{len(df_plot):,}")
                     with m3:
-                        st.metric("Average per Hour", f"${hourly_sum['ChargeFloat'].mean():,.2f}")
+                        avg_per_hour = hourly_sum["ChargeFloat"].mean() if not hourly_sum.empty else 0.0
+                        st.metric("Average per Hour", f"${avg_per_hour:,.2f}")
                     with m4:
                         if not hourly_sum.empty:
                             peak_time = hourly_sum.loc[hourly_sum["ChargeFloat"].idxmax(), "Hour"]
                             st.metric("Peak Time", peak_time.strftime("%Y-%m-%d %H:%M:%S"))
+                        else:
+                            st.metric("Peak Time", "—")
         
         # --- Today's total (Night window) for the selected sheet only ---
         st.divider()
         if not df_all.empty:
             night_total = compute_night_window_totals(df_all.copy())
             st.metric("Night Charged Total — Selected Sheet (Today's Window)", f"${night_total:,.2f}")
+        
+            # Floating badge for the SELECTED sheet
+            badge_amount = f"${night_total:,.2f}"
+            st.markdown(
+                f"""
+        <div class="badge-fixed-top-right">
+          <span class="badge-label">Night Charged Total</span>
+          <span class="badge-label">Selected Sheet</span>
+          <span class="badge-amount">{badge_amount}</span>
+        </div>
+        """,
+                unsafe_allow_html=True,
+            )
         else:
             st.metric("Night Charged Total — Selected Sheet (Today's Window)", "$0.00")
 
-    st.markdown(
-        f"""
-<div class="badge-fixed-top-right">
-  <span class="badge-label">Night Charged Total</span>
-  <span class="badge-label">Today's Total</span>
-  <span class="badge-amount">{total_night_str}</span>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
 
 # ==============================
 # AGENT VIEW
