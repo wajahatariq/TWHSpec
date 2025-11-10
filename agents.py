@@ -7,7 +7,7 @@ import json
 import requests
 import random
 import time
-from pathlib import path
+from pathlib import Path
 st.set_page_config(page_title="Client Management System — Techware Hub", layout="wide")
 
 # ==============================
