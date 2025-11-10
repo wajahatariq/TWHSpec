@@ -341,35 +341,25 @@ if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
 
 st.title("Manager Transaction Dashboard")
 # --- TOP-RIGHT LOGOUT BUTTON ---
-st.markdown(f"""
-    <div style="
-        position: absolute;
-        top: 25px;
-        right: 30px;
-        z-index: 100;
-    ">
+st.markdown(
+    f"""
+    <div style="position:absolute;top:18px;right:24px;z-index:1000;">
         <form action="" method="get">
             <button type="submit"
                 style="
-                    background-color: {accent};
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    box-shadow: 0 2px 6px {accent}55;
-                    transition: all 0.3s ease;
-                "
-                onmouseover="this.style.backgroundColor='{accent}cc'"
-                onmouseout="this.style.backgroundColor='{accent}'"
+                    background-color:{accent};
+                    color:{get_contrast_color(accent)};
+                    border:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer;
+                    box-shadow:0 2px 6px {accent}55;transition:all .2s ease;"
                 name="logout"
             >
                 Logout
             </button>
         </form>
     </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # --- LOGOUT HANDLER ---
 if st.query_params.get("logout") is not None:
