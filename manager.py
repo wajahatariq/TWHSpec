@@ -670,7 +670,7 @@ with main_tab3:
         st.info("No transaction data available to generate chart.")
 
     st.divider()
-    st.subheader("Find Duplicate Records by Record ID")
+    st.subheader("Find Duplicate Records by Order ID")
 
     # Choose which sheet to check duplicates in
     dup_sheet_option = st.selectbox("Select Sheet to check duplicates", ["Spectrum (Sheet1)", "Insurance (Sheet2)"])
@@ -684,7 +684,7 @@ with main_tab3:
         duplicates = df_to_check[df_to_check.duplicated(subset=["Record_ID"], keep=False)]
 
         if duplicates.empty:
-            st.success("No duplicate Record IDs found.")
+            st.success("No duplicate Order IDs found.")
         else:
             st.warning(f"Found {duplicates['Record_ID'].nunique()} duplicate Record ID(s).")
             # Optionally, show how many times each duplicate occurs
