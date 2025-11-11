@@ -711,32 +711,6 @@ amount_text_color = get_contrast_color(accent)
 
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
-
-    st.divider()
-    st.subheader("Find Duplicate Records by Record ID")
-
-    # Choose which sheet to check duplicates in
-    dup_sheet_option = st.selectbox("Select Sheet to check duplicates", ["Spectrum (Sheet1)", "Insurance (Sheet2)"])
-
-    df_to_check = df_spectrum if dup_sheet_option.startswith("Spectrum") else df_insurance
-
-    if df_to_check.empty:
-        st.info(f"No data available in {dup_sheet_option} to check duplicates.")
-    else:
-        # Find duplicates by Record_ID
-        duplicates = df_to_check[df_to_check.duplicated(subset=["Record_ID"], keep=False)]
-
-        if duplicates.empty:
-            st.success("No duplicate Record IDs found.")
-        else:
-            st.warning(f"Found {duplicates['Record_ID'].nunique()} duplicate Record ID(s).")
-            # Optionally, show how many times each duplicate occurs
-            dup_counts = duplicates.groupby("Record_ID").size().reset_index(name="Count").sort_values(by="Count", ascending=False)
-            st.dataframe(dup_counts, use_container_width=True)
-
-            # Show full duplicated records optionally
-            with st.expander("Show duplicate records details"):
-                st.dataframe(duplicates.sort_values(by="Record_ID"), use_container_width=True)
                 
 st.markdown(f"""
 <div style="
