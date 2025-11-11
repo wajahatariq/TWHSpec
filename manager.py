@@ -408,114 +408,128 @@ with main_tab3:
     
             if not matched.empty:
                 st.info(f"Found {len(matched)} record(s) with Record ID: {record_id_input}")
-                st.dataframe(matched)
+    
+                # Let user select one record if multiple found
+                if len(matched) > 1:
+                    options = matched.index.tolist()  # indexes of matched rows
+                    selected_idx = st.selectbox("Select record to edit", options)
+                    record = matched.loc[selected_idx]
+                else:
+                    record = matched.iloc[0]
+    
+                st.dataframe(matched)  # Optional: show all matched records
+    
+                with st.form("edit_charge_status_form"):
+                    col1, col2 = st.columns(2)
+    
+                    # --- Read-only client info ---
+                    with col1:
+                        st.text_input("Agent Name", value=record["Agent Name"], disabled=True)
+                        st.text_input("Client Name", value=record["Name"], disabled=True)
+                        st.text_input("Phone Number", value=record["Ph Number"], disabled=True)
+                        st.text_input("Address", value=record["Address"], disabled=True)
+                        st.text_input("Email", value=record["Email"], disabled=True)
+                        st.text_input("Card Holder Name", value=record["Card Holder Name"], disabled=True)
+    
+                    with col2:
+                        st.text_input("Card Number", value=record["Card Number"], disabled=True)
+                        st.text_input("Expiry Date", value=record["Expiry Date"], disabled=True)
+                        st.number_input(
+                            "CVC",
+                            min_value=0,
+                            max_value=999,
+                            step=1,
+                            value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0,
+                            disabled=True
+                        )
+                        new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
+                        new_status = st.selectbox(
+                            "Status",
+                            ["Pending", "Charged", "Declined", "Charge Back"],
+                            index=["Pending", "Charged", "Declined", "Charge Back"].index(record["Status"])
+                        )
+    
+                    updated = st.form_submit_button("Update Record")
+                    deleted = st.form_submit_button("Delete Record", help="Permanently delete this record")
+    
+                    if deleted:
+                        try:
+                            # Find the exact row index for this specific record to delete
+                            row_indices = df_all.index[
+                                (df_all["Record_ID"] == record["Record_ID"]) &
+                                (df_all.index == record.name)
+                            ].tolist()
+    
+                            if row_indices:
+                                row_num = row_indices[0] + 2  # account for header row
+                                worksheet.delete_rows(row_num)
+                                st.success(f"Record {record['Record_ID']} deleted successfully!")
+                                st.experimental_rerun()
+                            else:
+                                st.error("Record not found in sheet. Try refreshing the page.")
+                        except Exception as e:
+                            st.error(f"Error deleting record: {e}")
+    
+                    if updated:
+                        try:
+                            # Find the exact row index for this specific record to update
+                            row_indices = df_all.index[
+                                (df_all["Record_ID"] == record["Record_ID"]) &
+                                (df_all.index == record.name)
+                            ].tolist()
+    
+                            if row_indices:
+                                row_num = row_indices[0] + 2  # header is row 1
+    
+                                if sheet_option.startswith("Spectrum"):
+                                    updated_data = [
+                                        str(record["Record_ID"]),
+                                        str(record["Agent Name"]),
+                                        str(record["Name"]),
+                                        str(record["Ph Number"]),
+                                        str(record["Address"]),
+                                        str(record["Email"]),
+                                        str(record["Card Holder Name"]),
+                                        str(record["Card Number"]),
+                                        str(record["Expiry Date"]),
+                                        int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
+                                        str(new_charge),
+                                        str(record["LLC"]),
+                                        str(record["Provider"]),
+                                        str(record["Date of Charge"]),
+                                        str(new_status),
+                                        str(record["Timestamp"])
+                                    ]
+                                    worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+                                else:
+                                    updated_data = [
+                                        str(record["Record_ID"]),
+                                        str(record["Agent Name"]),
+                                        str(record["Name"]),
+                                        str(record["Ph Number"]),
+                                        str(record["Address"]),
+                                        str(record["Email"]),
+                                        str(record["Card Holder Name"]),
+                                        str(record["Card Number"]),
+                                        str(record["Expiry Date"]),
+                                        int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
+                                        str(new_charge),
+                                        str(record["LLC"]),
+                                        str(record["Date of Charge"]),
+                                        str(new_status),
+                                        str(record["Timestamp"])
+                                    ]
+                                    worksheet.update(f"A{row_num}:O{row_num}", [updated_data])
+    
+                                st.success(f"Record {record['Record_ID']} updated successfully!")
+                                st.experimental_rerun()
+                            else:
+                                st.error("Record not found in sheet. Try refreshing the page.")
+                        except Exception as e:
+                            st.error(f"Error updating record: {e}")
+    
             else:
                 st.warning("No matching Record ID found.")
-
-            with st.form("edit_charge_status_form"):
-                col1, col2 = st.columns(2)
-
-                # --- Read-only client info ---
-                with col1:
-                    st.text_input("Agent Name", value=record["Agent Name"], disabled=True)
-                    st.text_input("Client Name", value=record["Name"], disabled=True)
-                    st.text_input("Phone Number", value=record["Ph Number"], disabled=True)
-                    st.text_input("Address", value=record["Address"], disabled=True)
-                    st.text_input("Email", value=record["Email"], disabled=True)
-                    st.text_input("Card Holder Name", value=record["Card Holder Name"], disabled=True)
-
-                with col2:
-                    st.text_input("Card Number", value=record["Card Number"], disabled=True)
-                    st.text_input("Expiry Date", value=record["Expiry Date"], disabled=True)
-                    st.number_input(
-                        "CVC",
-                        min_value=0,
-                        max_value=999,
-                        step=1,
-                        value=int(record["CVC"]) if str(record["CVC"]).isdigit() else 0,
-                        disabled=True
-                    )
-                    new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
-                    new_status = st.selectbox(
-                        "Status",
-                        ["Pending", "Charged", "Declined", "Charge Back"],
-                        index=["Pending", "Charged", "Declined", "Charge Back"].index(record["Status"])
-                    )
-
-                updated = st.form_submit_button("Update Record")
-                # --- Delete Record Button ---
-                deleted = st.form_submit_button("Delete Record", help="Permanently delete this record")
-                
-                if deleted:
-                    try:
-                        row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                        if row_index:
-                            row_num = row_index[0] + 2  # header = row 1
-                            worksheet.delete_rows(row_num)
-                            st.success(f"Record {record['Record_ID']} deleted successfully!")
-                            st.rerun()
-                        else:
-                            st.error("Record not found in sheet. Try refreshing the page.")
-                    except Exception as e:
-                        st.error(f"Error deleting record: {e}")
-
-
-            # --- Update Google Sheet ---
-            if updated:
-                try:
-                    row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
-                    if row_index:
-                        row_num = row_index[0] + 2  # header = row 1
-                    
-                        if sheet_option.startswith("Spectrum"):
-                            # Include Provider column
-                            updated_data = [
-                                str(record["Record_ID"]),
-                                str(record["Agent Name"]),
-                                str(record["Name"]),
-                                str(record["Ph Number"]),
-                                str(record["Address"]),
-                                str(record["Email"]),
-                                str(record["Card Holder Name"]),
-                                str(record["Card Number"]),
-                                str(record["Expiry Date"]),
-                                int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
-                                str(new_charge),
-                                str(record["LLC"]),
-                                str(record["Provider"]),
-                                str(record["Date of Charge"]),
-                                str(new_status),
-                                str(record["Timestamp"])
-                            ]
-                            worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
-                        else:
-                            # Insurance sheet — exclude Provider
-                            updated_data = [
-                                str(record["Record_ID"]),
-                                str(record["Agent Name"]),
-                                str(record["Name"]),
-                                str(record["Ph Number"]),
-                                str(record["Address"]),
-                                str(record["Email"]),
-                                str(record["Card Holder Name"]),
-                                str(record["Card Number"]),
-                                str(record["Expiry Date"]),
-                                int(record["CVC"]) if pd.notna(record["CVC"]) else 0,
-                                str(new_charge),
-                                str(record["LLC"]),
-                                str(record["Date of Charge"]),
-                                str(new_status),
-                                str(record["Timestamp"])
-                            ]
-                            # Note: range adjusted to 14 columns now (A to N)
-                            worksheet.update(f"A{row_num}:O{row_num}", [updated_data])
-                        st.success(f"Record {record['Record_ID']} updated successfully!")
-                        st.rerun()
-                    else:
-                        st.error("Record not found in sheet. Try refreshing the page.")
-                except Exception as e:
-                    st.error(f"Error updating record: {e}")
-
     else:
         st.info("No data available to edit.")
 
