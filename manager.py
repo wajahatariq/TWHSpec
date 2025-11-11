@@ -464,7 +464,7 @@ with main_tab3:
                                 row_num = row_indices[0] + 2  # account for header row
                                 worksheet.delete_rows(row_num)
                                 st.success(f"Record {record['Record_ID']} deleted successfully!")
-                                st.experimental_rerun()
+                                st.rerun()
                             else:
                                 st.error("Record not found in sheet. Try refreshing the page.")
                         except Exception as e:
@@ -522,7 +522,7 @@ with main_tab3:
                                     worksheet.update(f"A{row_num}:O{row_num}", [updated_data])
     
                                 st.success(f"Record {record['Record_ID']} updated successfully!")
-                                st.experimental_rerun()
+                                st.rerun()
                             else:
                                 st.error("Record not found in sheet. Try refreshing the page.")
                         except Exception as e:
