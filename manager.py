@@ -712,7 +712,7 @@ amount_text_color = get_contrast_color(accent)
 amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
 
-        st.divider()
+    st.divider()
     st.subheader("Find Duplicate Records by Record ID")
 
     # Choose which sheet to check duplicates in
