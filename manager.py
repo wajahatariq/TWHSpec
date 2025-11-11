@@ -397,22 +397,20 @@ with main_tab3:
     except Exception as e:
         st.error(f"Error loading sheet data: {e}")
         df_all = pd.DataFrame()
-
+    
     if not df_all.empty:
         record_id_input = st.text_input("Enter Record ID to search").strip()
-        record = None
-
+    
         if record_id_input:
             df_all["Record_ID"] = df_all["Record_ID"].astype(str).str.strip()
             record_id_input = record_id_input.strip()
             matched = df_all[df_all["Record_ID"] == record_id_input]
+    
             if not matched.empty:
-                record = matched.iloc[0]
+                st.info(f"Found {len(matched)} record(s) with Record ID: {record_id_input}")
+                st.dataframe(matched)
             else:
                 st.warning("No matching Record ID found.")
-
-        if record is not None:
-            st.info(f"Editing Record ID: {record['Record_ID']}")
 
             with st.form("edit_charge_status_form"):
                 col1, col2 = st.columns(2)
