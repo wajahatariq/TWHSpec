@@ -590,7 +590,7 @@ with main_tab3:
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="material",   # lighter and cleaner theme
+            theme="dark",   # lighter and cleaner theme
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
             height=600,
