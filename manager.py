@@ -562,11 +562,11 @@ with main_tab3:
         if (!params.data) return null;
         const status = params.data.Status;
         if (status === 'Charged') {
-            return {'background-color': '#d1e7dd', 'color': '#0f5132'};  // soft green bg, dark green text
+            return {'background-color': '#0f5132', 'color': 'black'};  // dark green bg, black text
         } else if (status === 'Charge Back') {
-            return {'background-color': '#f8d7da', 'color': '#842029'};  // soft red bg, dark red text
+            return {'background-color': '#dc3545', 'color': 'black'};  // normal red bg, black text
         } else if (status === 'Pending') {
-            return {'background-color': '#fff3cd', 'color': '#664d03'};  // soft yellow bg, dark yellow text
+            return {'background-color': '#856404', 'color': 'black'};  // dark yellow bg, black text
         } else {
             return null;
         }
