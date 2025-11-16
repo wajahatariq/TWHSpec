@@ -9,4 +9,7 @@ tabulate
 matplotlib
 seaborn 
 streamlit-aggrid
-streamlit-data-editor
+streamlit
+st_data_editor
+streamlit-handsontable
+plotly
