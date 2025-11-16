@@ -537,49 +537,78 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
-    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
     
-    # -------- AG GRID: Spectrum Sheet --------
-    st.subheader("Spectrum Data (Sheet1)")
+    # Define JS for row styling based on Status column
+    row_style_jscode = JsCode("""
+    function(params) {
+        if (params.data.Status === 'Charged') {
+            return { 'background-color': 'darkgreen', 'color': 'white' };
+        } else if (params.data.Status === 'Charge Back') {
+            return { 'background-color': 'red', 'color': 'white' };
+        } else if (params.data.Status === 'Pending') {
+            return { 'background-color': 'yellow', 'color': 'black' };
+        } else {
+            return null;
+        }
+    }
+    """)
     
-    if df_spectrum.empty:
-        st.info("No data available in Spectrum (Sheet1).")
-    else:
-        gb1 = GridOptionsBuilder.from_dataframe(df_spectrum)
-        gb1.configure_pagination(enabled=True, paginationPageSize=20)
-        gb1.configure_default_column(editable=False, sortable=True, filter=True)
-        gb1.configure_grid_options(domLayout="normal")
-        grid_options_1 = gb1.build()
+    def display_aggrid(df, label):
+        st.subheader(f"{label} Data")
     
-        grid_response_1 = AgGrid(
-            df_spectrum,
-            gridOptions=grid_options_1,
-            update_mode=GridUpdateMode.NO_UPDATE,
-            theme="balham",
-            fit_columns_on_grid_load=True
+        if df.empty:
+            st.info(f"No data available in {label}.")
+            return
+    
+        gb = GridOptionsBuilder.from_dataframe(df)
+        
+        # Enable pagination
+        gb.configure_pagination(enabled=True, paginationPageSize=20)
+        
+        # Enable default column options
+        gb.configure_default_column(
+            editable=True,  # allow editing all columns
+            filter=True,
+            sortable=True,
+            resizable=True,
+            flex=1,
+            min_width=100,
         )
+        
+        # Add quick filter (search box)
+        gb.configure_grid_options(quickFilterText="")
+        
+        # Enable multi-row selection with checkboxes
+        gb.configure_selection('multiple', use_checkbox=True)
+        
+        # Add row style JS code for conditional formatting
+        gb.configure_grid_options(getRowStyle=row_style_jscode)
+        
+        # Build options
+        grid_options = gb.build()
+        
+        grid_response = AgGrid(
+            df,
+            gridOptions=grid_options,
+            update_mode=GridUpdateMode.MODEL_CHANGED,  # capture edits
+            theme="dark",
+            fit_columns_on_grid_load=True,
+            enable_enterprise_modules=False,  # disable enterprise features
+            allow_unsafe_jscode=True,
+            height=400,
+        )
+        
+        return grid_response
+    
+    # Usage for Spectrum Sheet
+    display_aggrid(df_spectrum, "Spectrum (Sheet1)")
     
     st.divider()
     
-    # -------- AG GRID: Insurance Sheet --------
-    st.subheader("Insurance Data (Sheet2)")
-    
-    if df_insurance.empty:
-        st.info("No data available in Insurance (Sheet2).")
-    else:
-        gb2 = GridOptionsBuilder.from_dataframe(df_insurance)
-        gb2.configure_pagination(enabled=True, paginationPageSize=20)
-        gb2.configure_default_column(editable=False, sortable=True, filter=True)
-        gb2.configure_grid_options(domLayout="normal")
-        grid_options_2 = gb2.build()
-    
-        grid_response_2 = AgGrid(
-            df_insurance,
-            gridOptions=grid_options_2,
-            update_mode=GridUpdateMode.NO_UPDATE,
-            theme="balham",
-            fit_columns_on_grid_load=True
-        )
+    # Usage for Insurance Sheet
+    display_aggrid(df_insurance, "Insurance (Sheet2)")
+
 
 
 
