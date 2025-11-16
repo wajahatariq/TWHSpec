@@ -538,6 +538,25 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
+
+    # JS code for subtle row styling based on Status
+    row_style_jscode = JsCode("""
+    function(params) {
+        if (!params.data) return null;
+        const status = params.data.Status;
+        if (status === 'Charged') {
+            return {'background-color': '#0f5132', 'color': 'white'};
+        } else if (status === 'Charge Back') {
+            return {'background-color': '#dc3545', 'color': 'white'};
+        } else if (status === 'Pending') {
+            return {'background-color': '#856404', 'color': 'white'};
+        } else {
+            // default black bg for other rows
+            return {'background-color': '#000000', 'color': 'white'};
+        }
+    }
+    """)
+    
     st.markdown("""
     <style>
         /* Overall grid background */
@@ -575,24 +594,6 @@ with main_tab3:
         }
     </style>
     """, unsafe_allow_html=True)
-
-    # JS code for subtle row styling based on Status
-    row_style_jscode = JsCode("""
-    function(params) {
-        if (!params.data) return null;
-        const status = params.data.Status;
-        if (status === 'Charged') {
-            return {'background-color': '#0f5132', 'color': 'white'};
-        } else if (status === 'Charge Back') {
-            return {'background-color': '#dc3545', 'color': 'white'};
-        } else if (status === 'Pending') {
-            return {'background-color': '#856404', 'color': 'white'};
-        } else {
-            // default black bg for other rows
-            return {'background-color': '#000000', 'color': 'white'};
-        }
-    }
-    """)
     
     def display_aggrid_with_search(df, label):
         st.subheader(f"{label} Data")
