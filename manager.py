@@ -616,11 +616,11 @@ with main_tab3:
         )
         
             # Export button below grid
-            if st.button("Export to CSV"):
-                csv = df.to_csv(index=False).encode('utf-8')
-                st.download_button("Download CSV", csv, f"{label}_data.csv", "text/csv")
-        
-            return grid_response
+        if st.button("Export to CSV"):
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button("Download CSV", csv, f"{label}_data.csv", "text/csv")
+    
+        return grid_response
     
     # Example usage
     # Replace df_spectrum and df_insurance with your actual dataframes
