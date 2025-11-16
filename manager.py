@@ -539,18 +539,17 @@ with main_tab3:
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
     
-    
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
         if (!params.data) return null;
         const status = params.data.Status;
         if (status === 'Charged') {
-            return {'background-color': '#0f5132', 'color': 'white'};  // dark green bg, white text
+            return {'background-color': '#0f5132', 'color': 'white'};
         } else if (status === 'Charge Back') {
-            return {'background-color': '#dc3545', 'color': 'white'};  // red bg, white text
+            return {'background-color': '#dc3545', 'color': 'white'};
         } else if (status === 'Pending') {
-            return {'background-color': '#856404', 'color': 'white'};  // dark yellow bg, white text
+            return {'background-color': '#856404', 'color': 'white'};
         } else {
             return null;
         }
@@ -587,7 +586,7 @@ with main_tab3:
         )
     
         # Remove checkboxes & set single row selection (no checkbox)
-        gb.configure_selection('single')  
+        gb.configure_selection('single')
     
         # Enable sidebar for columns & filters
         gb.configure_side_bar()
@@ -615,18 +614,22 @@ with main_tab3:
             width="100%",
         )
         
-            # Export button below grid
-        if st.button("Export to CSV"):
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("Download CSV", csv, f"{label}_data.csv", "text/csv")
+        # Direct download button without needing a separate "Export to CSV" button
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label=f"Download {label} CSV",
+            data=csv,
+            file_name=f"{label.replace(' ', '_').lower()}_data.csv",
+            mime="text/csv",
+        )
     
         return grid_response
     
     # Example usage
-    # Replace df_spectrum and df_insurance with your actual dataframes
     display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
     st.divider()
     display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
+
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
