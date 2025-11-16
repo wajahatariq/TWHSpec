@@ -538,7 +538,24 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
-    
+    st.markdown(
+    """
+    <style>
+    .ag-theme-balham {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+    }
+    .ag-header {
+        background-color: #1f1f1f !important;
+    }
+    .ag-cell {
+        background-color: #121212 !important;
+        color: #e0e0e0 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
@@ -590,7 +607,7 @@ with main_tab3:
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="fresh",   # lighter and cleaner theme
+            theme="balham",   # lighter and cleaner theme
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
             height=600,
