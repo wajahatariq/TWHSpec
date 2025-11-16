@@ -537,19 +537,50 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
-    st.subheader("Spectrum Data (Sheet1)")
-    if df_spectrum.empty:
-        st.info("No data available in Spectrum (Sheet1).")
-    else:
-        st.dataframe(style_status_rows(df_spectrum), use_container_width=True)
+        from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+        
+        # -------- AG GRID: Spectrum Sheet --------
+        st.subheader("Spectrum Data (Sheet1)")
+        
+        if df_spectrum.empty:
+            st.info("No data available in Spectrum (Sheet1).")
+        else:
+            gb1 = GridOptionsBuilder.from_dataframe(df_spectrum)
+            gb1.configure_pagination(enabled=True, paginationPageSize=20)
+            gb1.configure_default_column(editable=False, sortable=True, filter=True)
+            gb1.configure_grid_options(domLayout="normal")
+            grid_options_1 = gb1.build()
+        
+            grid_response_1 = AgGrid(
+                df_spectrum,
+                gridOptions=grid_options_1,
+                update_mode=GridUpdateMode.NO_UPDATE,
+                theme="balham",
+                fit_columns_on_grid_load=True
+            )
+        
+        st.divider()
+        
+        # -------- AG GRID: Insurance Sheet --------
+        st.subheader("Insurance Data (Sheet2)")
+        
+        if df_insurance.empty:
+            st.info("No data available in Insurance (Sheet2).")
+        else:
+            gb2 = GridOptionsBuilder.from_dataframe(df_insurance)
+            gb2.configure_pagination(enabled=True, paginationPageSize=20)
+            gb2.configure_default_column(editable=False, sortable=True, filter=True)
+            gb2.configure_grid_options(domLayout="normal")
+            grid_options_2 = gb2.build()
+        
+            grid_response_2 = AgGrid(
+                df_insurance,
+                gridOptions=grid_options_2,
+                update_mode=GridUpdateMode.NO_UPDATE,
+                theme="balham",
+                fit_columns_on_grid_load=True
+            )
 
-    st.divider()
-
-    st.subheader("Insurance Data (Sheet2)")
-    if df_insurance.empty:
-        st.info("No data available in Insurance (Sheet2).")
-    else:
-        st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
 
     import matplotlib.pyplot as plt
