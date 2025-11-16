@@ -538,35 +538,18 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
-    st.markdown(
-    """
-    <style>
-    .ag-theme-balham {
-        background-color: #121212 !important;
-        color: #e0e0e0 !important;
-    }
-    .ag-header {
-        background-color: #1f1f1f !important;
-    }
-    .ag-cell {
-        background-color: #121212 !important;
-        color: #e0e0e0 !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+ 
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
         if (!params.data) return null;
         const status = params.data.Status;
         if (status === 'Charged') {
-            return {'background-color': '#0f5132', 'color': 'black'};  // dark green bg, black text
+            return {'background-color': '#0f5132', 'color': 'white'};  // dark green bg, black text
         } else if (status === 'Charge Back') {
-            return {'background-color': '#dc3545', 'color': 'black'};  // normal red bg, black text
+            return {'background-color': '#dc3545', 'color': 'white'};  // normal red bg, black text
         } else if (status === 'Pending') {
-            return {'background-color': '#856404', 'color': 'black'};  // dark yellow bg, black text
+            return {'background-color': '#856404', 'color': 'white'};  // dark yellow bg, black text
         } else {
             return null;
         }
@@ -607,7 +590,7 @@ with main_tab3:
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="balham",   # lighter and cleaner theme
+            theme="material",   # lighter and cleaner theme
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
             height=600,
