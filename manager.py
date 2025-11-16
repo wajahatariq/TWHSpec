@@ -538,18 +538,35 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
- 
+    
+    # Custom CSS for dark theme tweaks (optional)
+    st.markdown("""
+    <style>
+        .ag-theme-dark {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+        .ag-header {
+            background-color: #1f1f1f !important;
+            color: #e0e0e0 !important;
+        }
+        .ag-row {
+            border-bottom: 1px solid #333 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
         if (!params.data) return null;
         const status = params.data.Status;
         if (status === 'Charged') {
-            return {'background-color': '#0f5132', 'color': 'white'};  // dark green bg, black text
+            return {'background-color': '#0f5132', 'color': 'white'};  // dark green bg, white text
         } else if (status === 'Charge Back') {
-            return {'background-color': '#dc3545', 'color': 'white'};  // normal red bg, black text
+            return {'background-color': '#dc3545', 'color': 'white'};  // red bg, white text
         } else if (status === 'Pending') {
-            return {'background-color': '#856404', 'color': 'white'};  // dark yellow bg, black text
+            return {'background-color': '#856404', 'color': 'white'};  // dark yellow bg, white text
         } else {
             return null;
         }
@@ -590,21 +607,19 @@ with main_tab3:
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="dark",   # lighter and cleaner theme
+            theme="dark",  # use dark theme here
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
             height=600,
         )
     
         return grid_response
-
     
     # Example usage
     # Replace df_spectrum and df_insurance with your actual dataframes
     display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
     st.divider()
     display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
-
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
