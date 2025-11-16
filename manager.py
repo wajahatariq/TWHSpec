@@ -563,16 +563,18 @@ with main_tab3:
             st.info(f"No data available in {label}.")
             return
     
-        # Fullscreen toggle state
         if 'fullscreen' not in st.session_state:
-            st.session_state.fullscreen = False
+            st.session_state['fullscreen'] = {}
+    
+        if label not in st.session_state['fullscreen']:
+            st.session_state['fullscreen'][label] = False
     
         def toggle_fullscreen():
-            st.session_state.fullscreen = not st.session_state.fullscreen
+            st.session_state['fullscreen'][label] = not st.session_state['fullscreen'][label]
     
-        st.button("Toggle Fullscreen", on_click=toggle_fullscreen)
+        st.button("Toggle Fullscreen", on_click=toggle_fullscreen, key=f"toggle_fullscreen_{label}")
     
-        search_text = st.text_input(f"Search {label} Table")
+        search_text = st.text_input(f"Search {label} Table", key=f"search_{label}")
     
         gb = GridOptionsBuilder.from_dataframe(df)
     
@@ -585,23 +587,22 @@ with main_tab3:
             min_width=100,
         )
     
-        # Remove checkboxes & set single row selection (no checkbox)
         gb.configure_selection('single')
-    
-        # Enable sidebar for columns & filters
         gb.configure_side_bar()
     
-        # Enable pagination with page size 20
-        gb.configure_pagination(enabled=True, paginationPageSize=20)
+        # Disable pagination to let full data show in grid so page scrolls naturally
+        # gb.configure_pagination(enabled=False)
     
         gb.configure_grid_options(getRowStyle=row_style_jscode)
-    
         gb.configure_grid_options(quickFilterText=search_text)
     
         grid_options = gb.build()
     
-        # Adjust grid height for fullscreen toggle
-        grid_height = 900 if st.session_state.fullscreen else 600
+        # Calculate height dynamically: max 900 if fullscreen else min(600, 30 rows * row height)
+        row_height = 35  # approximate height per row in px
+        num_rows = len(df)
+        base_height = min(600, max(300, num_rows * row_height))
+        grid_height = 900 if st.session_state['fullscreen'][label] else base_height
     
         grid_response = AgGrid(
             df,
@@ -613,14 +614,14 @@ with main_tab3:
             height=grid_height,
             width="100%",
         )
-        
-        # Direct download button without needing a separate "Export to CSV" button
+    
         csv = df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label=f"Download {label} CSV",
             data=csv,
             file_name=f"{label.replace(' ', '_').lower()}_data.csv",
             mime="text/csv",
+            key=f"download_{label}"
         )
     
         return grid_response
