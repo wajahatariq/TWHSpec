@@ -537,75 +537,75 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
-
-# JS code for conditional row styling based on Status
-row_style_jscode = JsCode("""
-function(params) {
-    if (!params.data) return null;
-    const status = params.data.Status;
-    if (status === 'Charged') {
-        return {'background-color': 'darkgreen', 'color': 'white'};
-    } else if (status === 'Charge Back') {
-        return {'background-color': 'red', 'color': 'white'};
-    } else if (status === 'Pending') {
-        return {'background-color': 'yellow', 'color': 'black'};
-    } else {
-        return null;
+    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
+    
+    # JS code for conditional row styling based on Status
+    row_style_jscode = JsCode("""
+    function(params) {
+        if (!params.data) return null;
+        const status = params.data.Status;
+        if (status === 'Charged') {
+            return {'background-color': 'darkgreen', 'color': 'white'};
+        } else if (status === 'Charge Back') {
+            return {'background-color': 'red', 'color': 'white'};
+        } else if (status === 'Pending') {
+            return {'background-color': 'yellow', 'color': 'black'};
+        } else {
+            return null;
+        }
     }
-}
-""")
-
-def display_aggrid_with_search(df, label):
-    st.subheader(f"{label} Data")
-
-    if df.empty:
-        st.info(f"No data available in {label}.")
-        return
-
-    # Search input for quick filter
-    search_text = st.text_input(f"Search {label} Table")
-
-    gb = GridOptionsBuilder.from_dataframe(df)
+    """)
     
-    # Disable pagination to show all rows with vertical scroll
-    # Set a fixed height to enable scrolling
-    gb.configure_default_column(
-        editable=True,
-        filter=True,
-        sortable=True,
-        resizable=True,
-        flex=1,
-        min_width=100,
-    )
+    def display_aggrid_with_search(df, label):
+        st.subheader(f"{label} Data")
     
-    # Enable multi-row selection with checkboxes
-    gb.configure_selection('multiple', use_checkbox=True)
+        if df.empty:
+            st.info(f"No data available in {label}.")
+            return
     
-    # Add row style JS code for conditional formatting
-    gb.configure_grid_options(getRowStyle=row_style_jscode)
+        # Search input for quick filter
+        search_text = st.text_input(f"Search {label} Table")
     
-    # Set quick filter text dynamically from the search box
-    gb.configure_grid_options(quickFilterText=search_text)
+        gb = GridOptionsBuilder.from_dataframe(df)
+        
+        # Disable pagination to show all rows with vertical scroll
+        # Set a fixed height to enable scrolling
+        gb.configure_default_column(
+            editable=True,
+            filter=True,
+            sortable=True,
+            resizable=True,
+            flex=1,
+            min_width=100,
+        )
+        
+        # Enable multi-row selection with checkboxes
+        gb.configure_selection('multiple', use_checkbox=True)
+        
+        # Add row style JS code for conditional formatting
+        gb.configure_grid_options(getRowStyle=row_style_jscode)
+        
+        # Set quick filter text dynamically from the search box
+        gb.configure_grid_options(quickFilterText=search_text)
+        
+        grid_options = gb.build()
+        
+        grid_response = AgGrid(
+            df,
+            gridOptions=grid_options,
+            update_mode=GridUpdateMode.MODEL_CHANGED,
+            theme="dark",
+            fit_columns_on_grid_load=True,
+            allow_unsafe_jscode=True,
+            height=600,  # adjust height as needed for your layout
+        )
+        
+        return grid_response
     
-    grid_options = gb.build()
-    
-    grid_response = AgGrid(
-        df,
-        gridOptions=grid_options,
-        update_mode=GridUpdateMode.MODEL_CHANGED,
-        theme="dark",
-        fit_columns_on_grid_load=True,
-        allow_unsafe_jscode=True,
-        height=600,  # adjust height as needed for your layout
-    )
-    
-    return grid_response
-
-# Example usage
-display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
-st.divider()
-display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
+    # Example usage
+    display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
+    st.divider()
+    display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
 
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
