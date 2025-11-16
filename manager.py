@@ -538,22 +538,11 @@ with main_tab3:
 
     # --- Existing Data Display ---
 
+    import streamlit as st
+    import plotly.graph_objects as go
     import pandas as pd
-    from st_data_editor import st_data_editor
     
-    def style_status_rows(df):
-        def color_row(row):
-            if row.Status == 'Charged':
-                return ['background-color: #0f5132; color: white'] * len(row)
-            elif row.Status == 'Charge Back':
-                return ['background-color: #dc3545; color: white'] * len(row)
-            elif row.Status == 'Pending':
-                return ['background-color: #856404; color: white'] * len(row)
-            else:
-                return ['background-color: black; color: white'] * len(row)
-        return df.style.apply(color_row, axis=1)
-    
-    def display_data_editor_with_search(df, label):
+    def display_plotly_table(df, label):
         st.subheader(f"{label} Data")
     
         if df.empty:
@@ -562,24 +551,39 @@ with main_tab3:
     
         search_text = st.text_input(f"Search {label} Table", key=f"search_{label}")
     
-        # Filter df using search_text in any cell (case-insensitive)
         if search_text:
             mask = df.apply(lambda row: row.astype(str).str.contains(search_text, case=False).any(), axis=1)
             filtered_df = df[mask]
         else:
             filtered_df = df
     
-        styled_df = style_status_rows(filtered_df)
+        # Map status to colors
+        def get_row_color(status):
+            if status == 'Charged':
+                return '#0f5132'
+            elif status == 'Charge Back':
+                return '#dc3545'
+            elif status == 'Pending':
+                return '#856404'
+            else:
+                return 'black'
     
-        edited_df = st_data_editor(
-            filtered_df,
-            column_config=None,
-            hide_index=True,
-            key=f"data_editor_{label}",
-            use_container_width=True,
-            disabled=False,
-            height=600,
-        )
+        colors = [get_row_color(s) for s in filtered_df['Status']]
+    
+        fig = go.Figure(data=[go.Table(
+            header=dict(
+                values=list(filtered_df.columns),
+                fill_color='#121212',
+                font=dict(color='white', size=12),
+            ),
+            cells=dict(
+                values=[filtered_df[col] for col in filtered_df.columns],
+                fill_color=[colors]*len(filtered_df.columns),
+                font=dict(color='white')
+            )
+        )])
+    
+        st.plotly_chart(fig, use_container_width=True)
     
         csv = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
@@ -590,12 +594,10 @@ with main_tab3:
             key=f"download_{label}"
         )
     
-        return edited_df
-    
-    # Example usage
-    display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
-    st.divider()
-    display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
+    # Usage:
+    display_plotly_table(df_spectrum, "Spectrum (Sheet1)")
+    display_plotly_table(df_insurance, "Insurance (Sheet2)")
+
 
 
 
