@@ -539,22 +539,6 @@ with main_tab3:
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
     
-    # Custom CSS for dark theme tweaks (optional)
-    st.markdown("""
-    <style>
-        .ag-theme-dark {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
-        .ag-header {
-            background-color: #1f1f1f !important;
-            color: #e0e0e0 !important;
-        }
-        .ag-row {
-            border-bottom: 1px solid #333 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
     
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
@@ -580,6 +564,15 @@ with main_tab3:
             st.info(f"No data available in {label}.")
             return
     
+        # Fullscreen toggle state
+        if 'fullscreen' not in st.session_state:
+            st.session_state.fullscreen = False
+    
+        def toggle_fullscreen():
+            st.session_state.fullscreen = not st.session_state.fullscreen
+    
+        st.button("Toggle Fullscreen", on_click=toggle_fullscreen)
+    
         search_text = st.text_input(f"Search {label} Table")
     
         gb = GridOptionsBuilder.from_dataframe(df)
@@ -593,27 +586,41 @@ with main_tab3:
             min_width=100,
         )
     
-        gb.configure_selection('multiple', use_checkbox=True)
+        # Remove checkboxes & set single row selection (no checkbox)
+        gb.configure_selection('single')  
+    
+        # Enable sidebar for columns & filters
+        gb.configure_side_bar()
+    
+        # Enable pagination with page size 20
+        gb.configure_pagination(enabled=True, paginationPageSize=20)
     
         gb.configure_grid_options(getRowStyle=row_style_jscode)
     
         gb.configure_grid_options(quickFilterText=search_text)
     
-        gb.configure_pagination(enabled=False)
-    
         grid_options = gb.build()
+    
+        # Adjust grid height for fullscreen toggle
+        grid_height = 900 if st.session_state.fullscreen else 600
     
         grid_response = AgGrid(
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="dark",  # use dark theme here
+            theme="dark",
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
-            height=600,
+            height=grid_height,
+            width="100%",
         )
-    
-        return grid_response
+        
+            # Export button below grid
+            if st.button("Export to CSV"):
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button("Download CSV", csv, f"{label}_data.csv", "text/csv")
+        
+            return grid_response
     
     # Example usage
     # Replace df_spectrum and df_insurance with your actual dataframes
