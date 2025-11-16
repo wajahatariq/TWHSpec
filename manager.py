@@ -538,43 +538,43 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
-  st.markdown("""
-<style>
-    /* Overall grid background */
-    .ag-theme-dark {
-        background-color: black !important;
-        color: white !important;
-    }
-
-    /* Header container background */
-    .ag-theme-dark .ag-header {
-        background-color: #121212 !important;  /* very dark gray */
-        color: white !important;
-    }
-
-    /* Header cells background and text */
-    .ag-theme-dark .ag-header-cell, 
-    .ag-theme-dark .ag-header-cell-label {
-        background-color: #121212 !important;
-        color: white !important;
-    }
-
-    /* Header cell text */
-    .ag-theme-dark .ag-header-cell-text {
-        color: white !important;
-    }
-
-    /* Column sort icons color */
-    .ag-theme-dark .ag-header-icon {
-        fill: white !important;
-    }
-
-    /* Row border for better separation */
-    .ag-theme-dark .ag-row {
-        border-bottom: 1px solid #333 !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+        /* Overall grid background */
+        .ag-theme-dark {
+            background-color: black !important;
+            color: white !important;
+        }
+    
+        /* Header container background */
+        .ag-theme-dark .ag-header {
+            background-color: #121212 !important;  /* very dark gray */
+            color: white !important;
+        }
+    
+        /* Header cells background and text */
+        .ag-theme-dark .ag-header-cell, 
+        .ag-theme-dark .ag-header-cell-label {
+            background-color: #121212 !important;
+            color: white !important;
+        }
+    
+        /* Header cell text */
+        .ag-theme-dark .ag-header-cell-text {
+            color: white !important;
+        }
+    
+        /* Column sort icons color */
+        .ag-theme-dark .ag-header-icon {
+            fill: white !important;
+        }
+    
+        /* Row border for better separation */
+        .ag-theme-dark .ag-row {
+            border-bottom: 1px solid #333 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
