@@ -8,4 +8,4 @@ reportlab
 tabulate
 matplotlib
 seaborn 
-streamlit-aggrid
+streamlit-aggrid>=0.4.0
