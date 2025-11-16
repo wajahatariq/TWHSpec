@@ -539,17 +539,17 @@ with main_tab3:
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
     
-    # JS code for conditional row styling based on Status column
+    # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
         if (!params.data) return null;
         const status = params.data.Status;
         if (status === 'Charged') {
-            return {'background-color': 'darkgreen', 'color': 'white'};
+            return {'background-color': '#d1e7dd', 'color': '#0f5132'};  // soft green bg, dark green text
         } else if (status === 'Charge Back') {
-            return {'background-color': 'red', 'color': 'white'};
+            return {'background-color': '#f8d7da', 'color': '#842029'};  // soft red bg, dark red text
         } else if (status === 'Pending') {
-            return {'background-color': 'yellow', 'color': 'black'};
+            return {'background-color': '#fff3cd', 'color': '#664d03'};  // soft yellow bg, dark yellow text
         } else {
             return null;
         }
@@ -567,7 +567,6 @@ with main_tab3:
     
         gb = GridOptionsBuilder.from_dataframe(df)
     
-        # Configure grid options
         gb.configure_default_column(
             editable=True,
             filter=True,
@@ -577,16 +576,12 @@ with main_tab3:
             min_width=100,
         )
     
-        # Multi-row selection with checkboxes
         gb.configure_selection('multiple', use_checkbox=True)
     
-        # Add JS for row styling based on Status
         gb.configure_grid_options(getRowStyle=row_style_jscode)
     
-        # Set quick filter text from search input
         gb.configure_grid_options(quickFilterText=search_text)
     
-        # Disable pagination for vertical scrolling
         gb.configure_pagination(enabled=False)
     
         grid_options = gb.build()
@@ -595,13 +590,14 @@ with main_tab3:
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="alpine-dark",   # Use built-in dark theme
+            theme="material",   # lighter and cleaner theme
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
-            height=600,  # Adjust for scrolling
+            height=600,
         )
     
         return grid_response
+
     
     # Example usage
     # Replace df_spectrum and df_insurance with your actual dataframes
