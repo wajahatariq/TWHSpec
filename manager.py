@@ -537,65 +537,23 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
-    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
-    # JS code for subtle row styling based on Status
-    row_style_jscode = JsCode("""
-    function(params) {
-        if (!params.data) return null;
-        const status = params.data.Status;
-        if (status === 'Charged') {
-            return {'background-color': '#0f5132', 'color': 'white'};
-        } else if (status === 'Charge Back') {
-            return {'background-color': '#dc3545', 'color': 'white'};
-        } else if (status === 'Pending') {
-            return {'background-color': '#856404', 'color': 'white'};
-        } else {
-            // default black bg for other rows
-            return {'background-color': '#000000', 'color': 'white'};
-        }
-    }
-    """)
+    import pandas as pd
+    from st_data_editor import st_data_editor
     
-    st.markdown("""
-    <style>
-        /* Overall grid background */
-        .ag-theme-dark {
-            background-color: black !important;
-            color: white !important;
-        }
+    def style_status_rows(df):
+        def color_row(row):
+            if row.Status == 'Charged':
+                return ['background-color: #0f5132; color: white'] * len(row)
+            elif row.Status == 'Charge Back':
+                return ['background-color: #dc3545; color: white'] * len(row)
+            elif row.Status == 'Pending':
+                return ['background-color: #856404; color: white'] * len(row)
+            else:
+                return ['background-color: black; color: white'] * len(row)
+        return df.style.apply(color_row, axis=1)
     
-        /* Header container background */
-        .ag-theme-dark .ag-header {
-            background-color: #121212 !important;  /* very dark gray */
-            color: white !important;
-        }
-    
-        /* Header cells background and text */
-        .ag-theme-dark .ag-header-cell, 
-        .ag-theme-dark .ag-header-cell-label {
-            background-color: #121212 !important;
-            color: white !important;
-        }
-    
-        /* Header cell text */
-        .ag-theme-dark .ag-header-cell-text {
-            color: white !important;
-        }
-    
-        /* Column sort icons color */
-        .ag-theme-dark .ag-header-icon {
-            fill: white !important;
-        }
-    
-        /* Row border for better separation */
-        .ag-theme-dark .ag-row {
-            border-bottom: 1px solid #333 !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    def display_aggrid_with_search(df, label):
+    def display_data_editor_with_search(df, label):
         st.subheader(f"{label} Data")
     
         if df.empty:
@@ -604,44 +562,26 @@ with main_tab3:
     
         search_text = st.text_input(f"Search {label} Table", key=f"search_{label}")
     
-        gb = GridOptionsBuilder.from_dataframe(df)
+        # Filter df using search_text in any cell (case-insensitive)
+        if search_text:
+            mask = df.apply(lambda row: row.astype(str).str.contains(search_text, case=False).any(), axis=1)
+            filtered_df = df[mask]
+        else:
+            filtered_df = df
     
-        gb.configure_default_column(
-            editable=True,
-            filter=True,
-            sortable=True,
-            resizable=True,
-            flex=1,
-            min_width=100,
+        styled_df = style_status_rows(filtered_df)
+    
+        edited_df = st_data_editor(
+            filtered_df,
+            column_config=None,
+            hide_index=True,
+            key=f"data_editor_{label}",
+            use_container_width=True,
+            disabled=False,
+            height=600,
         )
     
-        gb.configure_selection('single')
-        gb.configure_side_bar()
-    
-        # Pagination disabled for natural page scrolling
-        # gb.configure_pagination(enabled=False)
-    
-        gb.configure_grid_options(getRowStyle=row_style_jscode)
-        gb.configure_grid_options(quickFilterText=search_text)
-    
-        grid_options = gb.build()
-    
-        row_height = 35  # approx height per row in px
-        num_rows = len(df)
-        base_height = min(600, max(300, num_rows * row_height))
-    
-        grid_response = AgGrid(
-            df,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme="dark",
-            fit_columns_on_grid_load=True,
-            allow_unsafe_jscode=True,
-            height=base_height,
-            width="100%",
-        )
-    
-        csv = df.to_csv(index=False).encode('utf-8')
+        csv = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
             label=f"Download {label} CSV",
             data=csv,
@@ -650,7 +590,7 @@ with main_tab3:
             key=f"download_{label}"
         )
     
-        return grid_response
+        return edited_df
     
     # Example usage
     display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
