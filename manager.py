@@ -537,9 +537,9 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
-    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode, StAggridTheme
+    from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
     
-    # Your JS code for conditional row styling based on Status column
+    # JS code for conditional row styling based on Status column
     row_style_jscode = JsCode("""
     function(params) {
         if (!params.data) return null;
@@ -556,23 +556,6 @@ with main_tab3:
     }
     """)
     
-    # Define a custom dark theme with black background and appropriate colors
-    custom_dark_theme = (
-        StAggridTheme(base="alpine-dark")  # alpine-dark is a good dark base theme
-        .withParams({
-            "backgroundColor": "#000000",
-            "foregroundColor": "#ffffff",
-            "headerBackgroundColor": "#111111",
-            "headerForegroundColor": "#ffffff",
-            "fontSize": 16,
-            "rowBorder": False,
-            "hoverColor": "#222222",
-            "selectedColor": "#333333",
-            "borderColor": "#444444",
-        })
-        .withParts(["iconSetAlpine"])  # Use alpine icons
-    )
-    
     def display_aggrid_with_search(df, label):
         st.subheader(f"{label} Data")
     
@@ -580,12 +563,11 @@ with main_tab3:
             st.info(f"No data available in {label}.")
             return
     
-        # Search input for quick filter
         search_text = st.text_input(f"Search {label} Table")
     
         gb = GridOptionsBuilder.from_dataframe(df)
     
-        # Show all rows with vertical scroll by not enabling pagination
+        # Configure grid options
         gb.configure_default_column(
             editable=True,
             filter=True,
@@ -598,29 +580,34 @@ with main_tab3:
         # Multi-row selection with checkboxes
         gb.configure_selection('multiple', use_checkbox=True)
     
-        # Add conditional row styling
+        # Add JS for row styling based on Status
         gb.configure_grid_options(getRowStyle=row_style_jscode)
     
-        # Set quick filter text dynamically
+        # Set quick filter text from search input
         gb.configure_grid_options(quickFilterText=search_text)
+    
+        # Disable pagination for vertical scrolling
+        gb.configure_pagination(enabled=False)
     
         grid_options = gb.build()
     
-        AgGrid(
+        grid_response = AgGrid(
             df,
             gridOptions=grid_options,
             update_mode=GridUpdateMode.MODEL_CHANGED,
-            theme=custom_dark_theme,  # Pass the custom theme object here
+            theme="alpine-dark",   # Use built-in dark theme
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
-            height=600,  # Fixed height for vertical scroll
+            height=600,  # Adjust for scrolling
         )
     
-    # Use your dataframes accordingly
+        return grid_response
+    
+    # Example usage
+    # Replace df_spectrum and df_insurance with your actual dataframes
     display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
     st.divider()
     display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
-
 
 
     import matplotlib.pyplot as plt
