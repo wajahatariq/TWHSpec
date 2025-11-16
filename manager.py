@@ -563,17 +563,6 @@ with main_tab3:
             st.info(f"No data available in {label}.")
             return
     
-        if 'fullscreen' not in st.session_state:
-            st.session_state['fullscreen'] = {}
-    
-        if label not in st.session_state['fullscreen']:
-            st.session_state['fullscreen'][label] = False
-    
-        def toggle_fullscreen():
-            st.session_state['fullscreen'][label] = not st.session_state['fullscreen'][label]
-    
-        st.button("Toggle Fullscreen", on_click=toggle_fullscreen, key=f"toggle_fullscreen_{label}")
-    
         search_text = st.text_input(f"Search {label} Table", key=f"search_{label}")
     
         gb = GridOptionsBuilder.from_dataframe(df)
@@ -590,7 +579,7 @@ with main_tab3:
         gb.configure_selection('single')
         gb.configure_side_bar()
     
-        # Disable pagination to let full data show in grid so page scrolls naturally
+        # Pagination disabled for natural page scrolling
         # gb.configure_pagination(enabled=False)
     
         gb.configure_grid_options(getRowStyle=row_style_jscode)
@@ -598,11 +587,9 @@ with main_tab3:
     
         grid_options = gb.build()
     
-        # Calculate height dynamically: max 900 if fullscreen else min(600, 30 rows * row height)
-        row_height = 35  # approximate height per row in px
+        row_height = 35  # approx height per row in px
         num_rows = len(df)
         base_height = min(600, max(300, num_rows * row_height))
-        grid_height = 900 if st.session_state['fullscreen'][label] else base_height
     
         grid_response = AgGrid(
             df,
@@ -611,7 +598,7 @@ with main_tab3:
             theme="dark",
             fit_columns_on_grid_load=True,
             allow_unsafe_jscode=True,
-            height=grid_height,
+            height=base_height,
             width="100%",
         )
     
@@ -630,6 +617,7 @@ with main_tab3:
     display_aggrid_with_search(df_spectrum, "Spectrum (Sheet1)")
     st.divider()
     display_aggrid_with_search(df_insurance, "Insurance (Sheet2)")
+
 
 
     import matplotlib.pyplot as plt
