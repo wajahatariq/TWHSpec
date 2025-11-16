@@ -538,7 +538,24 @@ with main_tab3:
 
     # --- Existing Data Display ---
     from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
-    
+    st.markdown("""
+<style>
+    .ag-theme-dark {
+        background-color: black !important;
+        color: white !important;
+    }
+    .ag-theme-dark .ag-header {
+        background-color: #121212 !important;
+        color: white !important;
+    }
+    .ag-theme-dark .ag-header-cell-label {
+        color: white !important;
+    }
+    .ag-theme-dark .ag-row {
+        border-bottom: 1px solid #333 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
     # JS code for subtle row styling based on Status
     row_style_jscode = JsCode("""
     function(params) {
@@ -551,7 +568,8 @@ with main_tab3:
         } else if (status === 'Pending') {
             return {'background-color': '#856404', 'color': 'white'};
         } else {
-            return null;
+            // default black bg for other rows
+            return {'background-color': '#000000', 'color': 'white'};
         }
     }
     """)
