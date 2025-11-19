@@ -731,8 +731,8 @@ with main_tab3:
                 st.dataframe(duplicates.sort_values(by="Record_ID"), use_container_width=True)
 
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
-from datetime import datetime, time, timedelta
 import pytz
+from datetime import datetime, time, timedelta
 import pandas as pd
 
 tz = pytz.timezone("Asia/Karachi")
@@ -742,11 +742,10 @@ today = now.date()
 yesterday = today - timedelta(days=1)
 tomorrow = today + timedelta(days=1)
 
-night_start = time(19, 0)   # 7 PM
-night_end = time(6, 0)      # 6 AM
-reset_time = time(9, 0)     # 9 AM
+night_start = time(19, 0)
+night_end = time(6, 0)
+reset_time = time(9, 0)
 
-# Safe charge parser: strips $, commas, handles numbers
 def parse_charge(x):
     if isinstance(x, str):
         x = x.replace("$", "").replace(",", "").strip()
@@ -760,16 +759,14 @@ def parse_charge(x):
         return 0.0
 
 df_all['ChargeFloat'] = df_all['ChargeFloat'].apply(parse_charge)
+df_all['Status'] = df_all['Status'].astype(str).str.strip()
 
-# Determine the night window
 if now.time() >= night_start:
     window_start = tz.localize(datetime.combine(today, night_start))
     window_end = tz.localize(datetime.combine(tomorrow, night_end))
-
 elif now.time() < night_end:
     window_start = tz.localize(datetime.combine(yesterday, night_start))
     window_end = tz.localize(datetime.combine(today, night_end))
-
 else:
     if now.time() < reset_time:
         window_start = tz.localize(datetime.combine(yesterday, night_start))
@@ -778,7 +775,6 @@ else:
         window_start = None
         window_end = None
 
-# Filter dataframe by window & charged status
 if window_start is None:
     total_night_charge = 0.0
 else:
@@ -789,7 +785,7 @@ else:
         df_all['Timestamp'] = df_all['Timestamp'].dt.tz_convert('Asia/Karachi')
 
     night_charged_df = df_all[
-        (df_all['Status'].str.strip() == "Charged") &
+        (df_all['Status'] == "Charged") &
         (df_all['Timestamp'] >= window_start) &
         (df_all['Timestamp'] <= window_end)
     ]
