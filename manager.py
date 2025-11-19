@@ -537,54 +537,19 @@ with main_tab3:
     st.divider()
 
     # --- Existing Data Display ---
+    st.subheader("Spectrum Data (Sheet1)")
+    if df_spectrum.empty:
+        st.info("No data available in Spectrum (Sheet1).")
+    else:
+        st.dataframe(style_status_rows(df_spectrum), use_container_width=True)
 
-    import pandas as pd
-    
-    def style_status_rows(row):
-        status = row['Status']
-        if status == 'Charged':
-            return ['background-color: #0f5132; color: white'] * len(row)
-        elif status == 'Charge Back':
-            return ['background-color: #dc3545; color: white'] * len(row)
-        elif status == 'Pending':
-            return ['background-color: #856404; color: white'] * len(row)
-        else:
-            return [''] * len(row)
-    
-    def display_pandas_table(df: pd.DataFrame, label: str):
-        st.subheader(f"{label} Data")
-    
-        if df.empty:
-            st.info(f"No data available in {label}.")
-            return
-    
-        search_text = st.text_input(f"Search {label} Table", key=f"search_{label}")
-    
-        if search_text:
-            mask = df.apply(lambda row: row.astype(str).str.contains(search_text, case=False, na=False).any(), axis=1)
-            filtered_df = df[mask]
-        else:
-            filtered_df = df
-    
-        # Display with styling for Status column rows
-        styled_df = filtered_df.style.apply(style_status_rows, axis=1)
-    
-        st.dataframe(styled_df, use_container_width=True, height=600)
-    
-        csv = filtered_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label=f"Download {label} CSV",
-            data=csv,
-            file_name=f"{label.replace(' ', '_').lower()}_data.csv",
-            mime="text/csv",
-            key=f"download_{label}"
-        )
-    
-    # Usage example:
-    display_pandas_table(df_spectrum, "Spectrum (Sheet1)")
-    display_pandas_table(df_insurance, "Insurance (Sheet2)")
+    st.divider()
 
-
+    st.subheader("Insurance Data (Sheet2)")
+    if df_insurance.empty:
+        st.info("No data available in Insurance (Sheet2).")
+    else:
+        st.dataframe(style_status_rows(df_insurance), use_container_width=True)
 
 
     import matplotlib.pyplot as plt
@@ -731,71 +696,46 @@ with main_tab3:
                 st.dataframe(duplicates.sort_values(by="Record_ID"), use_container_width=True)
 
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
-import pytz
 from datetime import datetime, time, timedelta
-import pandas as pd
+import pytz
 
 tz = pytz.timezone("Asia/Karachi")
-now = datetime.now(tz)
+now = datetime.now(tz).replace(tzinfo=None)  # naive for comparison with naive timestamps
 
-today = now.date()
-yesterday = today - timedelta(days=1)
-tomorrow = today + timedelta(days=1)
-
-night_start = time(19, 0)
-night_end = time(6, 0)
-reset_time = time(9, 0)
-
-def parse_charge(x):
-    if isinstance(x, str):
-        x = x.replace("$", "").replace(",", "").strip()
-        try:
-            return float(x)
-        except:
-            return 0.0
-    elif isinstance(x, (int, float)):
-        return float(x)
-    else:
-        return 0.0
-
-df_all['ChargeFloat'] = df_all['ChargeFloat'].apply(parse_charge)
-df_all['Status'] = df_all['Status'].astype(str).str.strip()
-
-if now.time() >= night_start:
-    window_start = tz.localize(datetime.combine(today, night_start))
-    window_end = tz.localize(datetime.combine(tomorrow, night_end))
-elif now.time() < night_end:
-    window_start = tz.localize(datetime.combine(yesterday, night_start))
-    window_end = tz.localize(datetime.combine(today, night_end))
+if time(7, 0) <= now.time() < time(19, 0):
+    # Daytime: last night 7 PM → today 6 AM
+    window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+    window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
+    window_start_2 = datetime.combine(now.date(), time(0, 0))
+    window_end_2 = datetime.combine(now.date(), time(6, 0))
 else:
-    if now.time() < reset_time:
-        window_start = tz.localize(datetime.combine(yesterday, night_start))
-        window_end = tz.localize(datetime.combine(today, night_end))
-    else:
-        window_start = None
-        window_end = None
+    # Nighttime: today 7 PM → tomorrow 6 AM
+    if now.time() >= time(19, 0):
+        window_start_1 = datetime.combine(now.date(), time(19, 0))
+        window_end_1 = datetime.combine(now.date(), time(23, 59, 59, 999999))
+        window_start_2 = datetime.combine(now.date() + timedelta(days=1), time(0, 0))
+        window_end_2 = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
+    else:  # between midnight and 6 AM
+        window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
+        window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
+        window_start_2 = datetime.combine(now.date(), time(0, 0))
+        window_end_2 = datetime.combine(now.date(), time(6, 0))
 
-if window_start is None:
-    total_night_charge = 0.0
-else:
-    df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
-    if df_all['Timestamp'].dt.tz is None:
-        df_all['Timestamp'] = df_all['Timestamp'].dt.tz_localize('Asia/Karachi', nonexistent='shift_forward', ambiguous='NaT')
-    else:
-        df_all['Timestamp'] = df_all['Timestamp'].dt.tz_convert('Asia/Karachi')
+# Now filter your dataframe:
+def in_night_window(ts):
+    return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
 
-    night_charged_df = df_all[
-        (df_all['Status'] == "Charged") &
-        (df_all['Timestamp'] >= window_start) &
-        (df_all['Timestamp'] <= window_end)
-    ]
+df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
+night_charged_df = df_all[
+    (df_all['Status'] == "Charged") & 
+    (df_all['Timestamp'].apply(in_night_window))
+]
 
-    total_night_charge = night_charged_df['ChargeFloat'].sum()
-
+total_night_charge = night_charged_df['ChargeFloat'].sum()
 total_night_charge_str = f"${total_night_charge:,.2f}"
-
 amount_text_color = get_contrast_color(accent)
 
+amount_text_color = get_contrast_color(accent)
 label_text_color = get_contrast_color(accent)
                 
 st.markdown(f"""
