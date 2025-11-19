@@ -746,8 +746,7 @@ night_start = time(19, 0)   # 7 PM
 night_end = time(6, 0)      # 6 AM
 reset_time = time(9, 0)     # 9 AM
 
-
-# Convert charges safely (string $?? or number)
+# Safe charge parser: strips $, commas, handles numbers
 def parse_charge(x):
     if isinstance(x, str):
         x = x.replace("$", "").replace(",", "").strip()
@@ -762,39 +761,33 @@ def parse_charge(x):
 
 df_all['ChargeFloat'] = df_all['ChargeFloat'].apply(parse_charge)
 
-
-# Determine which window applies
+# Determine the night window
 if now.time() >= night_start:
     window_start = tz.localize(datetime.combine(today, night_start))
-    window_end   = tz.localize(datetime.combine(tomorrow, night_end))
+    window_end = tz.localize(datetime.combine(tomorrow, night_end))
 
 elif now.time() < night_end:
     window_start = tz.localize(datetime.combine(yesterday, night_start))
-    window_end   = tz.localize(datetime.combine(today, night_end))
+    window_end = tz.localize(datetime.combine(today, night_end))
 
 else:
     if now.time() < reset_time:
         window_start = tz.localize(datetime.combine(yesterday, night_start))
-        window_end   = tz.localize(datetime.combine(today, night_end))
+        window_end = tz.localize(datetime.combine(today, night_end))
     else:
         window_start = None
         window_end = None
 
-
-# If no active window (after reset)
+# Filter dataframe by window & charged status
 if window_start is None:
-    night_charged_df = df_all[(df_all['Status'].str.strip() == "Charged") & (df_all['Timestamp'] < "1900-01-01")]
     total_night_charge = 0.0
-
 else:
-    # Convert timestamps to Asia/Karachi timezone consistently
     df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
     if df_all['Timestamp'].dt.tz is None:
         df_all['Timestamp'] = df_all['Timestamp'].dt.tz_localize('Asia/Karachi', nonexistent='shift_forward', ambiguous='NaT')
     else:
         df_all['Timestamp'] = df_all['Timestamp'].dt.tz_convert('Asia/Karachi')
 
-    # Apply window filter
     night_charged_df = df_all[
         (df_all['Status'].str.strip() == "Charged") &
         (df_all['Timestamp'] >= window_start) &
@@ -803,10 +796,10 @@ else:
 
     total_night_charge = night_charged_df['ChargeFloat'].sum()
 
-
 total_night_charge_str = f"${total_night_charge:,.2f}"
 
 amount_text_color = get_contrast_color(accent)
+
 label_text_color = get_contrast_color(accent)
                 
 st.markdown(f"""
