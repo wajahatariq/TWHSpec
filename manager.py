@@ -733,41 +733,62 @@ with main_tab3:
 # --- NIGHT WINDOW CHARGED TRANSACTIONS & DISPLAY ---
 from datetime import datetime, time, timedelta
 import pytz
+import pandas as pd
 
 tz = pytz.timezone("Asia/Karachi")
-now = datetime.now(tz).replace(tzinfo=None)  # naive for comparison with naive timestamps
+now = datetime.now(tz)
 
-if time(7, 0) <= now.time() < time(19, 0):
-    # Daytime: last night 7 PM → today 6 AM
-    window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-    window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
-    window_start_2 = datetime.combine(now.date(), time(0, 0))
-    window_end_2 = datetime.combine(now.date(), time(6, 0))
+today = now.date()
+yesterday = today - timedelta(days=1)
+tomorrow = today + timedelta(days=1)
+
+night_start = time(19, 0)   # 7 PM
+night_end = time(6, 0)      # 6 AM
+reset_time = time(9, 0)     # 9 AM
+
+
+# Determine which window applies
+if now.time() >= night_start:
+    # Example: today 9 PM → window is today 7 PM to tomorrow 6 AM
+    window_start = tz.localize(datetime.combine(today, night_start))
+    window_end   = tz.localize(datetime.combine(tomorrow, night_end))
+
+elif now.time() < night_end:
+    # Example: 2 AM → window is yesterday 7 PM to today 6 AM
+    window_start = tz.localize(datetime.combine(yesterday, night_start))
+    window_end   = tz.localize(datetime.combine(today, night_end))
+
 else:
-    # Nighttime: today 7 PM → tomorrow 6 AM
-    if now.time() >= time(19, 0):
-        window_start_1 = datetime.combine(now.date(), time(19, 0))
-        window_end_1 = datetime.combine(now.date(), time(23, 59, 59, 999999))
-        window_start_2 = datetime.combine(now.date() + timedelta(days=1), time(0, 0))
-        window_end_2 = datetime.combine(now.date() + timedelta(days=1), time(6, 0))
-    else:  # between midnight and 6 AM
-        window_start_1 = datetime.combine(now.date() - timedelta(days=1), time(19, 0))
-        window_end_1 = datetime.combine(now.date() - timedelta(days=1), time(23, 59, 59, 999999))
-        window_start_2 = datetime.combine(now.date(), time(0, 0))
-        window_end_2 = datetime.combine(now.date(), time(6, 0))
+    # Between 6 AM and 7 PM
+    if now.time() < reset_time:
+        # Before reset → still show last night's window
+        window_start = tz.localize(datetime.combine(yesterday, night_start))
+        window_end   = tz.localize(datetime.combine(today, night_end))
+    else:
+        # After 9 AM reset → no window yet for today
+        window_start = None
+        window_end = None
 
-# Now filter your dataframe:
-def in_night_window(ts):
-    return ((ts >= window_start_1) and (ts <= window_end_1)) or ((ts >= window_start_2) and (ts <= window_end_2))
 
-df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce')
-night_charged_df = df_all[
-    (df_all['Status'] == "Charged") & 
-    (df_all['Timestamp'].apply(in_night_window))
-]
+# If no active window (after reset)
+if window_start is None:
+    night_charged_df = df_all[(df_all['Status'] == "Charged") & (df_all['Timestamp'] < "1900-01-01")]
+    total_night_charge = 0.0
+else:
+    # Convert DataFrame timestamps to timezone-aware
+    df_all['Timestamp'] = pd.to_datetime(df_all['Timestamp'], errors='coerce').dt.tz_localize('Asia/Karachi', nonexistent='shift_forward', ambiguous='NaT')
 
-total_night_charge = night_charged_df['ChargeFloat'].sum()
+    # Filter only charged entries inside the window
+    night_charged_df = df_all[
+        (df_all['Status'].str.strip() == "Charged") &
+        (df_all['Timestamp'] >= window_start) &
+        (df_all['Timestamp'] <= window_end)
+    ]
+
+    total_night_charge = night_charged_df['ChargeFloat'].sum()
+
 total_night_charge_str = f"${total_night_charge:,.2f}"
+
 amount_text_color = get_contrast_color(accent)
 
 amount_text_color = get_contrast_color(accent)
