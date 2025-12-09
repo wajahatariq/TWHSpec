@@ -125,7 +125,7 @@ SHEET_NAME = "Company_Transactions"
 worksheet = gc.open(SHEET_NAME).sheet1
 
 AGENTS = ["Select Agent", "Arham Kaleem", "Arham Ali", "Haziq"]
-LLC_OPTIONS = ["Select LLC", "Visionary Pathways", "Bite Bazaar LLC"]
+LLC_OPTIONS = ["Select LLC", "Visionary Pathways", "J-Tech Solutions"]
 PROVIDERS = ["Select Provider", "Spectrum", "Insurance", "Xfinity", "Frontier", "Optimum"]
 
 def clear_form():
