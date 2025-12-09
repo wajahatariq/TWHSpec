@@ -353,8 +353,17 @@ elif mode.startswith("All-time"):
 if record is not None:
     st.info(f"Editing Record ID: {record['Record_ID']}")
 
-    # Determine current PIN code value or default to 'nil' if missing
-    current_pin_code = record.get("PIN Code", "nil") if "PIN Code" in record else "nil"
+    # Initialize provider in session_state if missing
+    if "edit_provider" not in st.session_state:
+        st.session_state.edit_provider = record["Provider"]
+
+    # Provider selectbox outside the form for immediate state update
+    new_provider = st.selectbox(
+        "Provider",
+        PROVIDERS,
+        index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0,
+        key="edit_provider"
+    )
 
     with st.form("edit_lead_form"):
         col1, col2 = st.columns(2)
@@ -379,15 +388,11 @@ if record is not None:
             new_llc = st.selectbox(
                 "LLC", LLC_OPTIONS, index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0
             )
-            new_provider = st.selectbox(
-                "Provider",
-                PROVIDERS,
-                index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0,
-                key="edit_provider"  # new key to track changes separately if needed
-            )
 
-            # PIN code field with logic
-            pin_code_disabled = (new_provider != "Spectrum")
+            # PIN code logic: disable unless Spectrum is selected
+            pin_code_disabled = (st.session_state.edit_provider != "Spectrum")
+            current_pin_code = record.get("PIN Code", "nil") if "PIN Code" in record else "nil"
+
             new_pin_code = st.text_input(
                 "4-digit PIN Code",
                 value=current_pin_code if not pin_code_disabled else "nil",
@@ -402,7 +407,7 @@ if record is not None:
                 value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date(),
             )
 
-        # --- STATUS LOGIC ---
+        # STATUS LOGIC
         current_status = record["Status"]
         if current_status == "Charged":
             status_options = ["Charged", "Pending", "Charge Back"]
@@ -418,8 +423,8 @@ if record is not None:
         updated = st.form_submit_button("Update Lead")
 
     if updated:
-        # Validate PIN code if Spectrum is selected
-        if new_provider == "Spectrum":
+        # Validate PIN code if Spectrum selected
+        if st.session_state.edit_provider == "Spectrum":
             if not new_pin_code or len(new_pin_code) != 4 or not new_pin_code.isdigit():
                 st.error("Please enter a valid 4-digit PIN Code for Spectrum provider.")
                 st.stop()
@@ -434,17 +439,18 @@ if record is not None:
                 updated_data = [
                     record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
                     new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
-                    new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
+                    new_llc, st.session_state.edit_provider, new_date_of_charge.strftime("%Y-%m-%d"),
                     new_status, new_timestamp,
-                    new_pin_code  # Add PIN Code as the last column or match your sheet layout
+                    new_pin_code  # Ensure your sheet has a column for this (adjust range below)
                 ]
-                worksheet.update(f"A{row_num}:Q{row_num}", [updated_data])  # Adjust 'Q' if columns change
+                worksheet.update(f"A{row_num}:Q{row_num}", [updated_data])  # Adjust 'Q' if needed
                 st.success(f"Lead for {new_name} updated successfully!")
                 st.rerun()
             else:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 
 from datetime import datetime, time, timedelta
