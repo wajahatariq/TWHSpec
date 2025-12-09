@@ -183,22 +183,36 @@ with st.form("transaction_form"):
         charge = st.text_input("Charge Amount", key="charge")
         llc = st.selectbox("LLC", LLC_OPTIONS, key="llc")
         provider = st.selectbox("Provider", PROVIDERS, key="provider")
+        pin_code = st.text_input("4-Digit PIN Code", key="pin_code")
         date_of_charge = st.date_input("Date of Charge", key="date_of_charge", value=datetime.now().date())
     submitted = st.form_submit_button("Submit")
-# --- VALIDATION & SAVE ---
+
 if submitted:
     missing_fields = []
 
-    # Validate Order ID (user input instead of UUID)
     record_id_input = st.session_state.get("order_id", "").strip()
     if not record_id_input:
         missing_fields.append("Order ID")
 
-    # Check if Order ID already exists (to avoid duplicates)
     if not df_all.empty and record_id_input in df_all["Record_ID"].values:
         st.error("Order ID already exists. Please enter a unique Order ID.")
         st.stop()
-        
+
+    agent_name = st.session_state.get("agent_name", "Select Agent")
+    name = st.session_state.get("name", "")
+    phone = st.session_state.get("phone", "")
+    address = st.session_state.get("address", "")
+    email = st.session_state.get("email", "")
+    card_holder = st.session_state.get("card_holder", "")
+    card_number = st.session_state.get("card_number", "")
+    expiry = st.session_state.get("expiry", "")
+    charge = st.session_state.get("charge", "")
+    llc = st.session_state.get("llc", "Select LLC")
+    provider = st.session_state.get("provider", "Select Provider")
+    date_of_charge = st.session_state.get("date_of_charge", datetime.now().date())
+    pin_code = st.session_state.get("pin_code", "").strip()
+
+    # Required fields validation
     if agent_name == "Select Agent": missing_fields.append("Agent Name")
     if not name: missing_fields.append("Client Name")
     if not phone: missing_fields.append("Phone Number")
@@ -210,14 +224,24 @@ if submitted:
     if not charge: missing_fields.append("Charge Amount")
     if llc == "Select LLC": missing_fields.append("LLC")
     if provider == "Select Provider": missing_fields.append("Provider")
+
+    # PIN Code validation conditional on provider
+    if provider == "Spectrum":
+        if not (pin_code.isdigit() and len(pin_code) == 4):
+            st.error("PIN Code must be exactly 4 digits when Provider is Spectrum.")
+            st.stop()
+    else:
+        pin_code = "Nil"
+
     if missing_fields:
         st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
         st.stop()
-    # --- Clean up formatting ---
+
+    # Clean formatting
     card_number = card_number.replace(" ", "").replace("-", "")
     expiry = expiry.replace("/", "").replace("-", "").replace(" ", "")
 
-    # --- Format Charge Amount ---
+    # Format Charge
     try:
         charge_value = float(charge.replace("$", "").strip())
         charge = f"${charge_value:.2f}"
@@ -225,14 +249,16 @@ if submitted:
         st.error("Charge amount must be numeric (e.g., 29 or 29.00).")
         st.stop()
 
-    # --- Save to Google Sheet ---
     record_id = record_id_input.strip()
     timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+
     data = [
         record_id, agent_name, name, phone, address, email, card_holder,
         card_number, expiry, cvc, charge, llc, provider,
-        date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp
+        date_of_charge.strftime("%Y-%m-%d"), "Pending", timestamp,
+        pin_code
     ]
+
     worksheet.append_row(data)
     st.success(f"Details for {name} added successfully!")
 
@@ -328,12 +354,14 @@ elif mode.startswith("All-time"):
 # --- EDIT FORM ---
 if record is not None:
     st.info(f"Editing Record ID: {record['Record_ID']}")
-    
+
     with st.form("edit_lead_form"):
         col1, col2 = st.columns(2)
         with col1:
-            new_agent_name = st.selectbox("Agent Name", AGENTS,
-                                          index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0)
+            new_agent_name = st.selectbox(
+                "Agent Name", AGENTS,
+                index=AGENTS.index(record["Agent Name"]) if record["Agent Name"] in AGENTS else 0
+            )
             new_name = st.text_input("Client Name", value=record["Name"])
             new_phone = st.text_input("Phone Number", value=record["Ph Number"])
             new_address = st.text_input("Address", value=record["Address"])
@@ -346,14 +374,24 @@ if record is not None:
             new_expiry = new_expiry.replace("/", "").replace("-", "").replace(" ", "")
             new_cvc = st.text_input("CVC", value=str(record["CVC"]))
             new_charge = st.text_input("Charge Amount", value=str(record["Charge"]))
-            new_llc = st.selectbox("LLC", LLC_OPTIONS,
-                                   index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0)
-            new_provider = st.selectbox("Provider", PROVIDERS,
-                                        index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0)
-            new_date_of_charge = st.date_input("Date of Charge",
-                                               value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date())
+            new_llc = st.selectbox(
+                "LLC", LLC_OPTIONS,
+                index=LLC_OPTIONS.index(record["LLC"]) if record["LLC"] in LLC_OPTIONS else 0
+            )
+            new_provider = st.selectbox(
+                "Provider", PROVIDERS,
+                index=PROVIDERS.index(record["Provider"]) if record["Provider"] in PROVIDERS else 0
+            )
+            new_pin_code = st.text_input(
+                "4-Digit PIN Code",
+                value=record["PIN CODE"] if "PIN CODE" in record and record["PIN CODE"] else "Nil"
+            )
+            new_date_of_charge = st.date_input(
+                "Date of Charge",
+                value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date()
+            )
 
-        # --- STATUS LOGIC ---
+        # Status logic
         current_status = record["Status"]
         if current_status == "Charged":
             status_options = ["Charged", "Pending", "Charge Back"]
@@ -361,7 +399,7 @@ if record is not None:
         elif current_status == "Declined":
             status_options = ["Declined", "Pending", "Charge Back"]
             status_disabled = False
-        else:  # Pending or Charge Back
+        else:
             status_options = [current_status]
             status_disabled = True
 
@@ -369,24 +407,36 @@ if record is not None:
         updated = st.form_submit_button("Update Lead")
 
     if updated:
+        # PIN code validation
+        if new_provider == "Spectrum":
+            if not (new_pin_code.isdigit() and len(new_pin_code) == 4):
+                st.error("PIN Code must be exactly 4 digits when Provider is Spectrum.")
+                st.stop()
+        else:
+            new_pin_code = "Nil"
+
         try:
             row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
             if row_index:
-                row_num = row_index[0] + 2
+                row_num = row_index[0] + 2  # Sheet rows start at 1, plus header row
                 new_timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+
                 updated_data = [
                     record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
                     new_card_holder, new_card_number, new_expiry, new_cvc, new_charge,
                     new_llc, new_provider, new_date_of_charge.strftime("%Y-%m-%d"),
-                    new_status, new_timestamp
+                    new_status, new_timestamp,
+                    new_pin_code
                 ]
-                worksheet.update(f"A{row_num}:P{row_num}", [updated_data])
+
+                worksheet.update(f"A{row_num}", [updated_data])
                 st.success(f"Lead for {new_name} updated successfully!")
                 st.rerun()
             else:
                 st.error("Record not found in sheet. Try refreshing the page.")
         except Exception as e:
             st.error(f"Error updating lead: {e}")
+
 
 from datetime import datetime, time, timedelta
 import pytz
