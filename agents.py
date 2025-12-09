@@ -391,6 +391,11 @@ if record is not None:
                 value=pd.to_datetime(record["Date of Charge"]).date() if record["Date of Charge"] else datetime.now().date()
             )
 
+        # Add Timestamp select box
+        previous_timestamp = record["Timestamp"] if "Timestamp" in record else ""
+        timestamp_options = [previous_timestamp, "Update Timestamp"]
+        selected_timestamp_option = st.selectbox("Timestamp", timestamp_options, index=0)
+
         # Status logic
         current_status = record["Status"]
         if current_status == "Charged":
@@ -407,6 +412,26 @@ if record is not None:
         updated = st.form_submit_button("Update Lead")
 
     if updated:
+        # Mandatory field validation (except PIN Code)
+        missing_fields = []
+        if new_agent_name == "Select Agent": missing_fields.append("Agent Name")
+        if not new_name.strip(): missing_fields.append("Client Name")
+        if not new_phone.strip(): missing_fields.append("Phone Number")
+        if not new_address.strip(): missing_fields.append("Address")
+        if not new_email.strip(): missing_fields.append("Email")
+        if not new_card_holder.strip(): missing_fields.append("Card Holder Name")
+        if not new_card_number.strip(): missing_fields.append("Card Number")
+        if not new_expiry.strip(): missing_fields.append("Expiry Date")
+        if not new_cvc.strip(): missing_fields.append("CVC")
+        if not new_charge.strip(): missing_fields.append("Charge Amount")
+        if new_llc == "Select LLC": missing_fields.append("LLC")
+        if new_provider == "Select Provider": missing_fields.append("Provider")
+        # Date of Charge is selected by default, so no need to check empty.
+
+        if missing_fields:
+            st.error(f"Please fill in all required fields: {', '.join(missing_fields)}")
+            st.stop()
+
         # PIN code validation
         if new_provider == "Spectrum":
             if not (new_pin_code.isdigit() and len(new_pin_code) == 4):
@@ -415,11 +440,17 @@ if record is not None:
         else:
             new_pin_code = "Nil"
 
+        # Determine timestamp to save
+        if selected_timestamp_option == "Update Timestamp":
+            new_timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
+        else:
+            # Use the previous timestamp from the sheet (string)
+            new_timestamp = previous_timestamp
+
         try:
             row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
             if row_index:
                 row_num = row_index[0] + 2  # Sheet rows start at 1, plus header row
-                new_timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
 
                 updated_data = [
                     record["Record_ID"], new_agent_name, new_name, new_phone, new_address, new_email,
