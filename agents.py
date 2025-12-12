@@ -392,9 +392,18 @@ if record is not None:
             )
 
         # Add Timestamp select box
-        previous_timestamp = record["Timestamp"] if "Timestamp" in record else ""
-        timestamp_options = [previous_timestamp, "Update Timestamp"]
+        # --- FIXED TIMESTAMP HANDLING ---
+        if "Timestamp" in record and pd.notna(record["Timestamp"]):
+            if isinstance(record["Timestamp"], (datetime, pd.Timestamp)):
+                previous_timestamp_str = record["Timestamp"].strftime("%Y-%m-%d %I:%M:%S %p")
+            else:
+                previous_timestamp_str = str(record["Timestamp"])
+        else:
+            previous_timestamp_str = ""
+        
+        timestamp_options = [previous_timestamp_str, "Update Timestamp"]
         selected_timestamp_option = st.selectbox("Timestamp", timestamp_options, index=0)
+
 
         # Status logic
         current_status = record["Status"]
@@ -444,8 +453,7 @@ if record is not None:
         if selected_timestamp_option == "Update Timestamp":
             new_timestamp = datetime.now(tz).strftime("%Y-%m-%d %I:%M:%S %p")
         else:
-            # Use the previous timestamp from the sheet (string)
-            new_timestamp = previous_timestamp
+            new_timestamp = selected_timestamp_option
 
         try:
             row_index = df_all.index[df_all["Record_ID"] == record["Record_ID"]].tolist()
